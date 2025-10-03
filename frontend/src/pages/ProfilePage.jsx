@@ -4,12 +4,13 @@ import { useAuth } from '../context/AuthContext'
 import { useQuery } from 'react-query'
 import { enrollmentService } from '../services/enrollmentService'
 import { courseService } from '../services/courseService'
+import { achievementService } from '../services/achievementService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import toast from 'react-hot-toast'
 
 const ProfilePage = () => {
-  const { user, updateUser } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
@@ -20,6 +21,17 @@ const ProfilePage = () => {
     phone: user?.phone || '',
     location: user?.location || ''
   })
+
+  // Update form data when user data changes
+  useEffect(() => {
+    setFormData({
+      name: user?.name || '',
+      email: user?.email || '',
+      bio: user?.bio || '',
+      phone: user?.phone || '',
+      location: user?.location || ''
+    })
+  }, [user])
 
   // Fetch user statistics
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useQuery(
@@ -40,8 +52,18 @@ const ProfilePage = () => {
     }
   )
 
+  const { data: achievementsData, isLoading: achievementsLoading } = useQuery(
+    'user-achievements',
+    () => achievementService.getMyAchievements(),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000
+    }
+  )
+
   const enrollments = enrollmentsData?.data?.enrollments || []
   const courses = coursesData?.data?.courses || []
+  const achievements = achievementsData?.data?.achievements || []
 
   // Calculate statistics
   const stats = {
@@ -67,18 +89,70 @@ const ProfilePage = () => {
     setIsLoading(true)
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Use the AuthContext's updateProfile function which handles API call and state update
+      const result = await updateProfile(formData)
       
-      // Update user context
-      updateUser({ ...user, ...formData })
-      setIsEditing(false)
-      toast.success('Profile updated successfully!')
+      if (result.success) {
+        setIsEditing(false)
+        toast.success('Profile updated successfully!')
+      } else {
+        toast.error(result.error || 'Failed to update profile. Please try again.')
+      }
     } catch (error) {
       console.error('Error updating profile:', error)
-      toast.error('Failed to update profile. Please try again.')
+      toast.error(error.message || 'Failed to update profile. Please try again.')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleDownloadCertificate = async (achievementId) => {
+    try {
+      const response = await achievementService.downloadCertificate(achievementId)
+      const certificate = response.data.certificate
+      
+      // Create a simple certificate display
+      const certificateWindow = window.open('', '_blank', 'width=800,height=600')
+      certificateWindow.document.write(`
+        <html>
+          <head>
+            <title>Certificate - ${certificate.title}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+              .certificate { background: white; padding: 60px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
+              .header { color: #4a5568; margin-bottom: 40px; }
+              .title { font-size: 36px; font-weight: bold; color: #2d3748; margin-bottom: 20px; }
+              .subtitle { font-size: 18px; color: #718096; margin-bottom: 40px; }
+              .student-name { font-size: 28px; font-weight: bold; color: #2d3748; margin-bottom: 20px; }
+              .course-title { font-size: 24px; color: #4a5568; margin-bottom: 30px; }
+              .details { display: flex; justify-content: space-between; margin-top: 40px; font-size: 14px; color: #718096; }
+              .certificate-id { font-size: 12px; color: #a0aec0; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="certificate">
+              <div class="header">
+                <h1>CERTIFICATE OF COMPLETION</h1>
+                <p class="subtitle">This is to certify that</p>
+              </div>
+              <div class="student-name">${certificate.studentName}</div>
+              <div class="course-title">has successfully completed the course</div>
+              <div class="course-title" style="font-weight: bold; color: #2d3748;">${certificate.courseTitle}</div>
+              <div class="details">
+                <div>Issued by: ${certificate.issuedBy}</div>
+                <div>Date: ${new Date(certificate.completionDate).toLocaleDateString()}</div>
+              </div>
+              <div class="certificate-id">Certificate ID: ${certificate.certificateId}</div>
+            </div>
+          </body>
+        </html>
+      `)
+      certificateWindow.document.close()
+      
+      toast.success('Certificate opened in new window!')
+    } catch (error) {
+      console.error('Error downloading certificate:', error)
+      toast.error('Failed to download certificate. Please try again.')
     }
   }
 
@@ -224,11 +298,11 @@ const ProfilePage = () => {
                           </div>
                           <div className="flex items-center justify-center text-sm text-gray-600">
                             <span className="mr-2">📱</span>
-                            {formData.phone || 'Not provided'}
+                            {user.phone || 'Not provided'}
                           </div>
                           <div className="flex items-center justify-center text-sm text-gray-600">
                             <span className="mr-2">📍</span>
-                            {formData.location || 'Not provided'}
+                            {user.location || 'Not provided'}
                           </div>
                         </div>
                   </div>
@@ -445,53 +519,94 @@ const ProfilePage = () => {
               {activeTab === 'achievements' && (
                 <div className="space-y-6">
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Achievements</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {/* Achievement Cards */}
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="p-4 border border-gray-200 rounded-lg text-center"
-                      >
-                        <div className="text-4xl mb-2">🎓</div>
-                        <h4 className="font-semibold text-gray-900">First Course</h4>
-                        <p className="text-sm text-gray-600">Complete your first course</p>
-                        <div className={`mt-2 px-3 py-1 rounded-full text-xs font-medium ${
-                          stats.completedCourses > 0 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {stats.completedCourses > 0 ? 'Unlocked' : 'Locked'}
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="p-4 border border-gray-200 rounded-lg text-center"
-                      >
-                        <div className="text-4xl mb-2">🔥</div>
-                        <h4 className="font-semibold text-gray-900">Streak Master</h4>
-                        <p className="text-sm text-gray-600">Study for 7 days in a row</p>
-                        <div className="mt-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                          Locked
-                        </div>
-                      </motion.div>
-
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        className="p-4 border border-gray-200 rounded-lg text-center"
-                      >
-                        <div className="text-4xl mb-2">⭐</div>
-                        <h4 className="font-semibold text-gray-900">Top Performer</h4>
-                        <p className="text-sm text-gray-600">Complete 5 courses</p>
-                        <div className={`mt-2 px-3 py-1 rounded-full text-xs font-medium ${
-                          stats.completedCourses >= 5 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {stats.completedCourses >= 5 ? 'Unlocked' : 'Locked'}
-                        </div>
-                      </motion.div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Achievements</h3>
+                      <div className="text-sm text-gray-500">
+                        {achievements.filter(a => a.isUnlocked).length} of {achievements.length} unlocked
+                      </div>
                     </div>
+                    
+                    {achievements.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {achievements.map((achievement, index) => (
+                          <motion.div
+                            key={achievement.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ scale: 1.05 }}
+                            className={`p-4 border rounded-lg text-center transition-all duration-200 ${
+                              achievement.isUnlocked 
+                                ? 'border-green-200 bg-green-50 hover:bg-green-100' 
+                                : 'border-gray-200 bg-gray-50'
+                            }`}
+                          >
+                            <div className="text-4xl mb-2">{achievement.icon}</div>
+                            <h4 className="font-semibold text-gray-900">{achievement.title}</h4>
+                            <p className="text-sm text-gray-600">{achievement.description}</p>
+                            
+                            {achievement.course && (
+                              <div className="mt-2 text-xs text-gray-500">
+                                Course: {achievement.course.title}
+                              </div>
+                            )}
+                            
+                            <div className="mt-3 flex items-center justify-between">
+                              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                achievement.isUnlocked 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {achievement.isUnlocked ? 'Unlocked' : 'Locked'}
+                              </div>
+                              
+                              {achievement.pointsEarned > 0 && (
+                                <div className="text-xs text-gray-500">
+                                  +{achievement.pointsEarned} XP
+                                </div>
+                              )}
+                            </div>
+                            
+                            {achievement.isUnlocked && achievement.type === 'course_completion' && (
+                              <button
+                                onClick={() => handleDownloadCertificate(achievement.id)}
+                                className="mt-3 w-full px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                              >
+                                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Download Certificate
+                              </button>
+                            )}
+                            
+                            {achievement.isUnlocked && (
+                              <div className="mt-2 text-xs text-gray-400">
+                                Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
+                              </div>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                          </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No achievements yet</h3>
+                        <p className="text-gray-600 mb-4">Complete courses to unlock achievements and earn certificates</p>
+                        <button 
+                          onClick={() => window.location.href = '/courses'}
+                          className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          </svg>
+                          Browse Courses
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

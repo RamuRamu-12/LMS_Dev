@@ -268,7 +268,7 @@ const getCurrentUser = async (req, res, next) => {
  */
 const updateProfile = async (req, res, next) => {
   try {
-    const { name, email, avatar, preferences } = req.body;
+    const { name, email, avatar, preferences, bio, phone, location } = req.body;
     const userId = req.user.id;
     
     // Check if email is being changed and if it's already taken
@@ -285,7 +285,10 @@ const updateProfile = async (req, res, next) => {
       name: name || updatedUser.name,
       email: email || updatedUser.email,
       avatar: avatar || updatedUser.avatar,
-      preferences: preferences || updatedUser.preferences
+      preferences: preferences || updatedUser.preferences,
+      bio: bio !== undefined ? bio : updatedUser.bio,
+      phone: phone !== undefined ? phone : updatedUser.phone,
+      location: location !== undefined ? location : updatedUser.location
     });
     
     logger.info(`User ${updatedUser.email} updated profile`);

@@ -12,6 +12,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import ChapterSidebar from '../components/course/ChapterSidebar'
 import StudentChapterView from '../components/course/StudentChapterView'
 import ChapterNavigation from '../components/course/ChapterNavigation'
+import TestSection from '../components/course/TestSection'
 import { FiAlertCircle } from 'react-icons/fi'
 
 const CourseDetailPage = () => {
@@ -21,6 +22,7 @@ const CourseDetailPage = () => {
   const [selectedChapter, setSelectedChapter] = useState(null)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [chapterProgression, setChapterProgression] = useState(null)
+  const [showTestSection, setShowTestSection] = useState(false)
 
   // Use content endpoint for enrolled students to get enrollment data
   const { data: courseData, isLoading, error } = useQuery(
@@ -111,6 +113,18 @@ const CourseDetailPage = () => {
       setSelectedChapter(chapters[0])
     }
   }, [chapters, progressionData, selectedChapter])
+
+  // Listen for test section display event
+  useEffect(() => {
+    const handleShowTestSection = (event) => {
+      setShowTestSection(true)
+    }
+
+    window.addEventListener('showTestSection', handleShowTestSection)
+    return () => {
+      window.removeEventListener('showTestSection', handleShowTestSection)
+    }
+  }, [])
 
   // Update progression data when it changes
   useEffect(() => {
@@ -457,13 +471,34 @@ const CourseDetailPage = () => {
                     
                     {/* Video/Content Area - Fixed height, no scrolling */}
                     <div className="flex-1 flex flex-col">
-                      <StudentChapterView 
-                        chapter={selectedChapter}
-                        enrollmentId={isEnrolled ? enrollment.id : null}
-                        chapters={chapters}
-                        onChapterChange={handleChapterChange}
-                        showNavigation={false}
-                      />
+                      {showTestSection ? (
+                        <div className="h-full overflow-y-auto p-6">
+                          <div className="flex items-center justify-between mb-6">
+                            <button
+                              onClick={() => setShowTestSection(false)}
+                              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                              <span>Back to Chapters</span>
+                            </button>
+                          </div>
+                          <TestSection 
+                            courseId={course.id}
+                            enrollment={isEnrolled ? enrollment : null}
+                            progress={enrollment?.progress || 0}
+                          />
+                        </div>
+                      ) : (
+                        <StudentChapterView 
+                          chapter={selectedChapter}
+                          enrollmentId={isEnrolled ? enrollment.id : null}
+                          chapters={chapters}
+                          onChapterChange={handleChapterChange}
+                          showNavigation={false}
+                        />
+                      )}
                     </div>
                     
                     {/* Chapter Navigation - Always visible at bottom */}
@@ -583,6 +618,15 @@ const CourseDetailPage = () => {
                 )}
               </div>
             </div>
+            )}
+
+            {/* Test Section - Shows for enrolled students */}
+            {user?.role === 'student' && isEnrolled && (
+              <TestSection 
+                courseId={course.id}
+                enrollment={enrollment}
+                progress={enrollment.progress || 0}
+              />
             )}
           </motion.div>
         </div>

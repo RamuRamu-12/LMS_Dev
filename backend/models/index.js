@@ -20,8 +20,10 @@ const sequelize = new Sequelize(
       timestamps: true,
       underscored: true,
       createdAt: 'created_at',
-      updatedAt: 'updated_at'
-    }
+      updatedAt: 'updated_at',
+      freezeTableName: true
+    },
+    quoteIdentifiers: false
   }
 );
 
@@ -37,6 +39,14 @@ const Document = require('./Document')(sequelize, Sequelize.DataTypes);
 const Video = require('./Video')(sequelize, Sequelize.DataTypes);
 const ProjectPhase = require('./ProjectPhase')(sequelize, Sequelize.DataTypes);
 const ProjectProgress = require('./ProjectProgress')(sequelize, Sequelize.DataTypes);
+const CourseTest = require('./CourseTest')(sequelize, Sequelize.DataTypes);
+const TestQuestion = require('./TestQuestion')(sequelize, Sequelize.DataTypes);
+const TestQuestionOption = require('./TestQuestionOption')(sequelize, Sequelize.DataTypes);
+const TestAttempt = require('./TestAttempt')(sequelize, Sequelize.DataTypes);
+const TestAnswer = require('./TestAnswer')(sequelize, Sequelize.DataTypes);
+const Certificate = require('./Certificate')(sequelize, Sequelize.DataTypes);
+const ActivityLog = require('./ActivityLog')(sequelize, Sequelize.DataTypes);
+const Achievement = require('./Achievement')(sequelize, Sequelize.DataTypes);
 
 // Define associations
 const defineAssociations = () => {
@@ -109,6 +119,11 @@ const defineAssociations = () => {
     as: 'course'
   });
 
+  CourseChapter.belongsTo(CourseTest, {
+    foreignKey: 'test_id',
+    as: 'test'
+  });
+
   CourseChapter.hasMany(ChapterProgress, {
     foreignKey: 'chapter_id',
     as: 'progress',
@@ -145,7 +160,7 @@ const defineAssociations = () => {
   });
 
   Project.hasMany(ProjectPhase, {
-    foreignKey: 'project_id',
+    foreignKey: 'projectId',
     as: 'projectPhases',
     onDelete: 'CASCADE'
   });
@@ -202,7 +217,7 @@ const defineAssociations = () => {
 
   // ProjectPhase associations
   ProjectPhase.belongsTo(Project, {
-    foreignKey: 'project_id',
+    foreignKey: 'projectId',
     as: 'project'
   });
 
@@ -235,6 +250,142 @@ const defineAssociations = () => {
     onDelete: 'CASCADE'
   });
 
+  // Test system associations
+  Course.hasMany(CourseTest, {
+    foreignKey: 'course_id',
+    as: 'tests',
+    onDelete: 'CASCADE'
+  });
+
+  CourseTest.belongsTo(Course, {
+    foreignKey: 'course_id',
+    as: 'course'
+  });
+
+  CourseTest.belongsTo(User, {
+    foreignKey: 'created_by',
+    as: 'creator'
+  });
+
+  CourseTest.hasMany(TestQuestion, {
+    foreignKey: 'test_id',
+    as: 'questions',
+    onDelete: 'CASCADE'
+  });
+
+  TestQuestion.belongsTo(CourseTest, {
+    foreignKey: 'test_id',
+    as: 'test'
+  });
+
+  TestQuestion.hasMany(TestQuestionOption, {
+    foreignKey: 'question_id',
+    as: 'options',
+    onDelete: 'CASCADE'
+  });
+
+  TestQuestionOption.belongsTo(TestQuestion, {
+    foreignKey: 'question_id',
+    as: 'question'
+  });
+
+  CourseTest.hasMany(TestAttempt, {
+    foreignKey: 'test_id',
+    as: 'attempts',
+    onDelete: 'CASCADE'
+  });
+
+  TestAttempt.belongsTo(CourseTest, {
+    foreignKey: 'test_id',
+    as: 'test'
+  });
+
+  TestAttempt.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  TestAttempt.hasMany(TestAnswer, {
+    foreignKey: 'attempt_id',
+    as: 'answers',
+    onDelete: 'CASCADE'
+  });
+
+  TestAnswer.belongsTo(TestAttempt, {
+    foreignKey: 'attempt_id',
+    as: 'attempt'
+  });
+
+  TestAnswer.belongsTo(TestQuestion, {
+    foreignKey: 'question_id',
+    as: 'question'
+  });
+
+  User.hasMany(Certificate, {
+    foreignKey: 'student_id',
+    as: 'certificates',
+    onDelete: 'CASCADE'
+  });
+
+  Certificate.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  Certificate.belongsTo(Course, {
+    foreignKey: 'course_id',
+    as: 'course'
+  });
+
+  Certificate.belongsTo(TestAttempt, {
+    foreignKey: 'test_attempt_id',
+    as: 'testAttempt'
+  });
+
+  // ActivityLog associations
+  User.hasMany(ActivityLog, {
+    foreignKey: 'student_id',
+    as: 'activities',
+    onDelete: 'CASCADE'
+  });
+
+  ActivityLog.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  ActivityLog.belongsTo(Course, {
+    foreignKey: 'course_id',
+    as: 'course'
+  });
+
+  ActivityLog.belongsTo(CourseChapter, {
+    foreignKey: 'chapter_id',
+    as: 'chapter'
+  });
+
+  ActivityLog.belongsTo(CourseTest, {
+    foreignKey: 'test_id',
+    as: 'test'
+  });
+
+  // Achievement associations
+  User.hasMany(Achievement, {
+    foreignKey: 'student_id',
+    as: 'achievements',
+    onDelete: 'CASCADE'
+  });
+
+  Achievement.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  Achievement.belongsTo(Course, {
+    foreignKey: 'course_id',
+    as: 'course'
+  });
+
 };
 
 // Define associations
@@ -254,5 +405,13 @@ module.exports = {
   Document,
   Video,
   ProjectPhase,
-  ProjectProgress
+  ProjectProgress,
+  CourseTest,
+  TestQuestion,
+  TestQuestionOption,
+  TestAttempt,
+  TestAnswer,
+  Certificate,
+  ActivityLog,
+  Achievement
 };

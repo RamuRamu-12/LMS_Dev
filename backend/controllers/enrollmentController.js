@@ -1,4 +1,4 @@
-const { Enrollment, Course, User, CourseChapter, ChapterProgress } = require('../models');
+const { Enrollment, Course, User, CourseChapter, ChapterProgress, ActivityLog, Achievement } = require('../models');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
@@ -401,6 +401,36 @@ const completeCourse = async (req, res, next) => {
     const course = await Course.findByPk(enrollment.course_id);
     if (course) {
       await course.updateEnrollmentCount();
+      
+      // Log course completion activity
+      await ActivityLog.createActivity(
+        req.user.id,
+        'course_completed',
+        `Completed ${course.title}`,
+        `Successfully completed ${course.title} course`,
+        {
+          courseId: course.id,
+          metadata: {
+            courseTitle: course.title,
+            courseCategory: course.category,
+            courseDifficulty: course.difficulty,
+            completionTime: enrollment.completed_at
+          },
+          pointsEarned: 50
+        }
+      );
+
+      // Create course completion achievement
+      await Achievement.createCourseCompletionAchievement(
+        req.user.id,
+        course.id,
+        {
+          studentName: req.user.name,
+          courseTitle: course.title,
+          courseCategory: course.category,
+          courseDuration: course.duration || 'Self-paced'
+        }
+      );
     }
 
     logger.info(`User ${req.user.email} completed course`);
@@ -617,11 +647,32 @@ const getChapterProgression = async (req, res, next) => {
       progressMap[progress.chapter_id] = progress;
     });
 
-    // Build chapter progression data
-    const chaptersWithProgress = enrollment.course.chapters.map((chapter, index) => {
+    // Separate regular chapters from assignment/test chapters
+    const regularChapters = enrollment.course.chapters.filter(chapter => 
+      !chapter.title.toLowerCase().includes('assignment') && 
+      !chapter.title.toLowerCase().includes('test') && 
+      !chapter.title.toLowerCase().includes('exam') &&
+      !chapter.title.toLowerCase().includes('final')
+    );
+    
+    const assignmentChapters = enrollment.course.chapters.filter(chapter => 
+      chapter.title.toLowerCase().includes('assignment') || 
+      chapter.title.toLowerCase().includes('test') || 
+      chapter.title.toLowerCase().includes('exam') ||
+      chapter.title.toLowerCase().includes('final')
+    );
+
+    // Check if all regular chapters are completed
+    const allRegularChaptersCompleted = regularChapters.every(chapter => {
+      const progress = progressMap[chapter.id];
+      return progress ? progress.is_completed : false;
+    });
+
+    // Build chapter progression data for regular chapters
+    const regularChaptersWithProgress = regularChapters.map((chapter, index) => {
       const progress = progressMap[chapter.id];
       const isCompleted = progress ? progress.is_completed : false;
-      const isAccessible = index === 0 || (progressMap[enrollment.course.chapters[index - 1].id]?.is_completed || false);
+      const isAccessible = index === 0 || (progressMap[regularChapters[index - 1].id]?.is_completed || false);
 
       return {
         id: chapter.id,
@@ -631,9 +682,40 @@ const getChapterProgression = async (req, res, next) => {
         is_completed: isCompleted,
         is_accessible: isAccessible,
         completed_at: progress?.completed_at || null,
-        time_spent: progress?.time_spent || 0
+        time_spent: progress?.time_spent || 0,
+        is_assignment: false
       };
     });
+
+    // Build chapter progression data for assignment chapters
+    const assignmentChaptersWithProgress = assignmentChapters.map((chapter) => {
+      const progress = progressMap[chapter.id];
+      const isCompleted = progress ? progress.is_completed : false;
+      // Assignment chapters are only accessible if all regular chapters are completed
+      const isAccessible = allRegularChaptersCompleted;
+
+      return {
+        id: chapter.id,
+        title: chapter.title,
+        description: chapter.description,
+        chapter_order: chapter.chapter_order,
+        is_completed: isCompleted,
+        is_accessible: isAccessible,
+        completed_at: progress?.completed_at || null,
+        time_spent: progress?.time_spent || 0,
+        is_assignment: true
+      };
+    });
+
+    // Only show assignment chapters if all regular chapters are completed
+    const visibleChapters = [...regularChaptersWithProgress];
+    
+    if (allRegularChaptersCompleted) {
+      visibleChapters.push(...assignmentChaptersWithProgress);
+    }
+    
+    // Sort by chapter order
+    const chaptersWithProgress = visibleChapters.sort((a, b) => a.chapter_order - b.chapter_order);
 
     const completedChapters = chaptersWithProgress.filter(ch => ch.is_completed).length;
     const totalChapters = chaptersWithProgress.length;

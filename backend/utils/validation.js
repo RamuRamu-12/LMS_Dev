@@ -17,7 +17,10 @@ const userSchemas = {
     role: Joi.string().valid('admin', 'student').optional(),
     is_active: Joi.boolean().optional(),
     password: Joi.string().min(6).optional(),
-    preferences: Joi.object().optional()
+    preferences: Joi.object().optional(),
+    bio: Joi.string().max(1000).optional().allow(''),
+    phone: Joi.string().max(20).optional().allow(''),
+    location: Joi.string().max(255).optional().allow('')
   }),
 
   login: Joi.object({
@@ -97,6 +100,86 @@ const fileSchemas = {
   upload: Joi.object({
     course_id: Joi.number().integer().positive().required(),
     file_type: Joi.string().valid('pdf', 'docx').required()
+  })
+};
+
+// Test system validation schemas
+const testSchemas = {
+  createTest: Joi.object({
+    course_id: Joi.number().integer().positive().required(),
+    title: Joi.string().min(3).max(255).required(),
+    description: Joi.string().max(2000).optional(),
+    passing_score: Joi.number().integer().min(0).max(100).default(70),
+    time_limit_minutes: Joi.number().integer().min(1).max(300).optional(),
+    max_attempts: Joi.number().integer().min(1).max(10).default(3)
+  }),
+
+  updateTest: Joi.object({
+    title: Joi.string().min(3).max(255).optional(),
+    description: Joi.string().max(2000).optional(),
+    passing_score: Joi.number().integer().min(0).max(100).optional(),
+    time_limit_minutes: Joi.number().integer().min(1).max(300).optional(),
+    max_attempts: Joi.number().integer().min(1).max(10).optional(),
+    is_active: Joi.boolean().optional()
+  }),
+
+  createQuestion: Joi.object({
+    test_id: Joi.number().integer().positive().required(),
+    question_text: Joi.string().min(10).max(2000).required(),
+    question_type: Joi.string().valid('multiple_choice', 'true_false', 'short_answer', 'essay').required(),
+    points: Joi.number().integer().min(1).max(100).default(1),
+    explanation: Joi.string().max(1000).optional(),
+    options: Joi.array().items(
+      Joi.object({
+        text: Joi.string().min(1).max(1000).required(),
+        is_correct: Joi.boolean().default(false)
+      })
+    ).min(2).max(6).when('question_type', {
+      is: 'multiple_choice',
+      then: Joi.required(),
+      otherwise: Joi.optional()
+    })
+  }),
+
+  updateQuestion: Joi.object({
+    question_text: Joi.string().min(10).max(2000).optional(),
+    question_type: Joi.string().valid('multiple_choice', 'true_false', 'short_answer', 'essay').optional(),
+    points: Joi.number().integer().min(1).max(100).optional(),
+    explanation: Joi.string().max(1000).optional(),
+    options: Joi.array().items(
+      Joi.object({
+        text: Joi.string().min(1).max(1000).required(),
+        is_correct: Joi.boolean().default(false)
+      })
+    ).min(2).max(6).optional()
+  }),
+
+  reorderQuestions: Joi.object({
+    questionOrders: Joi.array().items(
+      Joi.object({
+        id: Joi.number().integer().positive().required(),
+        order: Joi.number().integer().min(1).required()
+      })
+    ).min(1).required()
+  }),
+
+  addOption: Joi.object({
+    option_text: Joi.string().min(1).max(1000).required(),
+    is_correct: Joi.boolean().default(false)
+  }),
+
+  updateOption: Joi.object({
+    option_text: Joi.string().min(1).max(1000).optional(),
+    is_correct: Joi.boolean().optional()
+  }),
+
+  submitAnswer: Joi.object({
+    question_id: Joi.number().integer().positive().required(),
+    answer_text: Joi.string().max(2000).optional()
+  }),
+
+  generateCertificate: Joi.object({
+    test_attempt_id: Joi.number().integer().positive().required()
   })
 };
 
@@ -223,6 +306,7 @@ module.exports = {
   courseSchemas,
   enrollmentSchemas,
   fileSchemas,
+  testSchemas,
   commonSchemas,
   validate,
   validateEmail,

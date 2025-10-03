@@ -72,20 +72,20 @@ module.exports = (sequelize, DataTypes) => {
   timestamps: true,
   indexes: [
     {
-      fields: ['userId']
+      fields: ['user_id']
     },
     {
-      fields: ['projectId']
+      fields: ['project_id']
     },
     {
-      fields: ['phaseId']
+      fields: ['phase_id']
     },
     {
       fields: ['status']
     },
     {
       unique: true,
-      fields: ['userId', 'projectId', 'phaseId']
+      fields: ['user_id', 'project_id', 'phase_id']
     }
   ]
 });

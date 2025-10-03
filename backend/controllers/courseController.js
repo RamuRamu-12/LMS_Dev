@@ -1,4 +1,4 @@
-const { Course, User, Enrollment, CourseChapter } = require('../models');
+const { Course, User, Enrollment, CourseChapter, CourseTest, ChapterProgress, ActivityLog, sequelize } = require('../models');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
@@ -51,7 +51,11 @@ const getCourses = async (req, res, next) => {
         [Op.or]: [
           { title: { [Op.iLike]: `%${q}%` } },
           { description: { [Op.iLike]: `%${q}%` } },
-          { tags: { [Op.contains]: [q] } }
+          // Use raw SQL for tags search to avoid type issues
+          sequelize.literal(`EXISTS (
+            SELECT 1 FROM unnest(tags) AS tag 
+            WHERE tag ILIKE '%${q.replace(/'/g, "''")}%'
+          )`)
         ]
       });
     }
@@ -118,7 +122,11 @@ const searchCourses = async (req, res, next) => {
       [Op.or]: [
         { title: { [Op.iLike]: `%${q}%` } },
         { description: { [Op.iLike]: `%${q}%` } },
-        { tags: { [Op.contains]: [q] } }
+        // Use raw SQL for tags search to avoid type issues
+        sequelize.literal(`EXISTS (
+          SELECT 1 FROM unnest(tags) AS tag 
+          WHERE tag ILIKE '%${q.replace(/'/g, "''")}%'
+        )`)
       ]
     };
 
@@ -276,6 +284,13 @@ const getCourseById = async (req, res, next) => {
           attributes: ['id', 'title', 'description', 'video_url', 'pdf_url', 'chapter_order', 'duration_minutes', 'is_published'],
           where: { is_published: true },
           required: false
+        },
+        {
+          model: CourseTest,
+          as: 'tests',
+          attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes', 'max_attempts', 'is_active'],
+          where: { is_active: true },
+          required: false
         }
       ],
       order: [
@@ -308,13 +323,45 @@ const getCourseById = async (req, res, next) => {
       });
     }
 
+    // Combine chapters and tests into a single content array
+    const allContent = [];
+    
+    // Add chapters
+    if (course.chapters) {
+      course.chapters.forEach(chapter => {
+        allContent.push({
+          ...chapter.getPublicInfo(),
+          type: 'chapter'
+        });
+      });
+    }
+    
+    // Add tests as the last items
+    if (course.tests) {
+      course.tests.forEach(test => {
+        allContent.push({
+          id: test.id,
+          title: test.title,
+          description: test.description,
+          type: 'test',
+          passing_score: test.passing_score,
+          time_limit_minutes: test.time_limit_minutes,
+          max_attempts: test.max_attempts,
+          chapter_order: 9999 + test.id // Place tests at the end
+        });
+      });
+    }
+    
+    // Sort by chapter_order
+    allContent.sort((a, b) => a.chapter_order - b.chapter_order);
+
     const responseData = {
       success: true,
       message: 'Course retrieved successfully',
       data: {
         course: {
           ...course.getPublicInfo(),
-          chapters: course.chapters ? course.chapters.map(chapter => chapter.getPublicInfo()) : []
+          chapters: allContent
         },
         enrollment: enrollment ? {
           id: enrollment.id,
@@ -697,8 +744,23 @@ const getCourseContent = async (req, res, next) => {
         {
           model: CourseChapter,
           as: 'chapters',
-          attributes: ['id', 'title', 'description', 'video_url', 'pdf_url', 'chapter_order', 'duration_minutes', 'is_published'],
+          attributes: ['id', 'title', 'description', 'video_url', 'pdf_url', 'chapter_order', 'duration_minutes', 'is_published', 'test_id'],
           where: { is_published: true },
+          required: false,
+          include: [
+            {
+              model: CourseTest,
+              as: 'test',
+              attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes', 'max_attempts', 'is_active', 'instructions'],
+              required: false
+            }
+          ]
+        },
+        {
+          model: CourseTest,
+          as: 'tests',
+          attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes', 'max_attempts', 'is_active'],
+          where: { is_active: true },
           required: false
         }
       ],
@@ -711,13 +773,128 @@ const getCourseContent = async (req, res, next) => {
       throw new AppError('Course not found', 404);
     }
 
+    // Debug logging
+    console.log('=== COURSE CONTENT DEBUG ===');
+    console.log('Course ID:', id);
+    console.log('Course chapters:', course.chapters ? course.chapters.length : 0);
+    console.log('Course tests:', course.tests ? course.tests.length : 0);
+    if (course.tests && course.tests.length > 0) {
+      console.log('Test details:', course.tests.map(test => ({ id: test.id, title: test.title, is_active: test.is_active })));
+    }
+    console.log('============================');
+
+    // Separate regular chapters from assignment chapters
+    // Exclude chapters that have a test_id (these are test chapters, not regular content)
+    const regularChapters = course.chapters ? course.chapters.filter(chapter => 
+      !chapter.test_id && // Exclude chapters with test_id
+      !chapter.title.toLowerCase().includes('assignment') && 
+      !chapter.title.toLowerCase().includes('test') && 
+      !chapter.title.toLowerCase().includes('exam') &&
+      !chapter.title.toLowerCase().includes('final')
+    ) : [];
+    
+    const assignmentChapters = course.chapters ? course.chapters.filter(chapter => 
+      !chapter.test_id && // Exclude chapters with test_id
+      (chapter.title.toLowerCase().includes('assignment') || 
+      chapter.title.toLowerCase().includes('test') || 
+      chapter.title.toLowerCase().includes('exam') ||
+      chapter.title.toLowerCase().includes('final'))
+    ) : [];
+
+    // Debug chapter filtering
+    console.log('=== CHAPTER FILTERING DEBUG ===');
+    console.log('All chapters:', course.chapters ? course.chapters.map(ch => ch.title) : []);
+    console.log('Regular chapters:', regularChapters.map(ch => ch.title));
+    console.log('Assignment chapters:', assignmentChapters.map(ch => ch.title));
+    console.log('================================');
+
+    // Check if all regular chapters are completed (for enrolled students)
+    let allRegularChaptersCompleted = false;
+    if (req.enrollment) {
+      const chapterProgresses = await ChapterProgress.findAll({
+        where: {
+          enrollment_id: req.enrollment.id
+        }
+      });
+      
+      const progressMap = {};
+      chapterProgresses.forEach(progress => {
+        progressMap[progress.chapter_id] = progress;
+      });
+      
+      allRegularChaptersCompleted = regularChapters.every(chapter => {
+        const progress = progressMap[chapter.id];
+        return progress ? progress.is_completed : false;
+      });
+      
+      // Debug logging
+      console.log('=== ASSIGNMENT HIDING DEBUG ===');
+      console.log('Enrollment ID:', req.enrollment.id);
+      console.log('Regular chapters:', regularChapters.length);
+      console.log('Assignment chapters:', assignmentChapters.length);
+      console.log('Chapter progresses:', chapterProgresses.length);
+      console.log('All regular chapters completed:', allRegularChaptersCompleted);
+      console.log('Progress map:', progressMap);
+      console.log('================================');
+    } else {
+      // For non-enrolled users, always hide assignment chapters
+      console.log('=== NON-ENROLLED USER ===');
+      console.log('Hiding assignment chapters for non-enrolled user');
+      console.log('========================');
+    }
+
+    // Combine chapters and tests into a single content array
+    const allContent = [];
+    
+    // Add regular chapters
+    regularChapters.forEach(chapter => {
+      allContent.push({
+        ...chapter.getPublicInfo(),
+        type: 'chapter'
+      });
+    });
+    
+    // Only add assignment chapters if all regular chapters are completed
+    if (allRegularChaptersCompleted) {
+      assignmentChapters.forEach(chapter => {
+        allContent.push({
+          ...chapter.getPublicInfo(),
+          type: 'chapter'
+        });
+      });
+    }
+    
+    // Add tests as the last items (only if all regular chapters are completed)
+    if (allRegularChaptersCompleted && course.tests) {
+      course.tests.forEach(test => {
+        allContent.push({
+          id: test.id,
+          title: test.title,
+          description: test.description,
+          type: 'test',
+          passing_score: test.passing_score,
+          time_limit_minutes: test.time_limit_minutes,
+          max_attempts: test.max_attempts,
+          chapter_order: 9999 + test.id // Place tests at the end
+        });
+      });
+    }
+    
+    // Sort by chapter_order
+    allContent.sort((a, b) => a.chapter_order - b.chapter_order);
+    
+    console.log('Final content array length:', allContent.length);
+    console.log('Content types:', allContent.map(item => ({ type: item.type, title: item.title })));
+    console.log('Assignment chapters hidden:', !allRegularChaptersCompleted);
+    console.log('================================');
+
     res.json({
       success: true,
       message: 'Course content retrieved successfully',
       data: {
         course: {
           ...course.getPublicInfo(),
-          chapters: course.chapters ? course.chapters.map(chapter => chapter.getPublicInfo()) : []
+          chapters: allContent
         },
         enrollment: req.enrollment ? {
           id: req.enrollment.id,
@@ -771,6 +948,23 @@ const enrollInCourse = async (req, res, next) => {
 
     // Update course enrollment count
     await course.updateEnrollmentCount();
+
+    // Log enrollment activity
+    await ActivityLog.createActivity(
+      req.user.id,
+      'enrollment',
+      `Enrolled in ${course.title}`,
+      `Successfully enrolled in ${course.title} course`,
+      {
+        courseId: course.id,
+        metadata: {
+          courseTitle: course.title,
+          courseCategory: course.category,
+          courseDifficulty: course.difficulty
+        },
+        pointsEarned: 10
+      }
+    );
 
     logger.info(`User ${req.user.email} enrolled in course "${course.title}"`);
 

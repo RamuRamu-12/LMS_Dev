@@ -206,10 +206,10 @@ module.exports = (sequelize, DataTypes) => {
       fields: ['category']
     },
     {
-      fields: ['isPublished']
+      fields: ['is_published']
     },
     {
-      fields: ['createdBy']
+      fields: ['created_by']
     }
   ]
 });

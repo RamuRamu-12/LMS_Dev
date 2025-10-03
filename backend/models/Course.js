@@ -223,7 +223,11 @@ module.exports = (sequelize, DataTypes) => {
         [sequelize.Sequelize.Op.or]: [
           { title: { [sequelize.Sequelize.Op.iLike]: `%${searchTerm}%` } },
           { description: { [sequelize.Sequelize.Op.iLike]: `%${searchTerm}%` } },
-          { tags: { [sequelize.Sequelize.Op.contains]: [searchTerm] } }
+          // Use raw SQL for tags search to avoid type issues
+          sequelize.literal(`EXISTS (
+            SELECT 1 FROM unnest(tags) AS tag 
+            WHERE tag ILIKE '%${searchTerm.replace(/'/g, "''")}%'
+          )`)
         ]
       },
       order: [['created_at', 'DESC']]

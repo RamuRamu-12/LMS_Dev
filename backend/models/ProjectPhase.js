@@ -74,16 +74,16 @@ module.exports = (sequelize, DataTypes) => {
   timestamps: true,
   indexes: [
     {
-      fields: ['projectId']
+      fields: ['project_id']
     },
     {
-      fields: ['phaseNumber']
+      fields: ['phase_number']
     },
     {
-      fields: ['phaseType']
+      fields: ['phase_type']
     },
     {
-      fields: ['isActive']
+      fields: ['is_active']
     }
   ]
 });

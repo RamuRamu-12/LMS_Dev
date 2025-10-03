@@ -4,7 +4,15 @@ import { motion } from 'framer-motion'
 const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, courseTitle, progressionData = null }) => {
   const [isCollapsed, setIsCollapsed] = useState(false)
 
+  // Filter out test chapters to ensure they don't appear in the chapter list
+  const regularChapters = chapters.filter(chapter => 
+    !chapter.test_id && 
+    !chapter.test && 
+    chapter.type !== 'test'
+  )
+
   const getChapterContentType = (chapter) => {
+    if (chapter.test_id || chapter.test) return 'test'
     if (chapter.video_url && chapter.pdf_url) return 'both'
     if (chapter.video_url) return 'video'
     if (chapter.pdf_url) return 'pdf'
@@ -14,6 +22,12 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
   const getContentTypeIcon = (chapter) => {
     const contentType = getChapterContentType(chapter)
     switch (contentType) {
+      case 'test':
+        return (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        )
       case 'video':
         return (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,6 +58,8 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
   const getContentTypeColor = (chapter) => {
     const contentType = getChapterContentType(chapter)
     switch (contentType) {
+      case 'test':
+        return 'text-purple-600'
       case 'video':
         return 'text-red-600'
       case 'pdf':
@@ -109,7 +125,7 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
 
       {/* Chapters List */}
       <div className="flex-1 overflow-y-auto">
-        {chapters.length === 0 ? (
+        {regularChapters.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             <svg className="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -118,7 +134,7 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
           </div>
         ) : (
           <div className="p-1">
-            {chapters.map((chapter, index) => {
+            {regularChapters.map((chapter, index) => {
               const { isAccessible, isCompleted } = getChapterStatus(chapter)
               
               return (
@@ -171,24 +187,44 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
                         
                         <div className="flex items-center justify-between text-xs text-gray-400">
                           <span className="flex items-center space-x-1">
-                            {chapter.video_url && (
+                            {chapter.test_id || chapter.test ? (
+                              <span className="flex items-center space-x-0.5 text-purple-500">
+                                <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span>Test</span>
+                              </span>
+                            ) : chapter.video_url && chapter.pdf_url ? (
+                              <>
+                                <span className="flex items-center space-x-0.5">
+                                  <svg className="w-2.5 h-2.5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z"/>
+                                  </svg>
+                                  <span>1 video</span>
+                                </span>
+                                <span>,</span>
+                                <span className="flex items-center space-x-0.5">
+                                  <svg className="w-2.5 h-2.5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                                  </svg>
+                                  <span>1 PDF</span>
+                                </span>
+                              </>
+                            ) : chapter.video_url ? (
                               <span className="flex items-center space-x-0.5">
                                 <svg className="w-2.5 h-2.5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M8 5v14l11-7z"/>
                                 </svg>
                                 <span>1 video</span>
                               </span>
-                            )}
-                            {chapter.video_url && chapter.pdf_url && <span>,</span>}
-                            {chapter.pdf_url && (
+                            ) : chapter.pdf_url ? (
                               <span className="flex items-center space-x-0.5">
                                 <svg className="w-2.5 h-2.5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                                 </svg>
                                 <span>1 PDF</span>
                               </span>
-                            )}
-                            {!chapter.video_url && !chapter.pdf_url && (
+                            ) : (
                               <span>No content</span>
                             )}
                           </span>
@@ -208,7 +244,7 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
       {!isCollapsed && (
         <div className="p-2 border-t border-gray-200 bg-gray-50">
           <div className="text-xs text-gray-500 text-center">
-            {chapters.length} chapter{chapters.length !== 1 ? 's' : ''} available
+            {regularChapters.length} chapter{regularChapters.length !== 1 ? 's' : ''} available
           </div>
         </div>
       )}

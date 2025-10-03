@@ -112,22 +112,22 @@ module.exports = (sequelize, DataTypes) => {
   timestamps: true,
   indexes: [
     {
-      fields: ['projectId']
+      fields: ['project_id']
     },
     {
-      fields: ['documentType']
+      fields: ['document_type']
     },
     {
       fields: ['phase']
     },
     {
-      fields: ['isPublic']
+      fields: ['is_public']
     },
     {
-      fields: ['uploadedBy']
+      fields: ['uploaded_by']
     },
     {
-      fields: ['mimeType']
+      fields: ['mime_type']
     }
   ]
 });

@@ -73,6 +73,14 @@ module.exports = (sequelize, DataTypes) => {
     is_published: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
+    },
+    test_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'course_tests',
+        key: 'id'
+      }
     }
   }, {
     tableName: 'course_chapters',
@@ -88,13 +96,16 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
         fields: ['course_id', 'chapter_order']
+      },
+      {
+        fields: ['test_id']
       }
     ],
     hooks: {
       beforeValidate: (chapter) => {
-        // Validate that at least one URL is provided
-        if (!chapter.video_url && !chapter.pdf_url) {
-          throw new Error('At least one URL (video or PDF) is required');
+        // Validate that at least one content type is provided (video, PDF, or test)
+        if (!chapter.video_url && !chapter.pdf_url && !chapter.test_id) {
+          throw new Error('At least one content type (video, PDF, or test) is required');
         }
       }
     }
@@ -116,6 +127,7 @@ module.exports = (sequelize, DataTypes) => {
       chapter_order: this.chapter_order,
       duration_minutes: this.duration_minutes,
       is_published: this.is_published,
+      test_id: this.test_id,
       created_at: this.created_at,
       updated_at: this.updated_at
     };
@@ -127,6 +139,10 @@ module.exports = (sequelize, DataTypes) => {
 
   CourseChapter.prototype.hasPdf = function() {
     return !!this.pdf_url;
+  };
+
+  CourseChapter.prototype.hasTest = function() {
+    return !!this.test_id;
   };
 
   CourseChapter.prototype.getVideoUrl = function() {

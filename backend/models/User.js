@@ -60,6 +60,18 @@ module.exports = (sequelize, DataTypes) => {
     preferences: {
       type: DataTypes.JSONB,
       defaultValue: {}
+    },
+    bio: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    location: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     tableName: 'users',
@@ -116,6 +128,9 @@ module.exports = (sequelize, DataTypes) => {
       role: this.role,
       is_active: this.is_active,
       last_login: this.last_login,
+      bio: this.bio,
+      phone: this.phone,
+      location: this.location,
       created_at: this.created_at
     };
   };

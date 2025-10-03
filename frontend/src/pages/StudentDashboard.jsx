@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
+import { activityService } from '../services/activityService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import AllCoursesModal from '../components/course/AllCoursesModal'
@@ -42,6 +43,19 @@ const StudentDashboard = () => {
     }
   )
 
+  const { data: activitiesData, isLoading: activitiesLoading, error: activitiesError } = useQuery(
+    'student-activities',
+    () => activityService.getMyActivities(5),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 2 * 60 * 1000, // Refresh every 2 minutes
+      retry: 1,
+      onError: (error) => {
+        console.error('Activities API error:', error)
+      }
+    }
+  )
+
   // Enrollment mutation
   const enrollMutation = useMutation(
     (courseId) => courseService.enrollInCourse(courseId),
@@ -66,9 +80,100 @@ const StudentDashboard = () => {
   const [isAllCoursesModalOpen, setIsAllCoursesModalOpen] = useState(false)
   const [isEnrolledCoursesModalOpen, setIsEnrolledCoursesModalOpen] = useState(false)
 
-  const isLoading = coursesLoading || enrollmentsLoading
+  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading
   const courses = coursesData?.data?.courses || []
   const enrollments = enrollmentsData?.data?.enrollments || []
+  const activities = activitiesData?.data?.activities || []
+
+  // Helper function to get activity styling
+  const getActivityStyle = (activityType) => {
+    switch (activityType) {
+      case 'enrollment':
+        return {
+          bgColor: 'from-blue-50 to-indigo-50',
+          borderColor: 'border-blue-200',
+          iconBg: 'from-blue-500 to-indigo-600',
+          icon: (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          ),
+          badgeColor: 'bg-blue-100 text-blue-800',
+          badgeText: 'Enrolled',
+          dotColor: 'bg-blue-500'
+        }
+      case 'course_completed':
+        return {
+          bgColor: 'from-green-50 to-emerald-50',
+          borderColor: 'border-green-200',
+          iconBg: 'from-green-500 to-emerald-600',
+          icon: (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+          badgeColor: 'bg-green-100 text-green-800',
+          badgeText: 'Completed',
+          dotColor: 'bg-green-500'
+        }
+      case 'test_passed':
+        return {
+          bgColor: 'from-purple-50 to-violet-50',
+          borderColor: 'border-purple-200',
+          iconBg: 'from-purple-500 to-violet-600',
+          icon: (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          ),
+          badgeColor: 'bg-purple-100 text-purple-800',
+          badgeText: 'Passed',
+          dotColor: 'bg-purple-500'
+        }
+      case 'test_attempted':
+        return {
+          bgColor: 'from-orange-50 to-red-50',
+          borderColor: 'border-orange-200',
+          iconBg: 'from-orange-500 to-red-600',
+          icon: (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          ),
+          badgeColor: 'bg-orange-100 text-orange-800',
+          badgeText: 'Attempted',
+          dotColor: 'bg-orange-500'
+        }
+      case 'certificate_earned':
+        return {
+          bgColor: 'from-yellow-50 to-amber-50',
+          borderColor: 'border-yellow-200',
+          iconBg: 'from-yellow-500 to-amber-600',
+          icon: (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          ),
+          badgeColor: 'bg-yellow-100 text-yellow-800',
+          badgeText: 'Certificate',
+          dotColor: 'bg-yellow-500'
+        }
+      default:
+        return {
+          bgColor: 'from-gray-50 to-slate-50',
+          borderColor: 'border-gray-200',
+          iconBg: 'from-gray-500 to-slate-600',
+          icon: (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          ),
+          badgeColor: 'bg-gray-100 text-gray-800',
+          badgeText: 'Activity',
+          dotColor: 'bg-gray-500'
+        }
+    }
+  }
 
   // Debug logging
   console.log('Enrollments data:', enrollmentsData)
@@ -536,83 +641,58 @@ const StudentDashboard = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8 }}
-                    className="flex items-center space-x-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 hover:shadow-sm transition-all duration-200"
-                  >
-                    <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg shadow-md">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">Course Completed</p>
-                      <p className="text-xs text-gray-600">React Fundamentals - 2 hours ago</p>
-                      <div className="mt-1 flex items-center space-x-2">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                          Achievement
-                        </span>
-                        <span className="text-xs text-gray-500">+50 XP</span>
+                  {activities.length > 0 ? (
+                    activities.map((activity, index) => {
+                      const style = getActivityStyle(activity.type)
+                      return (
+                        <motion.div
+                          key={activity.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.8 + index * 0.1 }}
+                          className={`flex items-center space-x-4 p-4 bg-gradient-to-r ${style.bgColor} rounded-lg border ${style.borderColor} hover:shadow-sm transition-all duration-200`}
+                        >
+                          <div className={`p-3 bg-gradient-to-br ${style.iconBg} rounded-lg shadow-md`}>
+                            {style.icon}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-gray-900">{activity.title}</p>
+                            <p className="text-xs text-gray-600">{activity.description}</p>
+                            <div className="mt-1 flex items-center space-x-2">
+                              <span className={`px-2 py-1 ${style.badgeColor} text-xs font-medium rounded-full`}>
+                                {style.badgeText}
+                              </span>
+                              {activity.pointsEarned > 0 && (
+                                <span className="text-xs text-gray-500">+{activity.pointsEarned} XP</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`w-2 h-2 ${style.dotColor} rounded-full ${index === 0 ? 'animate-pulse' : ''}`}></div>
+                          </div>
+                        </motion.div>
+                      )
+                    })
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
                       </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
+                      <p className="text-gray-600 mb-4">Start learning to see your activity here</p>
+                      <button 
+                        onClick={() => navigate('/courses')}
+                        className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        Browse Courses
+                      </button>
                     </div>
-                    <div className="text-right">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 }}
-                    className="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 hover:shadow-sm transition-all duration-200"
-                  >
-                    <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-md">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">New Course Enrolled</p>
-                      <p className="text-xs text-gray-600">JavaScript Advanced Concepts - 1 day ago</p>
-                      <div className="mt-1 flex items-center space-x-2">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                          Enrolled
-                        </span>
-                        <span className="text-xs text-gray-500">12h duration</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    </div>
-                  </motion.div>
-                  
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1.0 }}
-                    className="flex items-center space-x-4 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200 hover:shadow-sm transition-all duration-200"
-                  >
-                    <div className="p-3 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-lg shadow-md">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">Achievement Unlocked</p>
-                      <p className="text-xs text-gray-600">First Course Completed - 3 days ago</p>
-                      <div className="mt-1 flex items-center space-x-2">
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                          Badge
-                        </span>
-                        <span className="text-xs text-gray-500">+100 XP</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    </div>
-                  </motion.div>
+                  )}
                 </div>
               </div>
             </motion.div>

@@ -18,6 +18,11 @@ const pdfRoutes = require('./routes/pdf');
 const projectRoutes = require('./routes/projects');
 const progressRoutes = require('./routes/progress-simple');
 const realtimeProjectsRoutes = require('./routes/realtimeProjects');
+const testRoutes = require('./routes/tests');
+const testTakingRoutes = require('./routes/test-taking');
+const certificateRoutes = require('./routes/certificates');
+const activityRoutes = require('./routes/activities');
+const achievementRoutes = require('./routes/achievements');
 const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 
@@ -202,6 +207,11 @@ app.use('/api/progress', chapterProgressRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/realtime-projects', realtimeProjectsRoutes);
+app.use('/api/tests', testRoutes);
+app.use('/api/test-taking', testTakingRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/activities', activityRoutes);
+app.use('/api/achievements', achievementRoutes);
 app.use('/api', progressRoutes);
 
 // Debug: Log all registered routes
@@ -215,6 +225,9 @@ console.log('- /api/courses/:courseId/chapters');
 console.log('- /api/progress (chapter progress tracking)');
 console.log('- /api/pdf (PDF proxy for CORS)');
 console.log('- /api/projects (realtime projects)');
+console.log('- /api/tests (test management)');
+console.log('- /api/test-taking (student test taking)');
+console.log('- /api/certificates (certificate management)');
 
 // 404 handler
 app.use('*', (req, res) => {

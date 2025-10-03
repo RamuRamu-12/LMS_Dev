@@ -8,6 +8,7 @@ import { chapterService } from '../../services/chapterService'
 import { api } from '../../services/api'
 import toast from 'react-hot-toast'
 import LoadingSpinner from '../common/LoadingSpinner'
+import TestManagement from './TestManagement'
 
 const EditCourse = () => {
   const navigate = useNavigate()
@@ -557,7 +558,9 @@ const EditCourse = () => {
           {/* Chapters List */}
           <div className="space-y-3">
             {courseData?.data?.course?.chapters?.length > 0 ? (
-              courseData.data.course.chapters.map((chapter, index) => (
+              courseData.data.course.chapters
+                .filter(chapter => chapter.title !== 'Final_Assignment' && !chapter.title.toLowerCase().includes('final assignment'))
+                .map((chapter, index) => (
                 <div key={chapter.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-medium">
@@ -730,6 +733,14 @@ const EditCourse = () => {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Test Management Section */}
+      <div className="card p-6">
+        <TestManagement 
+          courseId={id} 
+          courseTitle={courseData?.data?.course?.title || 'Course'} 
+        />
+      </div>
     </div>
   )
 }
