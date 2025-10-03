@@ -950,21 +950,31 @@ const enrollInCourse = async (req, res, next) => {
     await course.updateEnrollmentCount();
 
     // Log enrollment activity
-    await ActivityLog.createActivity(
-      req.user.id,
-      'enrollment',
-      `Enrolled in ${course.title}`,
-      `Successfully enrolled in ${course.title} course`,
-      {
-        courseId: course.id,
-        metadata: {
-          courseTitle: course.title,
-          courseCategory: course.category,
-          courseDifficulty: course.difficulty
-        },
-        pointsEarned: 10
-      }
-    );
+    try {
+      await ActivityLog.createActivity(
+        req.user.id,
+        'enrollment',
+        `Enrolled in ${course.title}`,
+        `Successfully enrolled in ${course.title} course`,
+        {
+          courseId: course.id,
+          metadata: {
+            courseTitle: course.title,
+            courseCategory: course.category,
+            courseDifficulty: course.difficulty
+          },
+          pointsEarned: 10
+        }
+      );
+      console.log('=== ACTIVITY LOGGED ===');
+      console.log('User ID:', req.user.id);
+      console.log('Course:', course.title);
+      console.log('Activity type: enrollment');
+      console.log('=======================');
+    } catch (activityError) {
+      console.error('Failed to log enrollment activity:', activityError);
+      // Don't fail the enrollment if activity logging fails
+    }
 
     logger.info(`User ${req.user.email} enrolled in course "${course.title}"`);
 

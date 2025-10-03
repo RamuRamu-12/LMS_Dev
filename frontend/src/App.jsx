@@ -14,6 +14,7 @@ import CreateCoursePage from './pages/CreateCoursePage'
 import UserManagementPage from './pages/UserManagementPage'
 import StudentListPage from './pages/StudentListPage'
 import ProfilePage from './pages/ProfilePage'
+import CertificatesPage from './pages/CertificatesPage'
 import RealtimeProjectsPage from './pages/RealtimeProjectsPageSimple'
 import BRDPhasePage from './pages/BRDPhasePage'
 import UIUXPhasePage from './pages/UIUXPhasePage'
@@ -245,6 +246,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Certificates Route */}
+            <Route
+              path="/certificates"
+              element={
+                <ProtectedRoute>
+                  <CertificatesPage />
                 </ProtectedRoute>
               }
             />

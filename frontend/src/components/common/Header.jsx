@@ -43,7 +43,7 @@ const Header = () => {
             <img 
                 src="/lms_logo.svg"
               alt="GNANAM AI" 
-              className="h-8 w-auto"
+              className="h-16 w-auto"
             />
           </Link>
 
@@ -103,6 +103,15 @@ const Header = () => {
                         >
                           Profile
                         </Link>
+                        {user?.role === 'student' && (
+                          <Link
+                            to="/certificates"
+                            className="block px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            My Certificates
+                          </Link>
+                        )}
                         <button
                           onClick={handleLogout}
                           className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"

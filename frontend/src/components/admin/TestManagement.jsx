@@ -10,6 +10,7 @@ const TestManagement = ({ courseId, courseTitle }) => {
   const [editingTest, setEditingTest] = useState(null)
   const [showQuestionForm, setShowQuestionForm] = useState(false)
   const [selectedTest, setSelectedTest] = useState(null)
+  const [editingQuestion, setEditingQuestion] = useState(null)
   const [testFormData, setTestFormData] = useState({
     title: '',
     description: '',
@@ -132,6 +133,36 @@ const TestManagement = ({ courseId, courseTitle }) => {
     }
   )
 
+  // Update question mutation
+  const updateQuestionMutation = useMutation(
+    ({ questionId, questionData }) => testService.updateQuestion(questionId, questionData),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['test-questions', selectedTest])
+        toast.success('Question updated successfully!')
+        setEditingQuestion(null)
+        resetQuestionForm()
+      },
+      onError: (error) => {
+        toast.error(error.message || 'Failed to update question')
+      }
+    }
+  )
+
+  // Delete question mutation
+  const deleteQuestionMutation = useMutation(
+    (questionId) => testService.deleteQuestion(questionId),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['test-questions', selectedTest])
+        toast.success('Question deleted successfully!')
+      },
+      onError: (error) => {
+        toast.error(error.message || 'Failed to delete question')
+      }
+    }
+  )
+
   const resetTestForm = () => {
     setTestFormData({
       title: '',
@@ -187,7 +218,35 @@ const TestManagement = ({ courseId, courseTitle }) => {
 
   const handleAddQuestion = (testId) => {
     setSelectedTest(testId)
+    setEditingQuestion(null)
+    resetQuestionForm()
     setShowQuestionForm(true)
+  }
+
+  const handleEditQuestion = (question) => {
+    setEditingQuestion(question)
+    setSelectedTest(question.test_id)
+    setQuestionFormData({
+      question_text: question.question_text,
+      question_type: question.question_type,
+      points: question.points,
+      options: question.options ? question.options.map(opt => ({
+        option_text: opt.option_text,
+        is_correct: opt.is_correct
+      })) : [
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false },
+        { option_text: '', is_correct: false }
+      ]
+    })
+    setShowQuestionForm(true)
+  }
+
+  const handleDeleteQuestion = (questionId, questionText) => {
+    if (window.confirm(`Are you sure you want to delete this question?\n\n"${questionText}"\n\nThis action cannot be undone.`)) {
+      deleteQuestionMutation.mutate(questionId)
+    }
   }
 
   const handleSubmitQuestion = (e) => {
@@ -233,7 +292,14 @@ const TestManagement = ({ courseId, courseTitle }) => {
     console.log('Data to send:', dataToSend);
     console.log('===============================');
 
-    createQuestionMutation.mutate(dataToSend)
+    if (editingQuestion) {
+      updateQuestionMutation.mutate({
+        questionId: editingQuestion.id,
+        questionData: dataToSend
+      })
+    } else {
+      createQuestionMutation.mutate(dataToSend)
+    }
   }
 
   const handleOptionChange = (index, field, value) => {
@@ -496,11 +562,15 @@ const TestManagement = ({ courseId, courseTitle }) => {
           >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h4 className="text-lg font-semibold text-gray-900">Add Questions</h4>
+                <h4 className="text-lg font-semibold text-gray-900">
+                  {editingQuestion ? 'Edit Question' : 'Add Questions'}
+                </h4>
                 {questionsLoading ? (
                   <p className="text-sm text-gray-600">Loading questions...</p>
                 ) : (
-                  <p className="text-sm text-gray-600">{questions.length} questions added so far</p>
+                  <p className="text-sm text-gray-600">
+                    {editingQuestion ? 'Edit the question below' : `${questions.length} questions added so far`}
+                  </p>
                 )}
               </div>
               <button
@@ -508,11 +578,12 @@ const TestManagement = ({ courseId, courseTitle }) => {
                 onClick={() => {
                   setShowQuestionForm(false)
                   setSelectedTest(null)
+                  setEditingQuestion(null)
                   resetQuestionForm()
                 }}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
               >
-                ✓ Done Adding Questions
+                {editingQuestion ? 'Cancel Edit' : '✓ Done Adding Questions'}
               </button>
             </div>
             <form onSubmit={handleSubmitQuestion} className="space-y-4">
@@ -607,10 +678,13 @@ const TestManagement = ({ courseId, courseTitle }) => {
               <div className="flex justify-end space-x-3 pt-4 border-t">
                 <button
                   type="submit"
-                  disabled={createQuestionMutation.isLoading}
+                  disabled={createQuestionMutation.isLoading || updateQuestionMutation.isLoading}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
                 >
-                  {createQuestionMutation.isLoading ? 'Adding...' : '+ Add This Question'}
+                  {createQuestionMutation.isLoading || updateQuestionMutation.isLoading 
+                    ? (editingQuestion ? 'Updating...' : 'Adding...') 
+                    : (editingQuestion ? 'Update Question' : '+ Add This Question')
+                  }
                 </button>
               </div>
             </form>
@@ -641,6 +715,23 @@ const TestManagement = ({ courseId, courseTitle }) => {
                             <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs capitalize">
                               {question.question_type.replace('_', ' ')}
                             </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleEditQuestion(question)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
+                              title="Edit question"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteQuestion(question.id, question.question_text)}
+                              disabled={deleteQuestionMutation.isLoading}
+                              className="px-3 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                              title="Delete question"
+                            >
+                              {deleteQuestionMutation.isLoading ? 'Deleting...' : 'Delete'}
+                            </button>
                           </div>
                         </div>
                         <p className="text-sm text-gray-800 font-medium mb-2">{question.question_text}</p>

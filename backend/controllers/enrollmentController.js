@@ -559,6 +559,38 @@ const completeChapter = async (req, res, next) => {
     // Update enrollment progress
     await enrollment.updateProgress(newProgress);
 
+    // Log chapter completion activity
+    try {
+      await ActivityLog.createActivity(
+        req.user.id,
+        'chapter_completed',
+        `Completed chapter: ${chapters[currentChapterIndex].title}`,
+        `Successfully completed chapter "${chapters[currentChapterIndex].title}" in ${enrollment.course.title}`,
+        {
+          courseId: enrollment.course_id,
+          chapterId: chapterId,
+          metadata: {
+            courseTitle: enrollment.course.title,
+            chapterTitle: chapters[currentChapterIndex].title,
+            chapterOrder: chapters[currentChapterIndex].chapter_order,
+            totalChapters: totalChapters,
+            completedChapters: completedChapters,
+            progress: newProgress
+          },
+          pointsEarned: 5
+        }
+      );
+      console.log('=== CHAPTER ACTIVITY LOGGED ===');
+      console.log('User ID:', req.user.id);
+      console.log('Chapter:', chapters[currentChapterIndex].title);
+      console.log('Course:', enrollment.course.title);
+      console.log('Activity type: chapter_completed');
+      console.log('===============================');
+    } catch (activityError) {
+      console.error('Failed to log chapter completion activity:', activityError);
+      // Don't fail the chapter completion if activity logging fails
+    }
+
     // Check if course is completed
     const isCourseCompleted = completedChapters === totalChapters;
     let nextChapter = null;

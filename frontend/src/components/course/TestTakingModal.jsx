@@ -89,7 +89,7 @@ const TestTakingModal = ({
         setTimeLeft(timeLeft - 1)
       }, 1000)
       return () => clearTimeout(timer)
-    } else if (timeLeft === 0 && testStarted && !testCompleted) {
+    } else if (timeLeft === 0 && testStarted && !testCompleted && !submitTestMutation.isLoading) {
       // Auto-submit when time runs out
       handleSubmitTest()
     }
@@ -119,7 +119,7 @@ const TestTakingModal = ({
   }
 
   const handleSubmitTest = () => {
-    if (testAttemptId) {
+    if (testAttemptId && !testCompleted && !submitTestMutation.isLoading) {
       submitTestMutation.mutate({
         attemptId: testAttemptId,
         answers: answers
@@ -380,10 +380,10 @@ const TestTakingModal = ({
                   {currentQuestionIndex === questions.length - 1 ? (
                     <button
                       onClick={handleSubmitTest}
-                      disabled={submitTestMutation.isLoading}
+                      disabled={submitTestMutation.isLoading || testCompleted}
                       className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                     >
-                      {submitTestMutation.isLoading ? 'Submitting...' : 'Submit Test'}
+                      {submitTestMutation.isLoading ? 'Submitting...' : testCompleted ? 'Test Completed' : 'Submit Test'}
                     </button>
                   ) : (
                     <button

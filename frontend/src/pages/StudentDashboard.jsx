@@ -290,6 +290,15 @@ const StudentDashboard = () => {
                           </svg>
                           View Profile
                         </button>
+                        <button 
+                          onClick={() => navigate('/certificates')}
+                          className="inline-flex items-center px-6 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/30"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          My Certificates
+                        </button>
                       </div>
                     </motion.div>
                   </div>

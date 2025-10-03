@@ -73,6 +73,12 @@ const startTest = async (req, res, next) => {
     // Check if there's an active attempt
     const activeAttempt = existingAttempts.find(attempt => attempt.status === 'in_progress');
     if (activeAttempt) {
+      console.log('=== RESUME ATTEMPT DEBUG ===');
+      console.log('Resuming attempt ID:', activeAttempt.id);
+      console.log('Attempt status:', activeAttempt.status);
+      console.log('Started at:', activeAttempt.started_at);
+      console.log('============================');
+      
       return res.json({
         success: true,
         message: 'Resuming existing test attempt',
@@ -91,6 +97,12 @@ const startTest = async (req, res, next) => {
       status: 'in_progress',
       started_at: new Date()
     });
+
+    console.log('=== NEW ATTEMPT DEBUG ===');
+    console.log('Created attempt ID:', attempt.id);
+    console.log('Attempt status:', attempt.status);
+    console.log('Started at:', attempt.started_at);
+    console.log('=========================');
 
     logger.info(`Test attempt started for user ${req.user.email}, test ${testId}`);
 
@@ -197,12 +209,20 @@ const submitTest = async (req, res, next) => {
       throw new AppError('Test attempt not found', 404);
     }
 
+    console.log('=== SUBMIT TEST DEBUG ===');
+    console.log('Attempt ID:', attemptId);
+    console.log('Attempt status:', attempt.status);
+    console.log('Student ID:', attempt.student_id);
+    console.log('Request user ID:', req.user.id);
+    console.log('Started at:', attempt.started_at);
+    console.log('========================');
+
     if (attempt.student_id !== req.user.id) {
       throw new AppError('Unauthorized access to test attempt', 403);
     }
 
     if (attempt.status !== 'in_progress') {
-      throw new AppError('Test attempt is not active', 400);
+      throw new AppError(`Test attempt is not active. Current status: ${attempt.status}`, 400);
     }
 
     // Get the test
