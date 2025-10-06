@@ -61,6 +61,12 @@ const Header = () => {
             >
               Realtime Projects
             </button>
+            <button
+              onClick={() => handleProtectedClick('/hackathons')}
+              className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+            >
+              Hackathons
+            </button>
             
             {user ? (
               <div className="flex items-center space-x-4">
@@ -174,6 +180,15 @@ const Header = () => {
                   className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                 >
                   Realtime Projects
+                </button>
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    handleProtectedClick('/hackathons')
+                  }}
+                  className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                >
+                  Hackathons
                 </button>
                 
                 {user ? (

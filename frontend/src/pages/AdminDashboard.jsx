@@ -63,6 +63,7 @@ const AdminDashboard = () => {
     { name: 'Courses', href: '/admin/courses', icon: 'courses', current: location.pathname.startsWith('/admin/courses') },
     { name: 'Create Course', href: '/admin/courses/create', icon: 'add', current: location.pathname === '/admin/courses/create' },
     { name: 'Realtime Projects', href: '/admin/projects', icon: 'projects', current: location.pathname.startsWith('/admin/projects') },
+    { name: 'Hackathons', href: '/admin/hackathons', icon: 'hackathons', current: location.pathname.startsWith('/admin/hackathons') },
     { name: 'Users', href: '/admin/users', icon: 'users', current: location.pathname.startsWith('/admin/users') },
     { name: 'User Analytics', href: '/admin/analytics', icon: 'analytics', current: location.pathname === '/admin/analytics' },
   ]

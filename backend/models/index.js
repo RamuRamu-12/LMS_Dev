@@ -47,6 +47,8 @@ const TestAnswer = require('./TestAnswer')(sequelize, Sequelize.DataTypes);
 const Certificate = require('./Certificate')(sequelize, Sequelize.DataTypes);
 const ActivityLog = require('./ActivityLog')(sequelize, Sequelize.DataTypes);
 const Achievement = require('./Achievement')(sequelize, Sequelize.DataTypes);
+const Hackathon = require('./Hackathon')(sequelize, Sequelize.DataTypes);
+const HackathonParticipant = require('./HackathonParticipant')(sequelize, Sequelize.DataTypes);
 
 // Define associations
 const defineAssociations = () => {
@@ -386,6 +388,47 @@ const defineAssociations = () => {
     as: 'course'
   });
 
+  // Hackathon associations
+  Hackathon.belongsTo(User, {
+    foreignKey: 'created_by',
+    as: 'creator'
+  });
+  
+  Hackathon.belongsTo(User, {
+    foreignKey: 'updated_by',
+    as: 'updater'
+  });
+
+  Hackathon.belongsTo(User, {
+    foreignKey: 'multimedia_uploaded_by',
+    as: 'multimediaUploader'
+  });
+
+  Hackathon.belongsToMany(User, {
+    through: HackathonParticipant,
+    foreignKey: 'hackathon_id',
+    otherKey: 'student_id',
+    as: 'participants'
+  });
+
+  // HackathonParticipant associations
+  HackathonParticipant.belongsTo(Hackathon, {
+    foreignKey: 'hackathon_id',
+    as: 'hackathon'
+  });
+
+  HackathonParticipant.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  User.belongsToMany(Hackathon, {
+    through: HackathonParticipant,
+    foreignKey: 'student_id',
+    otherKey: 'hackathon_id',
+    as: 'hackathons'
+  });
+
 };
 
 // Define associations
@@ -413,5 +456,7 @@ module.exports = {
   TestAnswer,
   Certificate,
   ActivityLog,
-  Achievement
+  Achievement,
+  Hackathon,
+  HackathonParticipant
 };

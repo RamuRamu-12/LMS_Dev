@@ -16,6 +16,7 @@ import StudentListPage from './pages/StudentListPage'
 import ProfilePage from './pages/ProfilePage'
 import CertificatesPage from './pages/CertificatesPage'
 import RealtimeProjectsPage from './pages/RealtimeProjectsPageSimple'
+import HackathonPage from './pages/HackathonPage'
 import BRDPhasePage from './pages/BRDPhasePage'
 import UIUXPhasePage from './pages/UIUXPhasePage'
 import ArchitecturalDesignPhasePage from './pages/ArchitecturalDesignPhasePage'
@@ -25,6 +26,8 @@ import DeploymentPhasePage from './pages/DeploymentPhasePage'
 import AdminProjectsPage from './pages/AdminProjectsPage'
 import AdminProjectManagementPage from './pages/AdminProjectManagementPage'
 import ProjectManagementDetailPage from './pages/ProjectManagementDetailPage'
+import AdminHackathonsPage from './pages/AdminHackathonsPage'
+import CreateHackathonPage from './pages/CreateHackathonPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 // Components
@@ -112,6 +115,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RealtimeProjectsPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Hackathons Route */}
+            <Route
+              path="/hackathons"
+              element={
+                <ProtectedRoute>
+                  <HackathonPage />
                 </ProtectedRoute>
               }
             />
@@ -227,6 +240,25 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <ProjectManagementDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Hackathon Admin Routes */}
+            <Route
+              path="/admin/hackathons"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminHackathonsPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/hackathons/create"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <CreateHackathonPage />
                 </ProtectedRoute>
               }
             />
