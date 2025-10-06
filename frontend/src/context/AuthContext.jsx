@@ -202,6 +202,26 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const deleteAccount = async () => {
+    try {
+      const response = await authService.deleteAccount()
+      if (response.success) {
+        // Clear tokens and state
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+        dispatch({ type: 'AUTH_LOGOUT' })
+        toast.success('Account deleted successfully')
+        return { success: true }
+      } else {
+        throw new Error(response.message || 'Delete failed')
+      }
+    } catch (error) {
+      console.error('Account deletion failed:', error)
+      toast.error('Failed to delete account')
+      return { success: false, error: error.message }
+    }
+  }
+
   const clearError = () => {
     dispatch({ type: 'AUTH_CLEAR_ERROR' })
   }
@@ -212,6 +232,7 @@ export function AuthProvider({ children }) {
     logout,
     refreshToken,
     updateProfile,
+    deleteAccount,
     clearError
   }
 

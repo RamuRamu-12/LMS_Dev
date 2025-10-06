@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
 import { activityService } from '../services/activityService'
@@ -16,6 +17,7 @@ import toast from 'react-hot-toast'
 const StudentDashboard = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   const { data: coursesData, isLoading: coursesLoading, error: coursesError } = useQuery(
     'student-courses',
@@ -266,7 +268,7 @@ const StudentDashboard = () => {
                       transition={{ delay: 0.2 }}
                     >
                       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-3">
-                        Welcome back, <span className="text-yellow-300">Student!</span>
+                        Welcome back, <span className="text-yellow-300">{user?.name || 'Student'}!</span>
                       </h1>
                       <p className="text-lg text-indigo-100 mb-4 max-w-2xl">
                         Continue your learning journey and explore new courses.

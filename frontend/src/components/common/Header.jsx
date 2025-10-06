@@ -139,7 +139,7 @@ const Header = () => {
           <div className="md:hidden">
             <button
               onClick={toggleMenu}
-              className="p-2 rounded-lg hover:bg-white/20 transition-colors duration-200"
+              className="touch-target p-3 rounded-lg hover:bg-white/20 transition-colors duration-200"
               aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,10 +158,10 @@ const Header = () => {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden border-t border-white/20"
             >
-              <div className="py-4 space-y-2">
+              <div className="py-4 space-y-2 mobile-padding">
                 <Link
                   to="/courses"
-                  className="block px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                  className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Courses
@@ -171,7 +171,7 @@ const Header = () => {
                     setIsMenuOpen(false)
                     handleProtectedClick('/realtime-projects')
                   }}
-                  className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                  className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                 >
                   Realtime Projects
                 </button>
@@ -180,14 +180,14 @@ const Header = () => {
                   <>
                     <Link
                       to={user.role === 'admin' ? '/admin' : '/student'}
-                      className="block px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Dashboard
                     </Link>
                     <Link
                       to="/profile"
-                      className="block px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Profile
@@ -197,7 +197,7 @@ const Header = () => {
                         handleLogout()
                         setIsMenuOpen(false)
                       }}
-                      className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                     >
                       Logout
                     </button>
@@ -206,7 +206,7 @@ const Header = () => {
                   <>
                     <Link
                       to="/login"
-                      className="block px-4 py-2 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Login

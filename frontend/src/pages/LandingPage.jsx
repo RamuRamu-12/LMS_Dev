@@ -79,7 +79,7 @@ const LandingPage = () => {
           </div>
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 mobile-padding">
           <div className="text-center">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -87,13 +87,13 @@ const LandingPage = () => {
               transition={{ duration: 0.8 }}
               className="mb-8"
             >
-              <h1 className="text-6xl md:text-8xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
+              <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
                 GNANAM AI
               </h1>
-              <p className="text-2xl md:text-3xl text-gray-700 mb-4">
+              <p className="text-xl sm:text-2xl md:text-3xl text-gray-700 mb-4 mobile-text-sm">
                 The Future of Learning is Here
               </p>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              <p className="text-base sm:text-lg text-gray-600 max-w-3xl mx-auto mobile-text-sm">
                 Experience the next generation of education with AI-powered personalized learning, 
                 interactive courses, and intelligent progress tracking.
               </p>

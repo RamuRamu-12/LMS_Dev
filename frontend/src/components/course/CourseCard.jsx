@@ -15,7 +15,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
   return (
     <motion.div
       whileHover={{ y: -8, scale: 1.02 }}
-      className="bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden group border border-white/20 shadow-2xl hover:shadow-purple-500/20"
+      className="bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden group border border-white/20 shadow-2xl hover:shadow-purple-500/20 w-full max-w-sm mx-auto"
     >
       <Link to={`/courses/${course.id}`} className="block">
         <div className="relative overflow-hidden">

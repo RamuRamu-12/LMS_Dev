@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: 'Unicart - Premium E-Commerce Platform',
   description: 'Discover amazing products with Unicart. Quality, style, and exceptional service.',
   keywords: 'ecommerce, shopping, products, online store, Unicart',
+  viewport: 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes',
+  themeColor: '#6366f1',
+  manifest: '/manifest.json',
 }
 
 export default function RootLayout({

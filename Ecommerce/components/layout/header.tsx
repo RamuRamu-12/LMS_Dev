@@ -97,7 +97,7 @@ export default function Header() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden"
+              className="md:hidden touch-target"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <Menu className="h-5 w-5" />
@@ -107,22 +107,22 @@ export default function Header() {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t">
-            <nav className="flex flex-col space-y-4">
-              <Link href="/" className="text-gray-700 hover:text-primary transition-colors">
+          <div className="md:hidden py-4 border-t mobile-padding">
+            <nav className="flex flex-col space-y-2">
+              <Link href="/" className="touch-target text-gray-700 hover:text-primary transition-colors py-3 px-4 rounded-lg hover:bg-gray-100">
                 Home
               </Link>
-              <Link href="/products" className="text-gray-700 hover:text-primary transition-colors">
+              <Link href="/products" className="touch-target text-gray-700 hover:text-primary transition-colors py-3 px-4 rounded-lg hover:bg-gray-100">
                 Products
               </Link>
-              <Link href="/about" className="text-gray-700 hover:text-primary transition-colors">
+              <Link href="/about" className="touch-target text-gray-700 hover:text-primary transition-colors py-3 px-4 rounded-lg hover:bg-gray-100">
                 About
               </Link>
-              <Link href="/contact" className="text-gray-700 hover:text-primary transition-colors">
+              <Link href="/contact" className="touch-target text-gray-700 hover:text-primary transition-colors py-3 px-4 rounded-lg hover:bg-gray-100">
                 Contact
               </Link>
               {!session && (
-                <Link href="/login" className="text-gray-700 hover:text-primary transition-colors">
+                <Link href="/login" className="touch-target text-gray-700 hover:text-primary transition-colors py-3 px-4 rounded-lg hover:bg-gray-100">
                   Login
                 </Link>
               )}

@@ -73,5 +73,15 @@ export const authService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to get auth status')
     }
+  },
+
+  // Delete account
+  deleteAccount: async () => {
+    try {
+      const response = await api.delete('/auth/account')
+      return response.data
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to delete account')
+    }
   }
 }

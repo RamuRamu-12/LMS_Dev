@@ -1,99 +1,92 @@
-const { sequelize } = require('./models');
-const { QueryInterface } = require('sequelize');
+#!/usr/bin/env node
+
+/**
+ * MIGRATION RUNNER SCRIPT
+ * 
+ * This script provides an easy interface to run database migrations.
+ * It automatically detects the best migration method based on your setup.
+ * 
+ * Usage: node run-migration.js
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Colors for console output
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m'
+};
+
+function log(message, color = 'reset') {
+  console.log(`${colors[color]}${message}${colors.reset}`);
+}
+
+function logSuccess(message) {
+  log(`✅ ${message}`, 'green');
+}
+
+function logError(message) {
+  log(`❌ ${message}`, 'red');
+}
+
+function logInfo(message) {
+  log(`ℹ️  ${message}`, 'blue');
+}
+
+function logWarning(message) {
+  log(`⚠️  ${message}`, 'yellow');
+}
 
 async function runMigration() {
   try {
-    console.log('🔄 Starting migration to fix enrollment status enum...');
+    log('🚀 DATABASE MIGRATION RUNNER', 'bright');
+    log('═══════════════════════════════════════════════════════════════');
     
-    // Check current enum values
-    const [results] = await sequelize.query(`
-      SELECT column_name, column_type 
-      FROM information_schema.columns 
-      WHERE table_name = 'enrollments' 
-      AND column_name = 'status'
-    `);
-    
-    console.log('📊 Current status column type:', results[0]?.column_type);
-    
-    // Check if 'in-progress' is in the current enum
-    const currentType = results[0]?.column_type || '';
-    if (currentType.includes('in-progress')) {
-      console.log('✅ Enum already includes "in-progress" - no migration needed');
+    // Check if .env file exists
+    const envPath = path.join(__dirname, '.env');
+    if (!fs.existsSync(envPath)) {
+      logWarning('No .env file found. Running fresh database setup...');
+      const { execSync } = require('child_process');
+      execSync('node setup-fresh-database.js', { stdio: 'inherit' });
       return;
     }
     
-    // Update the enum to include the correct values
-    console.log('🔧 Updating enum values...');
+    // Load environment variables
+    require('dotenv').config({ path: envPath });
     
-    // First, let's see what values currently exist in the database
-    const [statusValues] = await sequelize.query(`
-      SELECT DISTINCT status FROM enrollments
-    `);
+    // Check if new database credentials are provided
+    const hasNewCredentials = process.env.NEW_DB_HOST && 
+                             process.env.NEW_DB_USER && 
+                             process.env.NEW_DB_PASSWORD && 
+                             process.env.NEW_DB_NAME;
     
-    console.log('📋 Current status values in database:', statusValues.map(v => v.status));
+    if (hasNewCredentials) {
+      logInfo('New database credentials found. Running simple migration...');
+      const { execSync } = require('child_process');
+      execSync('node migrate-database-simple.js', { stdio: 'inherit' });
+    } else {
+      logInfo('No new database credentials found. Running interactive migration...');
+      const { execSync } = require('child_process');
+      execSync('node migrate-to-fresh-db.js', { stdio: 'inherit' });
+    }
     
-    // Update the column to use the correct enum values
-    await sequelize.query(`
-      ALTER TABLE enrollments 
-      ALTER COLUMN status TYPE VARCHAR(20)
-    `);
-    
-    await sequelize.query(`
-      ALTER TABLE enrollments 
-      ALTER COLUMN status TYPE ENUM('enrolled', 'completed', 'dropped')
-    `);
-    
-    console.log('✅ Successfully updated enrollment status enum!');
-    console.log('📝 New enum values: enrolled, completed, dropped');
+    logSuccess('Migration completed successfully!');
     
   } catch (error) {
-    console.error('❌ Migration failed:', error.message);
-    
-    // If the enum change fails, try a different approach
-    if (error.message.includes('enum')) {
-      console.log('🔄 Trying alternative approach...');
-      
-      try {
-        // Update any 'in-progress' values to 'enrolled'
-        await sequelize.query(`
-          UPDATE enrollments 
-          SET status = 'enrolled' 
-          WHERE status = 'in-progress' OR status NOT IN ('enrolled', 'completed', 'dropped')
-        `);
-        
-        console.log('✅ Updated invalid status values to "enrolled"');
-        
-        // Now try to change the column type
-        await sequelize.query(`
-          ALTER TABLE enrollments 
-          ALTER COLUMN status TYPE VARCHAR(20)
-        `);
-        
-        await sequelize.query(`
-          ALTER TABLE enrollments 
-          ALTER COLUMN status TYPE ENUM('enrolled', 'completed', 'dropped')
-        `);
-        
-        console.log('✅ Successfully updated enum with alternative approach!');
-        
-      } catch (altError) {
-        console.error('❌ Alternative approach also failed:', altError.message);
-        console.log('💡 Manual fix needed: Update the database enum values manually');
-      }
-    }
-  } finally {
-    await sequelize.close();
-    console.log('🔌 Database connection closed');
+    logError(`Migration failed: ${error.message}`);
+    process.exit(1);
   }
 }
 
 // Run the migration
-runMigration()
-  .then(() => {
-    console.log('🎉 Migration completed successfully!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('💥 Migration failed:', error);
-    process.exit(1);
-  });
+if (require.main === module) {
+  runMigration().catch(console.error);
+}
+
+module.exports = runMigration;

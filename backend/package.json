@@ -9,8 +9,12 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "migrate": "node run-migration.js",
+    "migrate:simple": "node migrate-database-simple.js",
+    "migrate:interactive": "node migrate-to-fresh-db.js",
     "migrate:clean": "node clean-database-setup.js",
     "migrate:undo": "npx sequelize-cli db:migrate:undo",
+    "setup:fresh": "node setup-fresh-database.js",
+    "refresh": "node refresh-database.js",
     "seed": "npx sequelize-cli db:seed:all",
     "seed:undo": "npx sequelize-cli db:seed:undo:all"
   },

@@ -87,20 +87,20 @@ export default function HomePage() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 mobile-padding">
           <div className="text-center">
             <div className="inline-block mb-6">
               <span className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-sm font-medium border border-white/30">
                 ✨ Premium E-Commerce Experience
               </span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-8 leading-tight">
               Welcome to{' '}
               <span className="bg-gradient-to-r from-emerald-300 via-purple-300 to-pink-300 bg-clip-text text-transparent">
                 Unicart
               </span>
             </h1>
-            <p className="text-xl md:text-3xl mb-12 text-emerald-100 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-3xl mb-12 text-emerald-100 max-w-4xl mx-auto leading-relaxed mobile-text-sm">
               Discover Amazing Products for Every Need with{' '}
               <span className="text-emerald-300 font-semibold">Premium Quality</span> and{' '}
               <span className="text-purple-300 font-semibold">Exceptional Service</span>
@@ -177,7 +177,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mobile-grid tablet-grid desktop-grid">
             {featuredProducts.map((product) => (
               <Card key={product.id} className="group hover-lift glass-effect border-0 overflow-hidden">
                 <div className="aspect-square relative overflow-hidden">

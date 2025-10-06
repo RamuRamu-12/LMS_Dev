@@ -308,6 +308,63 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Touch-friendly interactions */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Mobile-specific optimizations */
+  @media (max-width: 768px) {
+    .mobile-padding {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    
+    .mobile-text-sm {
+      font-size: 0.875rem;
+      line-height: 1.25rem;
+    }
+    
+    .mobile-spacing {
+      margin: 0.75rem;
+    }
+  }
+
+  /* Tablet-specific optimizations */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .tablet-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    
+    .tablet-text-lg {
+      font-size: 1.125rem;
+      line-height: 1.75rem;
+    }
+  }
+
+  /* Desktop-specific optimizations */
+  @media (min-width: 1025px) {
+    .desktop-grid {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+    
+    .desktop-text-xl {
+      font-size: 1.25rem;
+      line-height: 1.75rem;
+    }
+  }
+
   /* Aspect ratios */
   .aspect-video {
     aspect-ratio: 16 / 9;
