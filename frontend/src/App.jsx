@@ -28,6 +28,7 @@ import AdminProjectManagementPage from './pages/AdminProjectManagementPage'
 import ProjectManagementDetailPage from './pages/ProjectManagementDetailPage'
 import AdminHackathonsPage from './pages/AdminHackathonsPage'
 import CreateHackathonPage from './pages/CreateHackathonPage'
+import CreateGroupPage from './pages/CreateGroupPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 // Components
@@ -259,6 +260,15 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <CreateHackathonPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/hackathons/create-group"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <CreateGroupPage />
                 </ProtectedRoute>
               }
             />

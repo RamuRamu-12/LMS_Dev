@@ -6,12 +6,15 @@ import { useAuth } from '../context/AuthContext'
 import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
 import { activityService } from '../services/activityService'
+import { hackathonService } from '../services/hackathonService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import AllCoursesModal from '../components/course/AllCoursesModal'
 import EnrolledCoursesModal from '../components/course/EnrolledCoursesModal'
 import StudentCourseCard from '../components/course/StudentCourseCard'
 import EnrolledCourseCard from '../components/course/EnrolledCourseCard'
+import StudentHackathonCard from '../components/hackathon/StudentHackathonCard'
+import StudentHackathonDetailsModal from '../components/hackathon/StudentHackathonDetailsModal'
 import toast from 'react-hot-toast'
 
 const StudentDashboard = () => {
@@ -58,6 +61,19 @@ const StudentDashboard = () => {
     }
   )
 
+  const { data: hackathonsData, isLoading: hackathonsLoading, error: hackathonsError } = useQuery(
+    'student-hackathons',
+    () => hackathonService.getMyHackathons(),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+      retry: 1,
+      onError: (error) => {
+        console.error('Hackathons API error:', error)
+      }
+    }
+  )
+
   // Enrollment mutation
   const enrollMutation = useMutation(
     (courseId) => courseService.enrollInCourse(courseId),
@@ -81,11 +97,14 @@ const StudentDashboard = () => {
   // Modal state
   const [isAllCoursesModalOpen, setIsAllCoursesModalOpen] = useState(false)
   const [isEnrolledCoursesModalOpen, setIsEnrolledCoursesModalOpen] = useState(false)
+  const [selectedHackathon, setSelectedHackathon] = useState(null)
+  const [isHackathonDetailsModalOpen, setIsHackathonDetailsModalOpen] = useState(false)
 
-  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading
+  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading || hackathonsLoading
   const courses = coursesData?.data?.courses || []
   const enrollments = enrollmentsData?.data?.enrollments || []
   const activities = activitiesData?.data?.activities || []
+  const hackathons = hackathonsData?.data?.hackathons || []
 
   // Helper function to get activity styling
   const getActivityStyle = (activityType) => {
@@ -188,16 +207,15 @@ const StudentDashboard = () => {
     return enrolled
   }
 
-  // Handle enrollment
-  const handleEnroll = async (courseId) => {
-    setEnrollingCourseId(courseId)
+  // Handle hackathon details view
+  const handleViewHackathonDetails = async (hackathonId) => {
     try {
-      await enrollMutation.mutateAsync(courseId)
-      // Force refresh the data
-      await queryClient.refetchQueries('student-enrollments')
-      await queryClient.refetchQueries('student-courses')
-    } finally {
-      setEnrollingCourseId(null)
+      const hackathon = await hackathonService.getHackathonById(hackathonId)
+      setSelectedHackathon(hackathon.data)
+      setIsHackathonDetailsModalOpen(true)
+    } catch (error) {
+      console.error('Error fetching hackathon details:', error)
+      toast.error('Failed to load hackathon details')
     }
   }
 
@@ -708,6 +726,51 @@ const StudentDashboard = () => {
               </div>
             </motion.div>
           </motion.div>
+
+          {/* Hackathons Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="group relative overflow-hidden bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full -translate-y-8 translate-x-8 opacity-10"></div>
+            <div className="relative p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">My Hackathons</h3>
+                  <p className="text-sm text-gray-600">Participate in coding competitions</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                  <span className="text-xs text-gray-500">Live</span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {hackathons.length > 0 ? (
+                  hackathons.slice(0, 6).map((hackathon, index) => (
+                    <StudentHackathonCard
+                      key={hackathon.id}
+                      hackathon={hackathon}
+                      index={index}
+                      onViewDetails={handleViewHackathonDetails}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-12">
+                    <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <svg className="w-12 h-12 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No hackathons available</h3>
+                    <p className="text-gray-600 mb-6">You're not currently eligible for any hackathons. Check back later!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </main>
       
@@ -721,6 +784,15 @@ const StudentDashboard = () => {
       <EnrolledCoursesModal 
         isOpen={isEnrolledCoursesModalOpen}
         onClose={() => setIsEnrolledCoursesModalOpen(false)}
+      />
+      
+      {/* Hackathon Details Modal */}
+      <StudentHackathonDetailsModal
+        hackathon={selectedHackathon}
+        onClose={() => {
+          setIsHackathonDetailsModalOpen(false)
+          setSelectedHackathon(null)
+        }}
       />
     </div>
   )

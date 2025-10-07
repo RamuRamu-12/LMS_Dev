@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward } from 'react-icons/fi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EditHackathonModal from '../components/EditHackathonModal';
@@ -12,11 +12,27 @@ const AdminHackathonsPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [preservedFormData, setPreservedFormData] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     fetchHackathons();
   }, []);
+
+  // Handle returning from group creation
+  useEffect(() => {
+    if (location.state?.openEditModal && location.state?.hackathonId) {
+      const hackathon = hackathons.find(h => h.id === location.state.hackathonId);
+      if (hackathon) {
+        setSelectedHackathon(hackathon);
+        setPreservedFormData(location.state.hackathonData);
+        setShowEditModal(true);
+        // Clear the state to prevent reopening on refresh
+        navigate(location.pathname, { replace: true });
+      }
+    }
+  }, [location.state, hackathons, navigate, location.pathname]);
 
   const fetchHackathons = async () => {
     try {
@@ -414,9 +430,11 @@ const AdminHackathonsPage = () => {
       {showEditModal && selectedHackathon && (
         <EditHackathonModal
           hackathon={selectedHackathon}
+          preservedFormData={preservedFormData}
           onClose={() => {
             setShowEditModal(false);
             setSelectedHackathon(null);
+            setPreservedFormData(null);
           }}
           onSave={handleUpdateHackathon}
         />

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FiX, FiCalendar, FiUsers, FiTag, FiUserPlus, FiUserMinus } from 'react-icons/fi';
+import { FiX, FiCalendar, FiUsers, FiTag, FiUserPlus, FiUserMinus, FiPlus } from 'react-icons/fi';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
+const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -11,6 +14,7 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
     end_date: '',
     difficulty: 'intermediate',
     max_participants: '',
+    max_groups: '',
     prize_description: '',
     rules: '',
     requirements: '',
@@ -20,43 +24,57 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [students, setStudents] = useState([]);
-  const [selectedStudents, setSelectedStudents] = useState([]);
-  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
 
   useEffect(() => {
     if (hackathon) {
+      // Use preserved form data if available, otherwise use hackathon data
+      const dataToUse = preservedFormData || hackathon;
       setFormData({
-        name: hackathon.name || '',
-        description: hackathon.description || '',
-        technology: hackathon.technology || '',
-        tech_stack: hackathon.tech_stack || [],
-        start_date: hackathon.start_date ? new Date(hackathon.start_date).toISOString().slice(0, 16) : '',
-        end_date: hackathon.end_date ? new Date(hackathon.end_date).toISOString().slice(0, 16) : '',
-        difficulty: hackathon.difficulty || 'intermediate',
-        max_participants: hackathon.max_participants || '',
-        prize_description: hackathon.prize_description || '',
-        rules: hackathon.rules || '',
-        requirements: hackathon.requirements || '',
-        video_url: hackathon.video_url || '',
-        pdf_url: hackathon.pdf_url || ''
+        name: dataToUse.name || '',
+        description: dataToUse.description || '',
+        technology: dataToUse.technology || '',
+        tech_stack: dataToUse.tech_stack || [],
+        start_date: dataToUse.start_date ? new Date(dataToUse.start_date).toISOString().slice(0, 16) : '',
+        end_date: dataToUse.end_date ? new Date(dataToUse.end_date).toISOString().slice(0, 16) : '',
+        difficulty: dataToUse.difficulty || 'intermediate',
+        max_participants: dataToUse.max_participants || '',
+        max_groups: dataToUse.max_groups || '',
+        prize_description: dataToUse.prize_description || '',
+        rules: dataToUse.rules || '',
+        requirements: dataToUse.requirements || '',
+        video_url: dataToUse.video_url || '',
+        pdf_url: dataToUse.pdf_url || ''
       });
       
-      // Set selected students if hackathon has participants
-      if (hackathon.participants && hackathon.participants.length > 0) {
-        setSelectedStudents(hackathon.participants.map(p => p.student_id || p.id));
+      // Set selected groups if hackathon has groups
+      if (hackathon.groups && hackathon.groups.length > 0) {
+        setSelectedGroupIds(hackathon.groups.map(g => g.id));
       }
     }
     
-    // Fetch students
-    fetchStudents();
-  }, [hackathon]);
+    // Fetch all available groups and current hackathon groups
+    fetchGroups();
+    fetchHackathonGroups();
+  }, [hackathon, preservedFormData]);
 
-  const fetchStudents = async () => {
+  // Handle returning from group creation
+  useEffect(() => {
+    if (location.state?.groupCreated) {
+      // Refresh groups when returning from group creation
+      fetchGroups();
+      // Clear the state to prevent unnecessary refreshes
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location.state?.groupCreated, navigate, location.pathname]);
+
+  const fetchGroups = async () => {
     try {
-      setLoadingStudents(true);
+      setLoadingGroups(true);
       
-      // Get token from multiple sources (same as CreateHackathonPage)
+      // Get token from multiple sources
       let token = localStorage.getItem('accessToken');
       if (!token) {
         token = localStorage.getItem('token');
@@ -72,7 +90,7 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch('/api/users?role=student', {
+      const response = await fetch('/api/groups', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -81,36 +99,72 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Clear tokens and redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('token');
-          sessionStorage.removeItem('accessToken');
-          sessionStorage.removeItem('token');
-          throw new Error('Authentication token not found. Please login again.');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return;
         }
-        throw new Error('Failed to fetch students');
+        throw new Error(`Failed to fetch groups: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Students API response:', data);
-      
-      // Handle different possible response formats
-      let studentsArray = [];
-      if (data.data && Array.isArray(data.data)) {
-        studentsArray = data.data;
-      } else if (Array.isArray(data)) {
-        studentsArray = data;
-      } else if (data.students && Array.isArray(data.students)) {
-        studentsArray = data.students;
+      if (data.success && data.data) {
+        setGroups(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const fetchHackathonGroups = async () => {
+    if (!hackathon?.id) return;
+    
+    try {
+      // Get token from multiple sources
+      let token = localStorage.getItem('accessToken');
+      if (!token) {
+        token = localStorage.getItem('token');
+      }
+      if (!token) {
+        token = sessionStorage.getItem('accessToken');
+      }
+      if (!token) {
+        token = sessionStorage.getItem('token');
       }
       
-      console.log('Processed students array:', studentsArray);
-      setStudents(studentsArray);
-    } catch (err) {
-      console.error('Error fetching students:', err);
-      setStudents([]);
-    } finally {
-      setLoadingStudents(false);
+      if (!token) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
+      const response = await fetch(`/api/hackathons/${hackathon.id}/groups`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error(`Failed to fetch hackathon groups: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        // Set selected group IDs for this hackathon
+        const groupIds = data.data.map(group => group.id);
+        setSelectedGroupIds(groupIds);
+      }
+    } catch (error) {
+      console.error('Error fetching hackathon groups:', error);
     }
   };
 
@@ -139,26 +193,36 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
     }));
   };
 
-  const handleStudentSelection = (studentId) => {
-    setSelectedStudents(prev => {
-      if (prev.includes(studentId)) {
-        return prev.filter(id => id !== studentId);
+  const handleGroupSelection = (groupId) => {
+    setSelectedGroupIds(prev => {
+      if (prev.includes(groupId)) {
+        return prev.filter(id => id !== groupId);
       } else {
-        return [...prev, studentId];
+        return [...prev, groupId];
       }
     });
   };
 
-  const handleSelectAllStudents = () => {
-    if (!Array.isArray(students) || students.length === 0) {
-      return;
-    }
-    
-    if (selectedStudents.length === students.length) {
-      setSelectedStudents([]);
-    } else {
-      setSelectedStudents(students.map(student => student.id));
-    }
+  const getSelectedGroups = () => {
+    return groups.filter(group => selectedGroupIds.includes(group.id));
+  };
+
+  const getTotalParticipants = () => {
+    const selectedGroups = getSelectedGroups();
+    return selectedGroups.reduce((total, group) => total + (group.members?.length || 0), 0);
+  };
+
+  const navigateToCreateGroup = () => {
+    // Close the modal first
+    onClose();
+    // Navigate to create group page with hackathon data
+    navigate('/admin/hackathons/create-group', {
+      state: {
+        hackathonData: formData,
+        hackathonId: hackathon?.id,
+        isUpdate: true
+      }
+    });
   };
 
   const validateForm = () => {
@@ -192,7 +256,7 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
     try {
       const updateData = {
         ...formData,
-        student_ids: selectedStudents
+        group_ids: selectedGroupIds
       };
       await onSave(updateData);
     } catch (error) {
@@ -350,6 +414,21 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
+                Max Groups
+              </label>
+              <input
+                type="number"
+                name="max_groups"
+                value={formData.max_groups}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Optional"
+                min="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Prize Description
               </label>
               <input
@@ -425,70 +504,99 @@ const EditHackathonModal = ({ hackathon, onClose, onSave }) => {
             </div>
           </div>
 
-          {/* Eligible Students */}
+          {/* Group Selection */}
           <div>
             <div className="flex items-center justify-between mb-4">
               <label className="block text-sm font-medium text-gray-700">
-                Eligible Students
+                Selected Groups
               </label>
-              <button
-                type="button"
-                onClick={handleSelectAllStudents}
-                className="text-sm text-purple-600 hover:text-purple-800 font-medium"
-                disabled={!Array.isArray(students) || students.length === 0}
-              >
-                {Array.isArray(students) && selectedStudents.length === students.length ? 'Deselect All' : 'Select All'}
-              </button>
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Selected Groups</div>
+                <div className="text-lg font-bold text-indigo-600">{selectedGroupIds.length}</div>
+              </div>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              Select students who are eligible to participate in this hackathon. You can leave this empty to allow all students.
+              Select groups that are eligible to participate in this hackathon. You can leave this empty to allow all groups.
+              <br />
+              <span className="text-indigo-600 font-medium">Currently linked groups are pre-selected. Uncheck them to remove from this hackathon.</span>
             </p>
             
-            {loadingStudents ? (
+            {/* Create New Group Button */}
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={navigateToCreateGroup}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
+              >
+                <FiPlus className="w-5 h-5" />
+                <span className="font-medium">Create New Group</span>
+              </button>
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                Create a new group and it will be automatically selected for this hackathon
+              </p>
+            </div>
+            
+            {loadingGroups ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                <p className="text-gray-500 mt-2">Loading students...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Loading groups...</p>
               </div>
-            ) : !Array.isArray(students) || students.length === 0 ? (
+            ) : !Array.isArray(groups) || groups.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No students found. Please check your authentication and try again.
+                No groups found. Please create groups first.
               </div>
             ) : (
               <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div className="space-y-2">
-                  {Array.isArray(students) && students.map((student) => (
-                    <div
-                      key={student.id}
-                      className="flex items-center space-x-3 p-2 hover:bg-white rounded-lg transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        id={`student-${student.id}`}
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={() => handleStudentSelection(student.id)}
-                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                      />
-                      <label
-                        htmlFor={`student-${student.id}`}
-                        className="flex-1 cursor-pointer text-sm text-gray-700"
+                <div className="space-y-3">
+                  {Array.isArray(groups) && groups.map((group) => {
+                    const isSelected = selectedGroupIds.includes(group.id);
+                    return (
+                      <div
+                        key={group.id}
+                        className={`flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                          isSelected ? 'bg-indigo-50 border-2 border-indigo-200' : 'hover:bg-white border border-gray-200'
+                        }`}
+                        onClick={() => handleGroupSelection(group.id)}
                       >
-                        <div className="font-medium">{student.username || student.name}</div>
-                        <div className="text-gray-500">{student.email}</div>
-                      </label>
-                      {selectedStudents.includes(student.id) ? (
-                        <FiUserMinus className="w-4 h-4 text-red-500" />
-                      ) : (
-                        <FiUserPlus className="w-4 h-4 text-gray-400" />
-                      )}
-                    </div>
-                  ))}
+                        <input
+                          type="checkbox"
+                          id={`group-${group.id}`}
+                          checked={isSelected}
+                          onChange={() => handleGroupSelection(group.id)}
+                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        />
+                        <label
+                          htmlFor={`group-${group.id}`}
+                          className="flex-1 cursor-pointer text-sm text-gray-700"
+                        >
+                          <div className="font-medium flex items-center space-x-2">
+                            <span>{group.name}</span>
+                            {isSelected && (
+                              <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
+                                Linked
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-gray-500">
+                            {group.members?.length || 0} member{(group.members?.length || 0) !== 1 ? 's' : ''}
+                            {group.description && ` • ${group.description}`}
+                          </div>
+                        </label>
+                        {isSelected ? (
+                          <FiUserMinus className="w-4 h-4 text-red-500" title="Click to remove from hackathon" />
+                        ) : (
+                          <FiUserPlus className="w-4 h-4 text-gray-400" title="Click to add to hackathon" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
             
-            {selectedStudents.length > 0 && (
+            {selectedGroupIds.length > 0 && (
               <div className="mt-3 text-sm text-gray-600">
-                {selectedStudents.length} student(s) selected
+                {selectedGroupIds.length} group(s) selected • {getTotalParticipants()} total participants
               </div>
             )}
           </div>

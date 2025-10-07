@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const {
   getAllHackathons,
+  getMyHackathons,
   getHackathonById,
   createHackathon,
   updateHackathon,
@@ -12,7 +13,13 @@ const {
   removeParticipants,
   getHackathonParticipants,
   toggleHackathonPublish,
-  getHackathonMultimedia
+  getHackathonMultimedia,
+  getHackathonGroups,
+  createHackathonGroup,
+  addGroupMembers,
+  removeGroupMembers,
+  deleteHackathonGroup,
+  linkGroupToHackathon
 } = require('../controllers/hackathonController');
 
 // Public routes (for frontend to fetch hackathons and multimedia)
@@ -20,6 +27,9 @@ const {
 router.get('/', getAllHackathons);
 router.get('/:id', getHackathonById);
 router.get('/:id/multimedia', getHackathonMultimedia);
+
+// Student routes (require authentication but not admin role)
+router.get('/my', authenticate, getMyHackathons);
 
 // Admin routes (require authentication and admin role)
 router.use(authenticate); // All routes below require authentication
@@ -39,5 +49,13 @@ router.get('/:id/participants', requireAdmin, getHackathonParticipants);
 
 // Hackathon publish/unpublish (admin only)
 router.put('/:id/publish', requireAdmin, toggleHackathonPublish);
+
+// Hackathon groups management (admin only)
+router.get('/:id/groups', requireAdmin, getHackathonGroups);
+router.post('/:id/groups', requireAdmin, createHackathonGroup);
+router.post('/:id/groups/:groupId/members', requireAdmin, addGroupMembers);
+router.post('/:id/groups/:groupId/link', requireAdmin, linkGroupToHackathon);
+router.delete('/:id/groups/:groupId/members', requireAdmin, removeGroupMembers);
+router.delete('/:id/groups/:groupId', requireAdmin, deleteHackathonGroup);
 
 module.exports = router;

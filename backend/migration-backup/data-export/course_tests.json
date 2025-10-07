@@ -1,0 +1,22 @@
+{
+  "tableName": "course_tests",
+  "data": [
+    {
+      "id": 1,
+      "course_id": 1,
+      "title": "Basic Test",
+      "description": "Basic test description",
+      "passing_score": 70,
+      "time_limit_minutes": 36,
+      "max_attempts": 4,
+      "is_active": true,
+      "created_by": 1,
+      "instructions": "",
+      "order": 0,
+      "created_at": "2025-10-06T10:06:37.857Z",
+      "updated_at": "2025-10-06T10:06:37.857Z"
+    }
+  ],
+  "count": 1,
+  "exportedAt": "2025-10-07T10:47:40.907Z"
+}

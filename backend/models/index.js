@@ -49,6 +49,10 @@ const ActivityLog = require('./ActivityLog')(sequelize, Sequelize.DataTypes);
 const Achievement = require('./Achievement')(sequelize, Sequelize.DataTypes);
 const Hackathon = require('./Hackathon')(sequelize, Sequelize.DataTypes);
 const HackathonParticipant = require('./HackathonParticipant')(sequelize, Sequelize.DataTypes);
+const HackathonGroup = require('./HackathonGroup')(sequelize, Sequelize.DataTypes);
+const HackathonGroupMember = require('./HackathonGroupMember')(sequelize, Sequelize.DataTypes);
+const Group = require('./Group')(sequelize, Sequelize.DataTypes);
+const GroupMember = require('./GroupMember')(sequelize, Sequelize.DataTypes);
 
 // Define associations
 const defineAssociations = () => {
@@ -429,6 +433,105 @@ const defineAssociations = () => {
     as: 'hackathons'
   });
 
+  // HackathonGroup associations
+  HackathonGroup.belongsTo(Hackathon, {
+    foreignKey: 'hackathon_id',
+    as: 'hackathon'
+  });
+
+  HackathonGroup.belongsTo(User, {
+    foreignKey: 'created_by',
+    as: 'creator'
+  });
+
+  HackathonGroup.belongsToMany(User, {
+    through: HackathonGroupMember,
+    foreignKey: 'group_id',
+    otherKey: 'student_id',
+    as: 'members'
+  });
+
+  // HackathonGroupMember associations
+  HackathonGroupMember.belongsTo(HackathonGroup, {
+    foreignKey: 'group_id',
+    as: 'group'
+  });
+
+  HackathonGroupMember.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  HackathonGroupMember.belongsTo(User, {
+    foreignKey: 'added_by',
+    as: 'addedBy'
+  });
+
+  // User associations for groups
+  User.belongsToMany(HackathonGroup, {
+    through: HackathonGroupMember,
+    foreignKey: 'student_id',
+    otherKey: 'group_id',
+    as: 'hackathonGroups'
+  });
+
+  // Hackathon associations for groups
+  Hackathon.hasMany(HackathonGroup, {
+    foreignKey: 'hackathon_id',
+    as: 'groups',
+    onDelete: 'CASCADE'
+  });
+
+  // Group associations
+  Group.belongsTo(User, {
+    foreignKey: 'created_by',
+    as: 'creator'
+  });
+
+  Group.belongsToMany(User, {
+    through: GroupMember,
+    foreignKey: 'group_id',
+    otherKey: 'student_id',
+    as: 'members'
+  });
+
+  Group.belongsToMany(Hackathon, {
+    through: HackathonGroup,
+    foreignKey: 'group_id',
+    otherKey: 'hackathon_id',
+    as: 'hackathons'
+  });
+
+  // GroupMember associations
+  GroupMember.belongsTo(Group, {
+    foreignKey: 'group_id',
+    as: 'group'
+  });
+
+  GroupMember.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  GroupMember.belongsTo(User, {
+    foreignKey: 'added_by',
+    as: 'addedBy'
+  });
+
+  // User associations for standalone groups
+  User.belongsToMany(Group, {
+    through: GroupMember,
+    foreignKey: 'student_id',
+    otherKey: 'group_id',
+    as: 'groups'
+  });
+
+  User.hasMany(Group, {
+    foreignKey: 'created_by',
+    as: 'createdGroups',
+    onDelete: 'CASCADE'
+  });
+
 };
 
 // Define associations
@@ -458,5 +561,9 @@ module.exports = {
   ActivityLog,
   Achievement,
   Hackathon,
-  HackathonParticipant
+  HackathonParticipant,
+  HackathonGroup,
+  HackathonGroupMember,
+  Group,
+  GroupMember
 };

@@ -1,0 +1,33 @@
+{
+  "tableName": "courses",
+  "data": [
+    {
+      "id": 1,
+      "title": "Genai_Basic_Course",
+      "description": "Genai basic course",
+      "instructor_id": 1,
+      "is_published": true,
+      "category": "programming",
+      "difficulty": "intermediate",
+      "estimated_duration": 23,
+      "thumbnail": null,
+      "logo": "/uploads/logos/course-1-logo-1759745073021.jpeg",
+      "enrollment_count": 1,
+      "average_rating": "0.00",
+      "total_ratings": 0,
+      "tags": [
+        "Python",
+        "Data Science"
+      ],
+      "learning_objectives": [
+        "genai",
+        "gcp2",
+        "aws"
+      ],
+      "created_at": "2025-10-06T10:04:32.089Z",
+      "updated_at": "2025-10-06T10:16:41.792Z"
+    }
+  ],
+  "count": 1,
+  "exportedAt": "2025-10-07T10:47:41.179Z"
+}

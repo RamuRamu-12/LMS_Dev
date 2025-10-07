@@ -59,6 +59,17 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'Maximum number of participants allowed'
     },
+    max_groups: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Maximum number of groups allowed'
+    },
+    is_temp: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: 'Flag to identify temporary hackathons for group management'
+    },
     current_participants: {
       type: DataTypes.INTEGER,
       allowNull: false,
