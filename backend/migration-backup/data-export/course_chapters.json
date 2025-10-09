@@ -1,63 +1,6 @@
 {
   "tableName": "course_chapters",
-  "data": [
-    {
-      "id": 1,
-      "course_id": 1,
-      "title": "Chapter 1",
-      "description": "Chapter 1",
-      "video_url": "https://drive.google.com/file/d/1XzyfvSFzmwNVGCKkzshLYKUiHq54IIJ9/view?usp=sharing",
-      "pdf_url": null,
-      "chapter_order": 1,
-      "duration_minutes": 0,
-      "is_published": true,
-      "test_id": null,
-      "created_at": "2025-10-06T10:04:35.201Z",
-      "updated_at": "2025-10-06T10:04:35.201Z"
-    },
-    {
-      "id": 2,
-      "course_id": 1,
-      "title": "Chapter 2",
-      "description": "Chapter 2",
-      "video_url": "https://drive.google.com/file/d/1XzyfvSFzmwNVGCKkzshLYKUiHq54IIJ9/view?usp=sharing",
-      "pdf_url": null,
-      "chapter_order": 2,
-      "duration_minutes": 0,
-      "is_published": true,
-      "test_id": null,
-      "created_at": "2025-10-06T10:04:36.734Z",
-      "updated_at": "2025-10-06T10:04:36.734Z"
-    },
-    {
-      "id": 3,
-      "course_id": 1,
-      "title": "Chapter 3",
-      "description": "Chapter 4",
-      "video_url": "https://drive.google.com/file/d/1XzyfvSFzmwNVGCKkzshLYKUiHq54IIJ9/view?usp=sharing",
-      "pdf_url": "",
-      "chapter_order": 3,
-      "duration_minutes": null,
-      "is_published": true,
-      "test_id": null,
-      "created_at": "2025-10-06T10:05:55.948Z",
-      "updated_at": "2025-10-06T10:05:55.948Z"
-    },
-    {
-      "id": 4,
-      "course_id": 1,
-      "title": "Chapter 4",
-      "description": "Chapter 4",
-      "video_url": "https://drive.google.com/file/d/1XzyfvSFzmwNVGCKkzshLYKUiHq54IIJ9/view?usp=sharing",
-      "pdf_url": "",
-      "chapter_order": 4,
-      "duration_minutes": null,
-      "is_published": true,
-      "test_id": null,
-      "created_at": "2025-10-06T10:06:10.941Z",
-      "updated_at": "2025-10-06T10:06:10.941Z"
-    }
-  ],
-  "count": 4,
-  "exportedAt": "2025-10-07T10:47:40.633Z"
+  "data": [],
+  "count": 0,
+  "exportedAt": "2025-10-08T13:31:51.820Z"
 }

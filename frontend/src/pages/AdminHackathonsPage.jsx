@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward, FiFileText } from 'react-icons/fi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EditHackathonModal from '../components/EditHackathonModal';
+import HackathonSubmissionsManagement from '../components/admin/HackathonSubmissionsManagement';
+import Header from '../components/common/Header';
 
 const AdminHackathonsPage = () => {
   const [hackathons, setHackathons] = useState([]);
@@ -13,6 +15,8 @@ const AdminHackathonsPage = () => {
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [preservedFormData, setPreservedFormData] = useState(null);
+  const [showSubmissions, setShowSubmissions] = useState(false);
+  const [selectedHackathonForSubmissions, setSelectedHackathonForSubmissions] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,6 +76,7 @@ const AdminHackathonsPage = () => {
 
       const data = await response.json();
       console.log('AdminHackathonsPage - Response data:', data);
+      console.log('AdminHackathonsPage - First hackathon groups:', data.data?.hackathons?.[0]?.groups);
       setHackathons(data.data?.hackathons || []);
     } catch (err) {
       console.error('Error fetching hackathons:', err);
@@ -108,6 +113,9 @@ const AdminHackathonsPage = () => {
         throw new Error('Authentication token not found');
       }
 
+      console.log('AdminHackathonsPage - Sending update request for hackathon:', selectedHackathon.id);
+      console.log('AdminHackathonsPage - Update data:', updatedData);
+      
       const response = await fetch(`/api/hackathons/${selectedHackathon.id}`, {
         method: 'PUT',
         headers: {
@@ -117,14 +125,34 @@ const AdminHackathonsPage = () => {
         body: JSON.stringify(updatedData)
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update hackathon');
+      console.log('AdminHackathonsPage - Response status:', response.status);
+      console.log('AdminHackathonsPage - Response ok:', response.ok);
+
+      const updateData = await response.json();
+      console.log('AdminHackathonsPage - Update response:', updateData);
+      console.log('AdminHackathonsPage - Response success:', updateData.success);
+      console.log('AdminHackathonsPage - Updated hackathon groups:', updateData.data?.groups);
+
+      if (!response.ok || !updateData.success) {
+        console.log('AdminHackathonsPage - Error condition met:', {
+          responseOk: response.ok,
+          dataSuccess: updateData.success,
+          message: updateData.message
+        });
+        throw new Error(updateData.message || 'Failed to update hackathon');
       }
 
-      // Refresh the hackathons list
-      await fetchHackathons();
+      console.log('AdminHackathonsPage - Update successful, proceeding with modal close');
+
+      // Close modal first to show success
       setShowEditModal(false);
       setSelectedHackathon(null);
+      
+      // Refresh the hackathons list in background (don't await to prevent blocking)
+      fetchHackathons().catch(err => {
+        console.error('Error refreshing hackathons list:', err);
+        // Don't show error to user as the update was successful
+      });
       
     } catch (error) {
       console.error('Error updating hackathon:', error);
@@ -172,6 +200,11 @@ const AdminHackathonsPage = () => {
       console.error('Error deleting hackathon:', err);
       alert('Failed to delete hackathon');
     }
+  };
+
+  const handleViewSubmissions = (hackathon) => {
+    setSelectedHackathonForSubmissions(hackathon);
+    setShowSubmissions(true);
   };
 
   const handleTogglePublish = async (hackathon) => {
@@ -249,6 +282,7 @@ const AdminHackathonsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
+        <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner />
         </div>
@@ -258,12 +292,13 @@ const AdminHackathonsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Hackathons Management</h1>
-            <p className="text-gray-600 mt-2">Manage hackathons and their participants</p>
+            <p className="text-gray-600 mt-2">Manage hackathons and their groups</p>
           </div>
           <button
             onClick={handleCreateHackathon}
@@ -361,21 +396,21 @@ const AdminHackathonsPage = () => {
                     </div>
                   </div>
 
-                  {/* Participants */}
+                  {/* Groups */}
                   <div className="mb-4">
                     <div className="flex items-center text-xs text-gray-600 mb-1">
                       <FiUsers className="w-3 h-3 mr-1" />
                       <span>
-                        {hackathon.current_participants || 0}
-                        {hackathon.max_participants ? ` / ${hackathon.max_participants}` : ''} participants
+                        {hackathon.groups?.length || 0}
+                        {hackathon.max_groups ? ` / ${hackathon.max_groups}` : ''} groups
                       </span>
                     </div>
-                    {hackathon.max_participants && (
+                    {hackathon.max_groups && (
                       <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div
                           className="bg-indigo-600 h-1.5 rounded-full"
                           style={{
-                            width: `${((hackathon.current_participants || 0) / hackathon.max_participants) * 100}%`
+                            width: `${((hackathon.groups?.length || 0) / hackathon.max_groups) * 100}%`
                           }}
                         ></div>
                       </div>
@@ -401,6 +436,13 @@ const AdminHackathonsPage = () => {
                     >
                       <FiEdit className="w-4 h-4" />
                       <span className="text-xs">Edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleViewSubmissions(hackathon)}
+                      className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center space-x-1"
+                    >
+                      <FiFileText className="w-4 h-4" />
+                      <span className="text-xs">Submissions</span>
                     </button>
                     <button
                       onClick={() => handleTogglePublish(hackathon)}
@@ -438,6 +480,40 @@ const AdminHackathonsPage = () => {
           }}
           onSave={handleUpdateHackathon}
         />
+      )}
+
+      {/* Submissions Management Modal */}
+      {showSubmissions && selectedHackathonForSubmissions && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Submissions - {selectedHackathonForSubmissions.name}
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Manage and review hackathon submissions
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowSubmissions(false);
+                    setSelectedHackathonForSubmissions(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <HackathonSubmissionsManagement hackathonId={selectedHackathonForSubmissions.id} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

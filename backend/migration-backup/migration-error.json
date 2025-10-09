@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-10-08T09:27:38.686Z",
+  "error": "New database password is required",
+  "stack": "Error: New database password is required\n    at ComprehensiveDatabaseMigrator.getInteractiveConfig (D:\\LMS_Project\\LMS_Project\\backend\\migrate-to-fresh-db.js:217:15)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async ComprehensiveDatabaseMigrator.getNewDatabaseConfig (D:\\LMS_Project\\LMS_Project\\backend\\migrate-to-fresh-db.js:192:7)\n    at async ComprehensiveDatabaseMigrator.start (D:\\LMS_Project\\LMS_Project\\backend\\migrate-to-fresh-db.js:82:7)",
+  "oldConfig": {
+    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
+    "port": "5432",
+    "user": "Admin",
+    "password": "npg_eBHirts68bJg",
+    "database": "LMS_Dev"
+  },
+  "newConfig": null,
+  "exportedDataKeys": []
+}

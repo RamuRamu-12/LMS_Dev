@@ -207,6 +207,13 @@ module.exports = (sequelize, DataTypes) => {
       otherKey: 'student_id',
       as: 'participants'
     });
+
+    // Hackathon has many HackathonGroups
+    Hackathon.hasMany(models.HackathonGroup, {
+      foreignKey: 'hackathon_id',
+      as: 'groups',
+      onDelete: 'CASCADE'
+    });
   };
 
   // Instance methods

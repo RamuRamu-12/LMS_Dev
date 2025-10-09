@@ -71,7 +71,7 @@ module.exports = (sequelize, DataTypes) => {
       {
         unique: true,
         fields: ['group_id', 'student_id'],
-        name: 'unique_group_student'
+        name: 'unique_hackathon_group_member_student'
       }
     ]
   });

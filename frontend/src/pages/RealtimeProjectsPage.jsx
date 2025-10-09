@@ -7,6 +7,7 @@ import ProjectContent from '../components/projects/ProjectContent';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { projectService } from '../services/projectService';
 import toast from 'react-hot-toast';
+import Header from '../components/common/Header';
 
 const RealtimeProjectsPage = () => {
   const { user } = useAuth();
@@ -47,6 +48,7 @@ const RealtimeProjectsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
         <LoadingSpinner size="large" />
       </div>
     );
@@ -55,6 +57,7 @@ const RealtimeProjectsPage = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Projects</h2>
@@ -78,6 +81,7 @@ const RealtimeProjectsPage = () => {
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <motion.div

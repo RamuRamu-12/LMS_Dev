@@ -187,32 +187,32 @@ const HackathonDetailsModal = ({ hackathon, onClose }) => {
               </div>
             </div>
 
-            {/* Participants */}
+            {/* Groups */}
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300">
               <div className="flex items-center space-x-3 mb-3">
                 <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-lg shadow-lg">
                   <FiUsers className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">Participants</h3>
+                <h3 className="text-lg font-bold text-gray-900">Groups</h3>
               </div>
               <div className="space-y-3">
                 <div className="bg-white/70 backdrop-blur-sm p-3 rounded-xl border border-green-100">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-800 text-sm font-bold">
-                      {hackathon.current_participants || 0} / {hackathon.max_participants || '∞'}
+                      {hackathon.groups?.length || 0} / {hackathon.max_groups || '∞'}
                     </span>
-                    {hackathon.max_participants && (
+                    {hackathon.max_groups && (
                       <span className="text-xs font-semibold text-green-600">
-                        {Math.round(((hackathon.current_participants || 0) / hackathon.max_participants) * 100)}% filled
+                        {Math.round(((hackathon.groups?.length || 0) / hackathon.max_groups) * 100)}% filled
                       </span>
                     )}
                   </div>
-                  {hackathon.max_participants && (
+                  {hackathon.max_groups && (
                     <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                       <div
                         className="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500"
                         style={{
-                          width: `${Math.min(((hackathon.current_participants || 0) / hackathon.max_participants) * 100, 100)}%`
+                          width: `${Math.min(((hackathon.groups?.length || 0) / hackathon.max_groups) * 100, 100)}%`
                         }}
                       ></div>
                     </div>

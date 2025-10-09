@@ -5,6 +5,7 @@ import { projectService } from '../services/projectService';
 import ProjectVideoManager from '../components/admin/ProjectVideoManager';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { FiVideo, FiEdit, FiEye, FiExternalLink } from 'react-icons/fi';
+import Header from '../components/common/Header';
 
 const AdminProjectsPage = () => {
   const [selectedProject, setSelectedProject] = useState(null);
@@ -100,6 +101,7 @@ const AdminProjectsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -107,6 +109,7 @@ const AdminProjectsPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div

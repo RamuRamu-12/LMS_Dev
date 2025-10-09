@@ -1,10 +1,10 @@
 {
   "development": {
-    "username": "test_owner",
-    "password": "tcWI7unQ6REA",
-    "database": "test",
-    "host": "ep-yellow-recipe-a5fny139.us-east-2.aws.neon.tech",
-    "port": 5432,
+    "username": "Admin",
+    "password": "npg_eBHirts68bJg",
+    "database": "LMS_Dev",
+    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
+    "port": "5432",
     "dialect": "postgres",
     "logging": true,
     "pool": {
@@ -21,11 +21,11 @@
     }
   },
   "test": {
-    "username": "test_owner",
-    "password": "tcWI7unQ6REA",
-    "database": "test_test",
-    "host": "ep-yellow-recipe-a5fny139.us-east-2.aws.neon.tech",
-    "port": 5432,
+    "username": "Admin",
+    "password": "npg_eBHirts68bJg",
+    "database": "LMS_Dev",
+    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
+    "port": "5432",
     "dialect": "postgres",
     "logging": false,
     "pool": {
@@ -42,11 +42,11 @@
     }
   },
   "production": {
-    "username": "test_owner",
-    "password": "tcWI7unQ6REA",
-    "database": "test",
-    "host": "ep-yellow-recipe-a5fny139.us-east-2.aws.neon.tech",
-    "port": 5432,
+    "username": "Admin",
+    "password": "npg_eBHirts68bJg",
+    "database": "LMS_Dev",
+    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
+    "port": "5432",
     "dialect": "postgres",
     "logging": false,
     "pool": {

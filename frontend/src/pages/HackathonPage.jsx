@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import HackathonDetailsModal from '../components/HackathonDetailsModal';
+import StudentHackathonCard from '../components/hackathon/StudentHackathonCard';
 
 const HackathonPage = () => {
   const [hackathons, setHackathons] = useState([]);
@@ -56,32 +57,6 @@ const HackathonPage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'upcoming': return 'bg-blue-100 text-blue-800';
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   if (loading) {
     return (
@@ -165,104 +140,16 @@ const HackathonPage = () => {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             {hackathons.map((hackathon, index) => (
-              <motion.div
+              <StudentHackathonCard
                 key={hackathon.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 * index }}
-                className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
-              >
-                {/* Hackathon Logo/Image */}
-                <div className="h-48 bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                  {hackathon.logo ? (
-                    <img
-                      src={hackathon.logo}
-                      alt={hackathon.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-white text-center">
-                      <svg className="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
-                      <p className="text-lg font-semibold">{hackathon.name}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-6">
-                  {/* Status and Difficulty Badges */}
-                  <div className="flex justify-between items-center mb-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(hackathon.status)}`}>
-                      {hackathon.status.charAt(0).toUpperCase() + hackathon.status.slice(1)}
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(hackathon.difficulty)}`}>
-                      {hackathon.difficulty.charAt(0).toUpperCase() + hackathon.difficulty.slice(1)}
-                    </span>
-                  </div>
-
-                  {/* Hackathon Name */}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {hackathon.name}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-gray-600 mb-4 line-clamp-3">
-                    {hackathon.description}
-                  </p>
-
-                  {/* Technology */}
-                  {hackathon.technology && (
-                    <div className="mb-4">
-                      <span className="text-sm font-medium text-gray-700">Technology: </span>
-                      <span className="text-sm text-gray-600">{hackathon.technology}</span>
-                    </div>
-                  )}
-
-                  {/* Dates */}
-                  <div className="mb-4 space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-700 font-medium">Start:</span>
-                      <span className="text-gray-600">{formatDate(hackathon.start_date)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-700 font-medium">End:</span>
-                      <span className="text-gray-600">{formatDate(hackathon.end_date)}</span>
-                    </div>
-                  </div>
-
-                  {/* Participants */}
-                  {hackathon.max_participants && (
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-700 font-medium">Participants:</span>
-                        <span className="text-gray-600">
-                          {hackathon.current_participants || 0} / {hackathon.max_participants}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div
-                          className="bg-indigo-600 h-2 rounded-full"
-                          style={{
-                            width: `${((hackathon.current_participants || 0) / hackathon.max_participants) * 100}%`
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Button */}
-                  <button
-                    onClick={() => {
-                      setSelectedHackathon(hackathon);
-                      setShowDetailsModal(true);
-                    }}
-                    className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </motion.div>
+                hackathon={hackathon}
+                index={index}
+                onViewDetails={(hackathonId) => {
+                  const selectedHackathon = hackathons.find(h => h.id === hackathonId);
+                  setSelectedHackathon(selectedHackathon);
+                  setShowDetailsModal(true);
+                }}
+              />
             ))}
           </motion.div>
         )}

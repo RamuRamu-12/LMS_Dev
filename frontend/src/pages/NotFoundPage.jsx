@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import Header from '../components/common/Header'
 
 const NotFoundPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <Header />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

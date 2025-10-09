@@ -19,7 +19,13 @@ const {
   addGroupMembers,
   removeGroupMembers,
   deleteHackathonGroup,
-  linkGroupToHackathon
+  linkGroupToHackathon,
+  createOrUpdateSubmission,
+  submitSubmission,
+  getMySubmission,
+  getHackathonSubmissions,
+  reviewSubmission,
+  setSubmissionWinner
 } = require('../controllers/hackathonController');
 
 // Public routes (for frontend to fetch hackathons and multimedia)
@@ -30,6 +36,11 @@ router.get('/:id/multimedia', getHackathonMultimedia);
 
 // Student routes (require authentication but not admin role)
 router.get('/my', authenticate, getMyHackathons);
+
+// Student submission routes
+router.post('/:id/submission', authenticate, createOrUpdateSubmission);
+router.put('/:id/submission/submit', authenticate, submitSubmission);
+router.get('/:id/submission', authenticate, getMySubmission);
 
 // Admin routes (require authentication and admin role)
 router.use(authenticate); // All routes below require authentication
@@ -57,5 +68,10 @@ router.post('/:id/groups/:groupId/members', requireAdmin, addGroupMembers);
 router.post('/:id/groups/:groupId/link', requireAdmin, linkGroupToHackathon);
 router.delete('/:id/groups/:groupId/members', requireAdmin, removeGroupMembers);
 router.delete('/:id/groups/:groupId', requireAdmin, deleteHackathonGroup);
+
+// Hackathon submissions management (admin only)
+router.get('/:id/submissions', requireAdmin, getHackathonSubmissions);
+router.put('/:id/submissions/:submissionId/review', requireAdmin, reviewSubmission);
+router.put('/:id/submissions/:submissionId/winner', requireAdmin, setSubmissionWinner);
 
 module.exports = router;

@@ -20,6 +20,7 @@ const progressRoutes = require('./routes/progress-simple');
 const realtimeProjectsRoutes = require('./routes/realtimeProjects');
 const hackathonRoutes = require('./routes/hackathons');
 const groupRoutes = require('./routes/groups');
+const chatRoutes = require('./routes/chat');
 const testRoutes = require('./routes/tests');
 const testTakingRoutes = require('./routes/test-taking');
 const certificateRoutes = require('./routes/certificates');
@@ -27,6 +28,7 @@ const activityRoutes = require('./routes/activities');
 const achievementRoutes = require('./routes/achievements');
 const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const SocketServer = require('./socket/socketServer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -211,6 +213,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/realtime-projects', realtimeProjectsRoutes);
 app.use('/api/hackathons', hackathonRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/tests', testRoutes);
 app.use('/api/test-taking', testTakingRoutes);
 app.use('/api/certificates', certificateRoutes);
@@ -258,11 +261,15 @@ const startServer = async () => {
     logger.info('Database connection verified. Using pre-configured schema.');
 
     // Start server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
       logger.info(`Environment: ${process.env.NODE_ENV}`);
       logger.info(`Health check: http://localhost:${PORT}/health`);
     });
+
+    // Initialize Socket.io
+    const socketServer = new SocketServer(server);
+    logger.info('Socket.io server initialized');
   } catch (error) {
     logger.error('Unable to start server:', error);
     process.exit(1);

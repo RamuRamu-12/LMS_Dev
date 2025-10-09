@@ -49,13 +49,11 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
         pdf_url: dataToUse.pdf_url || ''
       });
       
-      // Set selected groups if hackathon has groups
-      if (hackathon.groups && hackathon.groups.length > 0) {
-        setSelectedGroupIds(hackathon.groups.map(g => g.id));
-      }
+      // Don't set selected groups here - let fetchHackathonGroups handle it
+      // This prevents race conditions between hackathon.groups and API data
     }
     
-    // Fetch all available groups and current hackathon groups
+    // Fetch all available groups and hackathon groups in parallel
     fetchGroups();
     fetchHackathonGroups();
   }, [hackathon, preservedFormData]);
@@ -65,6 +63,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
     if (location.state?.groupCreated) {
       // Refresh groups when returning from group creation
       fetchGroups();
+      fetchHackathonGroups();
       // Clear the state to prevent unnecessary refreshes
       navigate(location.pathname, { replace: true });
     }
@@ -111,9 +110,12 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
       const data = await response.json();
       if (data.success && data.data) {
         setGroups(data.data);
+        return data.data; // Return the groups data
       }
+      return [];
     } catch (error) {
       console.error('Error fetching groups:', error);
+      return [];
     } finally {
       setLoadingGroups(false);
     }
@@ -158,10 +160,15 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
       }
 
       const data = await response.json();
+      
       if (data.success && data.data) {
         // Set selected group IDs for this hackathon
-        const groupIds = data.data.map(group => group.id);
+        // The API returns HackathonGroup objects, we need to map to the original group IDs
+        const groupIds = data.data.map(hackathonGroup => hackathonGroup.group_id || hackathonGroup.id);
         setSelectedGroupIds(groupIds);
+      } else {
+        // If no groups found, ensure selectedGroupIds is empty
+        setSelectedGroupIds([]);
       }
     } catch (error) {
       console.error('Error fetching hackathon groups:', error);
@@ -254,10 +261,10 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
 
     setLoading(true);
     try {
-      const updateData = {
-        ...formData,
-        group_ids: selectedGroupIds
-      };
+        const updateData = {
+          ...formData,
+          selectedGroupIds: selectedGroupIds.filter(id => id && id !== '')
+        };
       await onSave(updateData);
     } catch (error) {
       console.error('Error saving hackathon:', error);
@@ -399,21 +406,6 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Max Participants
-              </label>
-              <input
-                type="number"
-                name="max_participants"
-                value={formData.max_participants}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Optional"
-                min="1"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Max Groups
               </label>
               <input
@@ -518,7 +510,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
             <p className="text-sm text-gray-500 mb-4">
               Select groups that are eligible to participate in this hackathon. You can leave this empty to allow all groups.
               <br />
-              <span className="text-indigo-600 font-medium">Currently linked groups are pre-selected. Uncheck them to remove from this hackathon.</span>
+              <span className="text-indigo-600 font-medium">✓ Currently linked groups are pre-selected</span> - uncheck to remove them.
             </p>
             
             {/* Create New Group Button */}
@@ -558,35 +550,50 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
                         }`}
                         onClick={() => handleGroupSelection(group.id)}
                       >
-                        <input
-                          type="checkbox"
-                          id={`group-${group.id}`}
-                          checked={isSelected}
-                          onChange={() => handleGroupSelection(group.id)}
-                          className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                        />
-                        <label
-                          htmlFor={`group-${group.id}`}
-                          className="flex-1 cursor-pointer text-sm text-gray-700"
-                        >
-                          <div className="font-medium flex items-center space-x-2">
+                        <div className="flex-shrink-0">
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                            isSelected 
+                              ? 'bg-indigo-600 border-indigo-600' 
+                              : 'border-gray-300 hover:border-indigo-400'
+                          }`}>
+                            {isSelected && (
+                              <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex-1 cursor-pointer">
+                          <div className={`font-medium flex items-center space-x-2 ${
+                            isSelected ? 'text-indigo-900' : 'text-gray-900'
+                          }`}>
                             <span>{group.name}</span>
                             {isSelected && (
                               <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
-                                Linked
+                                ✓ Linked
                               </span>
                             )}
                           </div>
-                          <div className="text-gray-500">
+                          <div className={`text-sm ${
+                            isSelected ? 'text-indigo-600' : 'text-gray-500'
+                          }`}>
                             {group.members?.length || 0} member{(group.members?.length || 0) !== 1 ? 's' : ''}
                             {group.description && ` • ${group.description}`}
                           </div>
-                        </label>
-                        {isSelected ? (
-                          <FiUserMinus className="w-4 h-4 text-red-500" title="Click to remove from hackathon" />
-                        ) : (
-                          <FiUserPlus className="w-4 h-4 text-gray-400" title="Click to add to hackathon" />
-                        )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          {isSelected ? (
+                            <div className="flex items-center space-x-1 text-red-600">
+                              <FiUserMinus className="w-4 h-4" />
+                              <span className="text-xs font-medium">Remove</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-1 text-gray-400 hover:text-indigo-600">
+                              <FiUserPlus className="w-4 h-4" />
+                              <span className="text-xs font-medium">Add</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -594,11 +601,59 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
               </div>
             )}
             
-            {selectedGroupIds.length > 0 && (
-              <div className="mt-3 text-sm text-gray-600">
-                {selectedGroupIds.length} group(s) selected • {getTotalParticipants()} total participants
+            {/* Group Analysis Summary */}
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Group Analysis</h4>
+              
+              {/* Linked Groups Section */}
+              <div className="mb-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                  <span className="font-medium text-gray-700">Currently Linked Groups</span>
+                  <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">
+                    {selectedGroupIds.length} group{selectedGroupIds.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="ml-5 text-sm text-gray-600 mb-2">
+                  {getTotalParticipants()} total member{getTotalParticipants() !== 1 ? 's' : ''}
+                </div>
+                {selectedGroupIds.length > 0 ? (
+                  <div className="ml-5 space-y-1">
+                    {groups.filter(group => selectedGroupIds.includes(group.id)).map((group, index) => (
+                      <div key={group.id} className="flex items-center justify-between text-xs bg-indigo-50 px-2 py-1 rounded">
+                        <span className="text-indigo-800 font-medium">{group.name}</span>
+                        <span className="text-indigo-600">{group.members?.length || 0} members</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ml-5 text-xs text-gray-500 italic">No groups currently linked</div>
+                )}
               </div>
-            )}
+
+              {/* Available Groups Section */}
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                  <span className="font-medium text-gray-700">Available Groups to Add</span>
+                  <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                    {groups.length - selectedGroupIds.length} group{(groups.length - selectedGroupIds.length) !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {groups.length - selectedGroupIds.length > 0 ? (
+                  <div className="ml-5 space-y-1">
+                    {groups.filter(group => !selectedGroupIds.includes(group.id)).map((group, index) => (
+                      <div key={group.id} className="flex items-center justify-between text-xs bg-gray-50 px-2 py-1 rounded">
+                        <span className="text-gray-700">{group.name}</span>
+                        <span className="text-gray-500">{group.members?.length || 0} members</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ml-5 text-xs text-gray-500 italic">All groups are already linked</div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Action Buttons */}

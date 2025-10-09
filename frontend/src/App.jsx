@@ -29,12 +29,14 @@ import ProjectManagementDetailPage from './pages/ProjectManagementDetailPage'
 import AdminHackathonsPage from './pages/AdminHackathonsPage'
 import CreateHackathonPage from './pages/CreateHackathonPage'
 import CreateGroupPage from './pages/CreateGroupPage'
+import AdminChatPage from './pages/AdminChatPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import ErrorBoundary from './components/common/ErrorBoundary'
+import ChatNotification from './components/chat/ChatNotification'
 
 // Hooks
 import { useAuth } from './context/AuthContext'
@@ -68,6 +70,8 @@ function App() {
             <title>GNANAM AI - AI-Powered Learning Platform</title>
             <meta name="description" content="Experience the future of education with GNANAM AI - your intelligent learning companion" />
           </Helmet>
+          
+          <ChatNotification />
           
           <AnimatePresence mode="wait">
             <Routes>
@@ -269,6 +273,15 @@ function App() {
               element={
                 <ProtectedRoute requiredRole="admin">
                   <CreateGroupPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            <Route
+              path="/admin/chat"
+              element={
+                <ProtectedRoute requiredRole="admin">
+                  <AdminChatPage />
                 </ProtectedRoute>
               }
             />

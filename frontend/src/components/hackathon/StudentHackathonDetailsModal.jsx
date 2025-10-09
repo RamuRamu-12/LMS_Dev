@@ -107,20 +107,20 @@ const StudentHackathonDetailsModal = ({ hackathon, onClose }) => {
             </div>
           </div>
 
-          {/* Participants */}
+          {/* Groups */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <FiUsers className="w-5 h-5 mr-2 text-green-600" />
-              Participants
+              Groups
             </h3>
             <div className="flex items-center space-x-4">
               <div className="text-2xl font-bold text-green-600">
-                {hackathon.current_participants || 0}
+                {hackathon.groups?.length || 0}
               </div>
               <div className="text-gray-600">
                 <span className="text-sm">out of </span>
-                <span className="font-medium">{hackathon.max_participants || '∞'}</span>
-                <span className="text-sm"> participants</span>
+                <span className="font-medium">{hackathon.max_groups || '∞'}</span>
+                <span className="text-sm"> groups</span>
               </div>
             </div>
           </div>

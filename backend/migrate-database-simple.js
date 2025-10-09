@@ -215,17 +215,41 @@ class SimpleDatabaseMigrator {
         try {
           const [data] = await oldSequelize.query(`SELECT * FROM "${tableName}"`);
           
+          // Sanitize data before export
+          const sanitizedData = data.map(record => {
+            const sanitizedRecord = {};
+            for (const [key, value] of Object.entries(record)) {
+              // Handle null/undefined values
+              if (value === null || value === undefined) {
+                sanitizedRecord[key] = null;
+              }
+              // Handle empty objects
+              else if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) {
+                sanitizedRecord[key] = null;
+              }
+              // Handle empty arrays
+              else if (Array.isArray(value) && value.length === 0) {
+                sanitizedRecord[key] = null;
+              }
+              // Keep other values as is
+              else {
+                sanitizedRecord[key] = value;
+              }
+            }
+            return sanitizedRecord;
+          });
+          
           const exportData = {
             tableName: tableName,
-            data: data,
-            count: data.length,
+            data: sanitizedData,
+            count: sanitizedData.length,
             exportedAt: new Date().toISOString()
           };
           
           const exportFile = path.join(this.exportDir, `${tableName}.json`);
           fs.writeFileSync(exportFile, JSON.stringify(exportData, null, 2));
           
-          logSuccess(`Exported ${data.length} records from ${tableName}`);
+          logSuccess(`Exported ${sanitizedData.length} records from ${tableName}`);
           this.exportedData[tableName] = exportData;
           
         } catch (error) {
@@ -352,23 +376,90 @@ class SimpleDatabaseMigrator {
           logInfo(`Importing ${exportData.count} records to ${tableName}...`);
           
           if (exportData.data.length > 0) {
-            // Get column names
+            // Get column names from the first record
             const columns = Object.keys(exportData.data[0]);
+            if (columns.length === 0) {
+              logWarning(`Skipping ${tableName} - no columns found`);
+              continue;
+            }
+            
             const columnList = columns.map(col => `"${col}"`).join(', ');
             const placeholders = columns.map(() => '?').join(', ');
             
             // Insert data
+            let successCount = 0;
+            let errorCount = 0;
+            
             for (const record of exportData.data) {
-              const values = columns.map(col => record[col]);
-              await newSequelize.query(`
-                INSERT INTO "${tableName}" (${columnList}) 
-                VALUES (${placeholders})
-              `, {
-                replacements: values
-              });
+              try {
+                const values = columns.map(col => {
+                  const value = record[col];
+                  
+                  // Handle different data types
+                  if (value === null || value === undefined) {
+                    return null;
+                  }
+                  
+                  // Handle JSON fields
+                  if (typeof value === 'object') {
+                    // If it's an empty object or array, convert to null
+                    if (Array.isArray(value) && value.length === 0) {
+                      return null;
+                    }
+                    if (!Array.isArray(value) && Object.keys(value).length === 0) {
+                      return null;
+                    }
+                    // Convert to JSON string for database storage
+                    return JSON.stringify(value);
+                  }
+                  
+                  // Handle dates
+                  if (value instanceof Date) {
+                    return value.toISOString();
+                  }
+                  
+                  // Handle booleans
+                  if (typeof value === 'boolean') {
+                    return value;
+                  }
+                  
+                  // Handle numbers
+                  if (typeof value === 'number') {
+                    return value;
+                  }
+                  
+                  // Handle strings
+                  if (typeof value === 'string') {
+                    return value;
+                  }
+                  
+                  // Default fallback
+                  return value;
+                });
+                
+                await newSequelize.query(`
+                  INSERT INTO "${tableName}" (${columnList}) 
+                  VALUES (${placeholders})
+                `, {
+                  replacements: values
+                });
+                
+                successCount++;
+              } catch (insertError) {
+                errorCount++;
+                console.error(`Error inserting record into ${tableName}:`, insertError.message);
+                console.error('Record data:', record);
+                
+                // Log the error but continue with other records
+                logWarning(`Skipped problematic record in ${tableName}: ${insertError.message}`);
+              }
             }
             
-            logSuccess(`Imported ${exportData.count} records to ${tableName}`);
+            if (errorCount > 0) {
+              logWarning(`Imported ${successCount} records to ${tableName}, skipped ${errorCount} problematic records`);
+            } else {
+              logSuccess(`Imported ${successCount} records to ${tableName}`);
+            }
           }
         }
       }

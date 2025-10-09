@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FiSave, FiX, FiCalendar, FiUsers, FiAward, FiUpload, FiPlus, FiEdit3, FiTrash2, FiSettings } from 'react-icons/fi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
+import Header from '../components/common/Header';
 
 const CreateHackathonPage = () => {
   const [loading, setLoading] = useState(false);
@@ -374,6 +375,7 @@ const CreateHackathonPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <Header />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

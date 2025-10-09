@@ -49,10 +49,13 @@ const ActivityLog = require('./ActivityLog')(sequelize, Sequelize.DataTypes);
 const Achievement = require('./Achievement')(sequelize, Sequelize.DataTypes);
 const Hackathon = require('./Hackathon')(sequelize, Sequelize.DataTypes);
 const HackathonParticipant = require('./HackathonParticipant')(sequelize, Sequelize.DataTypes);
+const HackathonSubmission = require('./HackathonSubmission')(sequelize, Sequelize.DataTypes);
 const HackathonGroup = require('./HackathonGroup')(sequelize, Sequelize.DataTypes);
 const HackathonGroupMember = require('./HackathonGroupMember')(sequelize, Sequelize.DataTypes);
 const Group = require('./Group')(sequelize, Sequelize.DataTypes);
 const GroupMember = require('./GroupMember')(sequelize, Sequelize.DataTypes);
+const ChatMessage = require('./ChatMessage')(sequelize, Sequelize.DataTypes);
+const ChatParticipant = require('./ChatParticipant')(sequelize, Sequelize.DataTypes);
 
 // Define associations
 const defineAssociations = () => {
@@ -433,6 +436,35 @@ const defineAssociations = () => {
     as: 'hackathons'
   });
 
+  // HackathonSubmission associations
+  HackathonSubmission.belongsTo(Hackathon, {
+    foreignKey: 'hackathon_id',
+    as: 'hackathon'
+  });
+
+  HackathonSubmission.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student'
+  });
+
+  HackathonSubmission.belongsTo(User, {
+    foreignKey: 'reviewed_by',
+    as: 'reviewer'
+  });
+
+  // Reverse associations
+  Hackathon.hasMany(HackathonSubmission, {
+    foreignKey: 'hackathon_id',
+    as: 'submissions',
+    onDelete: 'CASCADE'
+  });
+
+  User.hasMany(HackathonSubmission, {
+    foreignKey: 'student_id',
+    as: 'hackathonSubmissions',
+    onDelete: 'CASCADE'
+  });
+
   // HackathonGroup associations
   HackathonGroup.belongsTo(Hackathon, {
     foreignKey: 'hackathon_id',
@@ -445,10 +477,15 @@ const defineAssociations = () => {
   });
 
   HackathonGroup.belongsToMany(User, {
-    through: HackathonGroupMember,
+    through: 'hackathon_group_members',
     foreignKey: 'group_id',
     otherKey: 'student_id',
     as: 'members'
+  });
+
+  HackathonGroup.hasMany(HackathonGroupMember, {
+    foreignKey: 'group_id',
+    as: 'groupMembers'
   });
 
   // HackathonGroupMember associations
@@ -469,7 +506,7 @@ const defineAssociations = () => {
 
   // User associations for groups
   User.belongsToMany(HackathonGroup, {
-    through: HackathonGroupMember,
+    through: 'hackathon_group_members',
     foreignKey: 'student_id',
     otherKey: 'group_id',
     as: 'hackathonGroups'
@@ -489,14 +526,14 @@ const defineAssociations = () => {
   });
 
   Group.belongsToMany(User, {
-    through: GroupMember,
+    through: 'group_members',
     foreignKey: 'group_id',
     otherKey: 'student_id',
     as: 'members'
   });
 
   Group.belongsToMany(Hackathon, {
-    through: HackathonGroup,
+    through: 'hackathon_groups',
     foreignKey: 'group_id',
     otherKey: 'hackathon_id',
     as: 'hackathons'
@@ -532,6 +569,82 @@ const defineAssociations = () => {
     onDelete: 'CASCADE'
   });
 
+  // Chat Message associations
+  ChatMessage.belongsTo(Hackathon, {
+    foreignKey: 'hackathon_id',
+    as: 'hackathon'
+  });
+  ChatMessage.belongsTo(HackathonGroup, {
+    foreignKey: 'group_id',
+    as: 'group'
+  });
+  ChatMessage.belongsTo(User, {
+    foreignKey: 'user_id',
+    as: 'user'
+  });
+  ChatMessage.belongsTo(User, {
+    foreignKey: 'deleted_by',
+    as: 'deletedBy'
+  });
+  ChatMessage.belongsTo(ChatMessage, {
+    foreignKey: 'reply_to_message_id',
+    as: 'replyToMessage'
+  });
+  ChatMessage.hasMany(ChatMessage, {
+    foreignKey: 'reply_to_message_id',
+    as: 'replies'
+  });
+
+  // Chat Participant associations
+  ChatParticipant.belongsTo(Hackathon, {
+    foreignKey: 'hackathon_id',
+    as: 'hackathon'
+  });
+  ChatParticipant.belongsTo(HackathonGroup, {
+    foreignKey: 'group_id',
+    as: 'group'
+  });
+  ChatParticipant.belongsTo(User, {
+    foreignKey: 'user_id',
+    as: 'user'
+  });
+
+  // User associations for chat
+  User.hasMany(ChatMessage, {
+    foreignKey: 'user_id',
+    as: 'chatMessages',
+    onDelete: 'CASCADE'
+  });
+  User.hasMany(ChatParticipant, {
+    foreignKey: 'user_id',
+    as: 'chatParticipants',
+    onDelete: 'CASCADE'
+  });
+
+  // Hackathon associations for chat
+  Hackathon.hasMany(ChatMessage, {
+    foreignKey: 'hackathon_id',
+    as: 'chatMessages',
+    onDelete: 'CASCADE'
+  });
+  Hackathon.hasMany(ChatParticipant, {
+    foreignKey: 'hackathon_id',
+    as: 'chatParticipants',
+    onDelete: 'CASCADE'
+  });
+
+  // HackathonGroup associations for chat
+  HackathonGroup.hasMany(ChatMessage, {
+    foreignKey: 'group_id',
+    as: 'chatMessages',
+    onDelete: 'CASCADE'
+  });
+  HackathonGroup.hasMany(ChatParticipant, {
+    foreignKey: 'group_id',
+    as: 'chatParticipants',
+    onDelete: 'CASCADE'
+  });
+
 };
 
 // Define associations
@@ -562,8 +675,11 @@ module.exports = {
   Achievement,
   Hackathon,
   HackathonParticipant,
+  HackathonSubmission,
   HackathonGroup,
   HackathonGroupMember,
   Group,
-  GroupMember
+  GroupMember,
+  ChatMessage,
+  ChatParticipant
 };

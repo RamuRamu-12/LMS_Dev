@@ -9,6 +9,7 @@ import { analyzeUrl, getUrlTypeDisplayName, supportsEmbedding } from '../../util
 import toast from 'react-hot-toast'
 import ChapterManagement from './ChapterManagement'
 import { FiCheck, FiAlertCircle, FiExternalLink, FiYoutube, FiFile, FiPlus, FiTrash2 } from 'react-icons/fi'
+import Header from '../common/Header'
 
 const CreateCourseNew = () => {
   const navigate = useNavigate()
@@ -213,6 +214,7 @@ const CreateCourseNew = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

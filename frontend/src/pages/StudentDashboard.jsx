@@ -7,6 +7,7 @@ import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
 import { activityService } from '../services/activityService'
 import { hackathonService } from '../services/hackathonService'
+import { chatService } from '../services/chatService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import AllCoursesModal from '../components/course/AllCoursesModal'
@@ -15,6 +16,8 @@ import StudentCourseCard from '../components/course/StudentCourseCard'
 import EnrolledCourseCard from '../components/course/EnrolledCourseCard'
 import StudentHackathonCard from '../components/hackathon/StudentHackathonCard'
 import StudentHackathonDetailsModal from '../components/hackathon/StudentHackathonDetailsModal'
+import ChatRoomsList from '../components/chat/ChatRoomsList'
+import ChatRoom from '../components/chat/ChatRoom'
 import toast from 'react-hot-toast'
 
 const StudentDashboard = () => {
@@ -74,6 +77,19 @@ const StudentDashboard = () => {
     }
   )
 
+  const { data: chatRoomsData, isLoading: chatRoomsLoading, error: chatRoomsError } = useQuery(
+    'student-chat-rooms',
+    () => chatService.getMyChatRooms(),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 2 * 60 * 1000, // 2 minutes for chat rooms
+      retry: 1,
+      onError: (error) => {
+        console.error('Chat rooms API error:', error)
+      }
+    }
+  )
+
   // Enrollment mutation
   const enrollMutation = useMutation(
     (courseId) => courseService.enrollInCourse(courseId),
@@ -99,11 +115,14 @@ const StudentDashboard = () => {
   const [isEnrolledCoursesModalOpen, setIsEnrolledCoursesModalOpen] = useState(false)
   const [selectedHackathon, setSelectedHackathon] = useState(null)
   const [isHackathonDetailsModalOpen, setIsHackathonDetailsModalOpen] = useState(false)
+  const [selectedChatRoom, setSelectedChatRoom] = useState(null)
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false)
 
-  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading || hackathonsLoading
+  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading || hackathonsLoading || chatRoomsLoading
   const courses = coursesData?.data?.courses || []
   const enrollments = enrollmentsData?.data?.enrollments || []
   const activities = activitiesData?.data?.activities || []
+  const chatRooms = chatRoomsData?.data?.chatRooms || []
   const hackathons = hackathonsData?.data?.hackathons || []
 
   // Helper function to get activity styling
@@ -218,6 +237,30 @@ const StudentDashboard = () => {
       toast.error('Failed to load hackathon details')
     }
   }
+
+  const handleSelectChatRoom = (hackathon, group) => {
+    setSelectedChatRoom({ hackathon, group })
+    setIsChatModalOpen(true)
+  }
+
+  const handleCloseChat = () => {
+    setSelectedChatRoom(null)
+    setIsChatModalOpen(false)
+  }
+
+  const handleEnroll = async (courseId) => {
+    try {
+      setEnrollingCourseId(courseId);
+      await enrollMutation.mutateAsync(courseId);
+      toast.success('Successfully enrolled in course!');
+      queryClient.invalidateQueries('student-enrollments');
+    } catch (error) {
+      console.error('Enrollment error:', error);
+      toast.error('Failed to enroll in course');
+    } finally {
+      setEnrollingCourseId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -771,6 +814,31 @@ const StudentDashboard = () => {
               </div>
             </div>
           </motion.div>
+
+          {/* Group Chats Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Group Chats</h3>
+                <p className="text-sm text-gray-600">Connect with your hackathon teams</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-gray-500">Live</span>
+              </div>
+            </div>
+            
+            <ChatRoomsList
+              chatRooms={chatRooms}
+              onSelectRoom={handleSelectChatRoom}
+              loading={chatRoomsLoading}
+            />
+          </motion.div>
         </div>
       </main>
       
@@ -794,6 +862,15 @@ const StudentDashboard = () => {
           setSelectedHackathon(null)
         }}
       />
+
+      {/* Chat Room Modal */}
+      {isChatModalOpen && selectedChatRoom && (
+        <ChatRoom
+          hackathon={selectedChatRoom.hackathon}
+          group={selectedChatRoom.group}
+          onClose={handleCloseChat}
+        />
+      )}
     </div>
   )
 }

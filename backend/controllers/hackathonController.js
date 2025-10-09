@@ -1,4 +1,4 @@
-const { Hackathon, HackathonParticipant, HackathonGroup, HackathonGroupMember, Group, GroupMember, User, sequelize } = require('../models');
+const { Hackathon, HackathonParticipant, HackathonSubmission, HackathonGroup, HackathonGroupMember, Group, GroupMember, User, sequelize } = require('../models');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
 
@@ -84,6 +84,11 @@ const getAllHackathons = async (req, res, next) => {
           model: User,
           as: 'creator',
           attributes: ['id', 'name', 'email']
+        },
+        {
+          model: HackathonGroup,
+          as: 'groups',
+          attributes: ['id', 'name', 'description', 'current_members']
         }
       ],
       order: [[sort, order.toUpperCase()]],
@@ -117,20 +122,39 @@ const getAllHackathons = async (req, res, next) => {
 const getMyHackathons = async (req, res, next) => {
   try {
     const studentId = req.user.id;
-    
-    // Get hackathons where the student is eligible (through groups)
+
+    // Get hackathons where the student is eligible (through groups OR direct participation)
     const hackathons = await Hackathon.findAll({
       where: {
         is_published: true,
         status: {
           [Op.in]: ['upcoming', 'active']
-        }
+        },
+        [Op.or]: [
+          // Direct participation through HackathonParticipant
+          {
+            '$participants.user_id$': studentId
+          },
+          // Group participation through HackathonGroup
+          {
+            '$groups.members.id$': studentId
+          }
+        ]
       },
       include: [
         {
           model: User,
           as: 'creator',
           attributes: ['id', 'name', 'email']
+        },
+        {
+          model: HackathonParticipant,
+          as: 'participants',
+          where: {
+            user_id: studentId
+          },
+          required: false,
+          attributes: ['id', 'user_id', 'joined_at']
         },
         {
           model: HackathonGroup,
@@ -152,18 +176,11 @@ const getMyHackathons = async (req, res, next) => {
       order: [['start_date', 'ASC']]
     });
 
-    // Filter hackathons where student is a member of at least one group
-    const eligibleHackathons = hackathons.filter(hackathon => 
-      hackathon.groups.some(group => 
-        group.members.some(member => member.id === studentId)
-      )
-    );
-
     res.json({
       success: true,
       data: {
-        hackathons: eligibleHackathons,
-        total: eligibleHackathons.length
+        hackathons: hackathons,
+        total: hackathons.length
       }
     });
   } catch (error) {
@@ -394,11 +411,23 @@ const createHackathon = async (req, res, next) => {
 const updateHackathon = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const updateData = { ...req.body, updated_by: req.user.id };
+    const { selectedGroupIds, ...updateData } = req.body;
+    
+    // Filter out invalid group IDs
+    const validGroupIds = selectedGroupIds ? selectedGroupIds.filter(id => 
+      id && id !== '' && !isNaN(parseInt(id))
+    ).map(id => parseInt(id)) : [];
+    
+    // Add updated_by field
+    updateData.updated_by = req.user.id;
 
     // Remove fields that shouldn't be updated directly
     delete updateData.created_by;
     delete updateData.current_participants;
+    
+    // Fix empty strings for integer fields
+    if (updateData.max_participants === '') updateData.max_participants = null;
+    if (updateData.max_groups === '') updateData.max_groups = null;
 
     const hackathon = await Hackathon.findByPk(id);
     if (!hackathon) {
@@ -414,14 +443,103 @@ const updateHackathon = async (req, res, next) => {
       }
     }
 
-    await hackathon.update(updateData);
+    // Use transaction to ensure data consistency
+    await sequelize.transaction(async (transaction) => {
+      // Update hackathon basic data
+      await hackathon.update(updateData, { transaction });
+
+      // Handle group relationships if selectedGroupIds is provided
+      if (selectedGroupIds !== undefined) {
+        // Remove existing group links
+        await HackathonGroup.destroy({
+          where: { hackathon_id: id },
+          transaction
+        });
+
+        // Create new group links if groups are selected
+        if (validGroupIds && validGroupIds.length > 0) {
+          for (const groupId of validGroupIds) {
+            console.log(`Processing group ID: ${groupId}`);
+            
+            // Check if group exists
+            const group = await Group.findByPk(groupId, {
+              include: [
+                {
+                  model: User,
+                  as: 'members',
+                  attributes: ['id']
+                }
+              ],
+              transaction
+            });
+
+            console.log(`Group found: ${!!group}, Members count: ${group?.members?.length || 0}`);
+
+            if (group) {
+              // Create hackathon group
+              const hackathonGroup = await HackathonGroup.create({
+                hackathon_id: id,
+                group_id: groupId,
+                name: group.name,
+                description: group.description,
+                max_members: group.max_members,
+                current_members: group.members ? group.members.length : 0,
+                created_by: req.user.id
+              }, { transaction });
+
+              console.log(`Created hackathon group with ID: ${hackathonGroup.id}`);
+
+              // Copy group members to hackathon group
+              if (group.members && group.members.length > 0) {
+                const groupMembers = group.members.map(member => ({
+                  group_id: hackathonGroup.id,
+                  student_id: member.id,
+                  joined_at: new Date(),
+                  is_leader: false,
+                  status: 'active',
+                  added_by: req.user.id
+                }));
+
+                console.log(`Creating ${groupMembers.length} group members`);
+                await HackathonGroupMember.bulkCreate(groupMembers, { transaction });
+                console.log(`Successfully created group members`);
+              }
+            } else {
+              console.log(`Group with ID ${groupId} not found`);
+            }
+          }
+        }
+      }
+    });
+
+    // Fetch updated hackathon with groups
+    console.log('Fetching updated hackathon with ID:', id);
+    const updatedHackathon = await Hackathon.findByPk(id, {
+      include: [
+        {
+          model: HackathonGroup,
+          as: 'groups',
+          include: [
+            {
+              model: User,
+              as: 'members',
+              attributes: ['id', 'name', 'email', 'avatar']
+            }
+          ]
+        }
+      ]
+    });
+
+    console.log('Updated hackathon found:', !!updatedHackathon);
+    console.log('Updated hackathon groups count:', updatedHackathon?.groups?.length || 0);
 
     res.json({
       success: true,
       message: 'Hackathon updated successfully',
-      data: hackathon
+      data: updatedHackathon
     });
   } catch (error) {
+    console.error('Error updating hackathon:', error);
     if (error.name === 'SequelizeValidationError') {
       return next(new AppError(error.errors[0].message, 400));
     }
@@ -1090,6 +1208,420 @@ const linkGroupToHackathon = async (req, res, next) => {
   }
 };
 
+/**
+ * Create or update hackathon submission (Student only)
+ */
+const createOrUpdateSubmission = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {
+      project_title,
+      project_description,
+      github_url,
+      live_url,
+      demo_video_url,
+      presentation_url,
+      documentation_url,
+      additional_files_url,
+      submission_notes
+    } = req.body;
+
+    // Validate required fields
+    if (!project_title || !project_description) {
+      return next(new AppError('Project title and description are required', 400));
+    }
+
+    // Check if hackathon exists and is active/upcoming
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    if (!hackathon.is_published) {
+      return next(new AppError('Hackathon is not published', 403));
+    }
+
+    // Check if student is eligible for the hackathon (either direct enrollment or group membership)
+    console.log(`\n=== SUBMISSION ELIGIBILITY CHECK ===`);
+    console.log(`Hackathon ID: ${id}`);
+    console.log(`User ID: ${req.user.id}`);
+    console.log(`User Email: ${req.user.email}`);
+    
+    const participant = await HackathonParticipant.findOne({
+      where: {
+        hackathon_id: id,
+        student_id: req.user.id
+      }
+    });
+
+    console.log(`Direct participant found:`, !!participant);
+    if (participant) {
+      console.log(`Participant details:`, participant.toJSON());
+    }
+
+    // If not directly enrolled, check if student is part of a group that's enrolled in this hackathon
+    let isEligible = !!participant;
+    
+    if (!isEligible) {
+      console.log(`Checking group membership for user ${req.user.id} in hackathon ${id}`);
+      
+      const groupMembership = await HackathonGroupMember.findOne({
+        where: {
+          student_id: req.user.id
+        },
+        include: [
+          {
+            model: HackathonGroup,
+            as: 'group',
+            where: {
+              hackathon_id: id
+            }
+          }
+        ]
+      });
+      
+      console.log(`Group membership found:`, !!groupMembership);
+      if (groupMembership) {
+        console.log(`Group membership details:`, {
+          id: groupMembership.id,
+          student_id: groupMembership.student_id,
+          group_id: groupMembership.group_id,
+          group_name: groupMembership.group?.name,
+          hackathon_id: groupMembership.group?.hackathon_id,
+          status: groupMembership.status
+        });
+      } else {
+        // Let's check what groups exist for this hackathon
+        const hackathonGroups = await HackathonGroup.findAll({
+          where: { hackathon_id: id },
+          include: [{
+            model: User,
+            as: 'members',
+            attributes: ['id', 'name', 'email']
+          }]
+        });
+        
+        console.log(`Available groups for hackathon ${id}:`, hackathonGroups.length);
+        hackathonGroups.forEach((group, index) => {
+          console.log(`  Group ${index + 1}: ${group.name} (ID: ${group.id})`);
+          console.log(`    Members: ${group.members?.length || 0}`);
+          group.members?.forEach(member => {
+            console.log(`      - ${member.name} (ID: ${member.id})`);
+          });
+        });
+        
+        // Let's also check if user is in any groups at all
+        const userGroups = await HackathonGroupMember.findAll({
+          where: { student_id: req.user.id },
+          include: [{
+            model: HackathonGroup,
+            as: 'group',
+            attributes: ['id', 'name', 'hackathon_id']
+          }]
+        });
+        
+        console.log(`User ${req.user.id} is in ${userGroups.length} groups total:`);
+        userGroups.forEach((membership, index) => {
+          console.log(`  Group ${index + 1}: ${membership.group?.name} (Hackathon ID: ${membership.group?.hackathon_id})`);
+        });
+      }
+      
+      isEligible = !!groupMembership;
+    }
+
+    console.log(`Final eligibility result: ${isEligible}`);
+    console.log(`=== END ELIGIBILITY CHECK ===\n`);
+
+    if (!isEligible) {
+      return next(new AppError('You are not enrolled in this hackathon', 403));
+    }
+
+    // Check if hackathon is still accepting submissions
+    const now = new Date();
+    if (now > hackathon.end_date) {
+      return next(new AppError('Submission deadline has passed', 400));
+    }
+
+    // Check if submission already exists
+    let submission = await HackathonSubmission.findOne({
+      where: {
+        hackathon_id: id,
+        student_id: req.user.id
+      }
+    });
+
+    if (submission) {
+      // Update existing submission
+      await submission.update({
+        project_title,
+        project_description,
+        github_url,
+        live_url,
+        demo_video_url,
+        presentation_url,
+        documentation_url,
+        additional_files_url,
+        submission_notes,
+        status: 'draft' // Reset to draft when updating
+      });
+
+      res.json({
+        success: true,
+        message: 'Submission updated successfully',
+        data: submission
+      });
+    } else {
+      // Create new submission
+      submission = await HackathonSubmission.create({
+        hackathon_id: id,
+        student_id: req.user.id,
+        project_title,
+        project_description,
+        github_url,
+        live_url,
+        demo_video_url,
+        presentation_url,
+        documentation_url,
+        additional_files_url,
+        submission_notes,
+        status: 'draft'
+      });
+
+      res.status(201).json({
+        success: true,
+        message: 'Submission created successfully',
+        data: submission
+      });
+    }
+  } catch (error) {
+    if (error.name === 'SequelizeValidationError') {
+      return next(new AppError(error.errors[0].message, 400));
+    }
+    next(new AppError('Failed to create/update submission', 500));
+  }
+};
+
+/**
+ * Submit hackathon submission (Student only)
+ */
+const submitSubmission = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check if hackathon exists
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    // Check if student is eligible for the hackathon (either direct enrollment or group membership)
+    const participant = await HackathonParticipant.findOne({
+      where: {
+        hackathon_id: id,
+        student_id: req.user.id
+      }
+    });
+
+    // If not directly enrolled, check if student is part of a group that's enrolled in this hackathon
+    let isEligible = !!participant;
+    
+    if (!isEligible) {
+      const groupMembership = await HackathonGroupMember.findOne({
+        where: {
+          student_id: req.user.id
+        },
+        include: [
+          {
+            model: HackathonGroup,
+            as: 'group',
+            where: {
+              hackathon_id: id
+            }
+          }
+        ]
+      });
+      
+      isEligible = !!groupMembership;
+    }
+
+    if (!isEligible) {
+      return next(new AppError('You are not enrolled in this hackathon', 403));
+    }
+
+    // Check if submission exists
+    const submission = await HackathonSubmission.findOne({
+      where: {
+        hackathon_id: id,
+        student_id: req.user.id
+      }
+    });
+
+    if (!submission) {
+      return next(new AppError('No submission found. Please create a submission first.', 404));
+    }
+
+    // Check if already submitted
+    if (submission.status === 'submitted') {
+      return next(new AppError('Submission has already been submitted', 400));
+    }
+
+    // Check if hackathon is still accepting submissions
+    const now = new Date();
+    if (now > hackathon.end_date) {
+      return next(new AppError('Submission deadline has passed', 400));
+    }
+
+    // Submit the submission
+    await submission.submit();
+
+    // Update participant status if participant exists (direct enrollment)
+    if (participant) {
+      participant.status = 'submitted';
+      participant.submitted_at = new Date();
+      await participant.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Submission submitted successfully',
+      data: submission
+    });
+  } catch (error) {
+    next(new AppError('Failed to submit submission', 500));
+  }
+};
+
+/**
+ * Get student's submission for a hackathon (Student only)
+ */
+const getMySubmission = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const submission = await HackathonSubmission.findOne({
+      where: {
+        hackathon_id: id,
+        student_id: req.user.id
+      },
+      include: [
+        {
+          model: Hackathon,
+          as: 'hackathon',
+          attributes: ['id', 'name', 'start_date', 'end_date', 'status']
+        }
+      ]
+    });
+
+    if (!submission) {
+      return res.json({
+        success: true,
+        data: null,
+        message: 'No submission found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: submission
+    });
+  } catch (error) {
+    next(new AppError('Failed to fetch submission', 500));
+  }
+};
+
+/**
+ * Get all submissions for a hackathon (Admin only)
+ */
+const getHackathonSubmissions = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    const submissions = await HackathonSubmission.findByHackathon(id);
+
+    res.json({
+      success: true,
+      data: submissions
+    });
+  } catch (error) {
+    next(new AppError('Failed to fetch hackathon submissions', 500));
+  }
+};
+
+/**
+ * Review submission (Admin only)
+ */
+const reviewSubmission = async (req, res, next) => {
+  try {
+    const { id, submissionId } = req.params;
+    const { status, review_notes, score } = req.body;
+
+    if (!['accepted', 'rejected'].includes(status)) {
+      return next(new AppError('Invalid status. Must be accepted or rejected', 400));
+    }
+
+    const submission = await HackathonSubmission.findOne({
+      where: {
+        id: submissionId,
+        hackathon_id: id
+      }
+    });
+
+    if (!submission) {
+      return next(new AppError('Submission not found', 404));
+    }
+
+    if (status === 'accepted') {
+      await submission.accept(req.user.id, review_notes, score);
+    } else {
+      await submission.reject(req.user.id, review_notes);
+    }
+
+    res.json({
+      success: true,
+      message: `Submission ${status} successfully`,
+      data: submission
+    });
+  } catch (error) {
+    next(new AppError('Failed to review submission', 500));
+  }
+};
+
+/**
+ * Set submission as winner (Admin only)
+ */
+const setSubmissionWinner = async (req, res, next) => {
+  try {
+    const { id, submissionId } = req.params;
+    const { prize, ranking } = req.body;
+
+    const submission = await HackathonSubmission.findOne({
+      where: {
+        id: submissionId,
+        hackathon_id: id
+      }
+    });
+
+    if (!submission) {
+      return next(new AppError('Submission not found', 404));
+    }
+
+    await submission.setWinner(prize, ranking);
+
+    res.json({
+      success: true,
+      message: 'Submission marked as winner successfully',
+      data: submission
+    });
+  } catch (error) {
+    next(new AppError('Failed to set submission as winner', 500));
+  }
+};
+
 module.exports = {
   getAllHackathons,
   getMyHackathons,
@@ -1108,5 +1640,11 @@ module.exports = {
   addGroupMembers,
   removeGroupMembers,
   deleteHackathonGroup,
-  linkGroupToHackathon
+  linkGroupToHackathon,
+  createOrUpdateSubmission,
+  submitSubmission,
+  getMySubmission,
+  getHackathonSubmissions,
+  reviewSubmission,
+  setSubmissionWinner
 };

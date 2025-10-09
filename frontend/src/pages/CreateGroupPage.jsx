@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { FiSave, FiX, FiUsers, FiPlus, FiMinus, FiUser, FiUserCheck, FiSearch } from 'react-icons/fi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
+import Header from '../components/common/Header';
 
 const CreateGroupPage = () => {
   const [loading, setLoading] = useState(false);
@@ -228,6 +229,7 @@ const CreateGroupPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <Header />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

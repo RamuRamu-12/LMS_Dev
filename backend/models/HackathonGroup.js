@@ -112,10 +112,16 @@ module.exports = (sequelize, DataTypes) => {
 
     // HackathonGroup has many HackathonGroupMembers (many-to-many with Users)
     HackathonGroup.belongsToMany(models.User, {
-      through: 'HackathonGroupMembers',
+      through: 'hackathon_group_members',
       foreignKey: 'group_id',
       otherKey: 'student_id',
       as: 'members'
+    });
+
+    // HackathonGroup has many HackathonGroupMembers
+    HackathonGroup.hasMany(models.HackathonGroupMember, {
+      foreignKey: 'group_id',
+      as: 'groupMembers'
     });
   };
 
