@@ -56,6 +56,7 @@ const Group = require('./Group')(sequelize, Sequelize.DataTypes);
 const GroupMember = require('./GroupMember')(sequelize, Sequelize.DataTypes);
 const ChatMessage = require('./ChatMessage')(sequelize, Sequelize.DataTypes);
 const ChatParticipant = require('./ChatParticipant')(sequelize, Sequelize.DataTypes);
+const StudentPermission = require('./StudentPermission')(sequelize, Sequelize.DataTypes);
 
 // Define associations
 const defineAssociations = () => {
@@ -532,12 +533,6 @@ const defineAssociations = () => {
     as: 'members'
   });
 
-  Group.belongsToMany(Hackathon, {
-    through: 'hackathon_groups',
-    foreignKey: 'group_id',
-    otherKey: 'hackathon_id',
-    as: 'hackathons'
-  });
 
   // GroupMember associations
   GroupMember.belongsTo(Group, {
@@ -645,6 +640,19 @@ const defineAssociations = () => {
     onDelete: 'CASCADE'
   });
 
+  // StudentPermission associations
+  StudentPermission.belongsTo(User, {
+    foreignKey: 'student_id',
+    as: 'student',
+    onDelete: 'CASCADE'
+  });
+
+  User.hasOne(StudentPermission, {
+    foreignKey: 'student_id',
+    as: 'permissions',
+    onDelete: 'CASCADE'
+  });
+
 };
 
 // Define associations
@@ -681,5 +689,6 @@ module.exports = {
   Group,
   GroupMember,
   ChatMessage,
-  ChatParticipant
+  ChatParticipant,
+  StudentPermission
 };

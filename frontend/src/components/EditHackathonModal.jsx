@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiX, FiCalendar, FiUsers, FiTag, FiUserPlus, FiUserMinus, FiPlus } from 'react-icons/fi';
+import { FiX, FiCalendar, FiUsers, FiTag, FiUserPlus, FiUserMinus, FiPlus, FiSearch, FiTrash2, FiSettings } from 'react-icons/fi';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) => {
@@ -24,8 +24,9 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [groups, setGroups] = useState([]);
-  const [selectedGroupIds, setSelectedGroupIds] = useState([]);
+  const [hackathonGroups, setHackathonGroups] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loadingGroups, setLoadingGroups] = useState(false);
 
   useEffect(() => {
@@ -53,26 +54,14 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
       // This prevents race conditions between hackathon.groups and API data
     }
     
-    // Fetch all available groups and hackathon groups in parallel
-    fetchGroups();
+    // Fetch students and hackathon groups
+    fetchStudents();
     fetchHackathonGroups();
   }, [hackathon, preservedFormData]);
 
-  // Handle returning from group creation
-  useEffect(() => {
-    if (location.state?.groupCreated) {
-      // Refresh groups when returning from group creation
-      fetchGroups();
-      fetchHackathonGroups();
-      // Clear the state to prevent unnecessary refreshes
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.state?.groupCreated, navigate, location.pathname]);
 
-  const fetchGroups = async () => {
+  const fetchStudents = async () => {
     try {
-      setLoadingGroups(true);
-      
       // Get token from multiple sources
       let token = localStorage.getItem('accessToken');
       if (!token) {
@@ -89,7 +78,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch('/api/groups', {
+      const response = await fetch('/api/users?role=student', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -104,20 +93,15 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
           window.location.href = '/login';
           return;
         }
-        throw new Error(`Failed to fetch groups: ${response.status}`);
+        throw new Error(`Failed to fetch students: ${response.status}`);
       }
 
       const data = await response.json();
-      if (data.success && data.data) {
-        setGroups(data.data);
-        return data.data; // Return the groups data
+      if (data.success && data.data?.users) {
+        setStudents(data.data.users);
       }
-      return [];
     } catch (error) {
-      console.error('Error fetching groups:', error);
-      return [];
-    } finally {
-      setLoadingGroups(false);
+      console.error('Error fetching students:', error);
     }
   };
 
@@ -125,6 +109,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
     if (!hackathon?.id) return;
     
     try {
+      setLoadingGroups(true);
       // Get token from multiple sources
       let token = localStorage.getItem('accessToken');
       if (!token) {
@@ -162,16 +147,22 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
       const data = await response.json();
       
       if (data.success && data.data) {
-        // Set selected group IDs for this hackathon
-        // The API returns HackathonGroup objects, we need to map to the original group IDs
-        const groupIds = data.data.map(hackathonGroup => hackathonGroup.group_id || hackathonGroup.id);
-        setSelectedGroupIds(groupIds);
+        // Convert hackathon groups to the format expected by the UI
+        const groupsWithMembers = data.data.map(group => ({
+          id: group.id,
+          name: group.name,
+          description: group.description,
+          max_members: group.max_members,
+          student_ids: group.members ? group.members.map(member => member.id) : []
+        }));
+        setHackathonGroups(groupsWithMembers);
       } else {
-        // If no groups found, ensure selectedGroupIds is empty
-        setSelectedGroupIds([]);
+        setHackathonGroups([]);
       }
     } catch (error) {
       console.error('Error fetching hackathon groups:', error);
+    } finally {
+      setLoadingGroups(false);
     }
   };
 
@@ -200,36 +191,69 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
     }));
   };
 
-  const handleGroupSelection = (groupId) => {
-    setSelectedGroupIds(prev => {
-      if (prev.includes(groupId)) {
-        return prev.filter(id => id !== groupId);
-      } else {
-        return [...prev, groupId];
-      }
-    });
+  // Add a new group for this hackathon
+  const addGroup = () => {
+    const newGroup = {
+      id: Date.now(), // Temporary ID for UI
+      name: '',
+      description: '',
+      student_ids: [],
+      max_members: null
+    };
+    setHackathonGroups(prev => [...prev, newGroup]);
   };
 
-  const getSelectedGroups = () => {
-    return groups.filter(group => selectedGroupIds.includes(group.id));
+  // Remove a group from this hackathon
+  const removeGroup = (groupId) => {
+    setHackathonGroups(prev => prev.filter(group => group.id !== groupId));
+  };
+
+  // Update group details
+  const updateGroup = (groupId, updates) => {
+    setHackathonGroups(prev => prev.map(group => 
+      group.id === groupId ? { ...group, ...updates } : group
+    ));
+  };
+
+  // Add student to group
+  const addStudentToGroup = (groupId, studentId) => {
+    setHackathonGroups(prev => prev.map(group => {
+      if (group.id === groupId) {
+        const newStudentIds = [...(group.student_ids || []), studentId];
+        return { ...group, student_ids: newStudentIds };
+      }
+      return group;
+    }));
+  };
+
+  // Remove student from group
+  const removeStudentFromGroup = (groupId, studentId) => {
+    setHackathonGroups(prev => prev.map(group => {
+      if (group.id === groupId) {
+        const newStudentIds = (group.student_ids || []).filter(id => id !== studentId);
+        return { ...group, student_ids: newStudentIds };
+      }
+      return group;
+    }));
   };
 
   const getTotalParticipants = () => {
-    const selectedGroups = getSelectedGroups();
-    return selectedGroups.reduce((total, group) => total + (group.members?.length || 0), 0);
+    return hackathonGroups.reduce((total, group) => total + (group.student_ids?.length || 0), 0);
   };
 
-  const navigateToCreateGroup = () => {
-    // Close the modal first
-    onClose();
-    // Navigate to create group page with hackathon data
-    navigate('/admin/hackathons/create-group', {
-      state: {
-        hackathonData: formData,
-        hackathonId: hackathon?.id,
-        isUpdate: true
-      }
+  // Filter students based on search term
+  const getFilteredStudents = (groupStudentIds = []) => {
+    return students.filter(student => {
+      const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const notInGroup = !groupStudentIds.includes(student.id);
+      return matchesSearch && notInGroup;
     });
+  };
+
+  // Get students already in a group
+  const getStudentsInGroup = (groupStudentIds = []) => {
+    return students.filter(student => groupStudentIds.includes(student.id));
   };
 
   const validateForm = () => {
@@ -263,7 +287,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
     try {
         const updateData = {
           ...formData,
-          selectedGroupIds: selectedGroupIds.filter(id => id && id !== '')
+          groups: hackathonGroups.filter(group => group.name && group.student_ids.length > 0)
         };
       await onSave(updateData);
     } catch (error) {
@@ -496,35 +520,33 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
             </div>
           </div>
 
-          {/* Group Selection */}
+          {/* Hackathon Groups Management */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Selected Groups
+            <div className="flex items-center justify-between mb-6">
+              <label className="block text-lg font-semibold text-gray-900">
+                Hackathon Groups
               </label>
               <div className="text-right">
-                <div className="text-sm text-gray-500">Selected Groups</div>
-                <div className="text-lg font-bold text-indigo-600">{selectedGroupIds.length}</div>
+                <div className="text-sm text-gray-500">Groups Created</div>
+                <div className="text-lg font-bold text-indigo-600">{hackathonGroups.length}</div>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mb-4">
-              Select groups that are eligible to participate in this hackathon. You can leave this empty to allow all groups.
-              <br />
-              <span className="text-indigo-600 font-medium">✓ Currently linked groups are pre-selected</span> - uncheck to remove them.
+            <p className="text-sm text-gray-500 mb-6">
+              Manage groups specifically for this hackathon. Each group is tied exclusively to this hackathon.
             </p>
             
             {/* Create New Group Button */}
-            <div className="mb-4">
+            <div className="mb-6">
               <button
                 type="button"
-                onClick={navigateToCreateGroup}
+                onClick={addGroup}
                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg"
               >
                 <FiPlus className="w-5 h-5" />
-                <span className="font-medium">Create New Group</span>
+                <span className="font-medium">Add New Group</span>
               </button>
               <p className="text-xs text-gray-500 mt-2 text-center">
-                Create a new group and it will be automatically selected for this hackathon
+                Create groups specifically for this hackathon
               </p>
             </div>
             
@@ -533,127 +555,139 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                 <p className="text-gray-500 mt-2">Loading groups...</p>
               </div>
-            ) : !Array.isArray(groups) || groups.length === 0 ? (
+            ) : hackathonGroups.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No groups found. Please create groups first.
+                No groups created yet for this hackathon.
               </div>
             ) : (
-              <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
-                <div className="space-y-3">
-                  {Array.isArray(groups) && groups.map((group) => {
-                    const isSelected = selectedGroupIds.includes(group.id);
-                    return (
-                      <div
-                        key={group.id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg transition-colors cursor-pointer ${
-                          isSelected ? 'bg-indigo-50 border-2 border-indigo-200' : 'hover:bg-white border border-gray-200'
-                        }`}
-                        onClick={() => handleGroupSelection(group.id)}
-                      >
-                        <div className="flex-shrink-0">
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            isSelected 
-                              ? 'bg-indigo-600 border-indigo-600' 
-                              : 'border-gray-300 hover:border-indigo-400'
-                          }`}>
-                            {isSelected && (
-                              <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            )}
+              <div className="space-y-4">
+                {hackathonGroups.map((group, index) => (
+                  <div key={group.id} className="bg-gradient-to-br from-white to-indigo-50 border-2 border-indigo-200 rounded-xl p-6 shadow-lg">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-4 mb-4">
+                          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {index + 1}
                           </div>
+                          <input
+                            type="text"
+                            value={group.name}
+                            onChange={(e) => updateGroup(group.id, { name: e.target.value })}
+                            placeholder="Enter group name"
+                            className="text-xl font-bold text-gray-900 bg-transparent border-none outline-none flex-1 placeholder-gray-400"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeGroup(group.id)}
+                            className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                            title="Remove group"
+                          >
+                            <FiTrash2 className="w-5 h-5" />
+                          </button>
                         </div>
-                        <div className="flex-1 cursor-pointer">
-                          <div className={`font-medium flex items-center space-x-2 ${
-                            isSelected ? 'text-indigo-900' : 'text-gray-900'
-                          }`}>
-                            <span>{group.name}</span>
-                            {isSelected && (
-                              <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full text-xs font-medium">
-                                ✓ Linked
+                        
+                        <textarea
+                          value={group.description}
+                          onChange={(e) => updateGroup(group.id, { description: e.target.value })}
+                          placeholder="Group description (optional)"
+                          rows={2}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4 resize-none"
+                        />
+
+                        <div className="flex items-center space-x-6 text-sm text-gray-600 mb-6 p-4 bg-white rounded-lg border border-gray-200">
+                          <span className="flex items-center">
+                            <FiUsers className="w-4 h-4 mr-2 text-indigo-600" />
+                            <span className="font-medium">{group.student_ids?.length || 0}</span>
+                            <span className="ml-1">member{(group.student_ids?.length || 0) !== 1 ? 's' : ''}</span>
                               </span>
-                            )}
-                          </div>
-                          <div className={`text-sm ${
-                            isSelected ? 'text-indigo-600' : 'text-gray-500'
-                          }`}>
-                            {group.members?.length || 0} member{(group.members?.length || 0) !== 1 ? 's' : ''}
-                            {group.description && ` • ${group.description}`}
+                          <div className="flex items-center space-x-2">
+                            <label className="text-gray-600">Max:</label>
+                            <input
+                              type="number"
+                              value={group.max_members || ''}
+                              onChange={(e) => updateGroup(group.id, { max_members: e.target.value ? parseInt(e.target.value) : null })}
+                              placeholder="∞"
+                              className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                              min="1"
+                            />
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
-                          {isSelected ? (
-                            <div className="flex items-center space-x-1 text-red-600">
-                              <FiUserMinus className="w-4 h-4" />
-                              <span className="text-xs font-medium">Remove</span>
+
+                        {/* Student Selection */}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-700">Student Management</div>
+                            <div className="text-xs text-gray-500">
+                              {getStudentsInGroup(group.student_ids).length} selected
                             </div>
-                          ) : (
-                            <div className="flex items-center space-x-1 text-gray-400 hover:text-indigo-600">
-                              <FiUserPlus className="w-4 h-4" />
-                              <span className="text-xs font-medium">Add</span>
+                          </div>
+                          
+                          {/* Search Bar */}
+                          <div className="relative">
+                            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <input
+                              type="text"
+                              placeholder="Search students by name or email..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                            />
+                          </div>
+
+                          {/* Students Already in Group */}
+                          {getStudentsInGroup(group.student_ids).length > 0 && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700 mb-2">Selected Students:</div>
+                              <div className="flex flex-wrap gap-2">
+                                {getStudentsInGroup(group.student_ids).map((student) => (
+                                  <button
+                                    key={student.id}
+                                    type="button"
+                                    onClick={() => removeStudentFromGroup(group.id, student.id)}
+                                    className="bg-indigo-100 text-indigo-800 border border-indigo-300 px-3 py-2 rounded-lg text-sm hover:bg-indigo-200 transition-colors flex items-center space-x-2"
+                                  >
+                                    <span>{student.name}</span>
+                                    <FiX className="w-3 h-3" />
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           )}
+
+                          {/* Available Students */}
+                          {getFilteredStudents(group.student_ids).length > 0 && (
+                            <div>
+                              <div className="text-sm font-medium text-gray-700 mb-2">
+                                Available Students ({getFilteredStudents(group.student_ids).length}):
                         </div>
-                      </div>
-                    );
-                  })}
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                                {getFilteredStudents(group.student_ids).map((student) => (
+                                  <button
+                                    key={student.id}
+                                    type="button"
+                                    onClick={() => addStudentToGroup(group.id, student.id)}
+                                    className="bg-gray-100 text-gray-700 border border-gray-300 px-3 py-2 rounded-lg text-sm hover:bg-indigo-50 hover:border-indigo-300 transition-colors text-left"
+                                  >
+                                    <div className="font-medium">{student.name}</div>
+                                    <div className="text-xs text-gray-500">{student.email}</div>
+                                  </button>
+                                ))}
                 </div>
               </div>
             )}
             
-            {/* Group Analysis Summary */}
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Group Analysis</h4>
-              
-              {/* Linked Groups Section */}
-              <div className="mb-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
-                  <span className="font-medium text-gray-700">Currently Linked Groups</span>
-                  <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">
-                    {selectedGroupIds.length} group{selectedGroupIds.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <div className="ml-5 text-sm text-gray-600 mb-2">
-                  {getTotalParticipants()} total member{getTotalParticipants() !== 1 ? 's' : ''}
-                </div>
-                {selectedGroupIds.length > 0 ? (
-                  <div className="ml-5 space-y-1">
-                    {groups.filter(group => selectedGroupIds.includes(group.id)).map((group, index) => (
-                      <div key={group.id} className="flex items-center justify-between text-xs bg-indigo-50 px-2 py-1 rounded">
-                        <span className="text-indigo-800 font-medium">{group.name}</span>
-                        <span className="text-indigo-600">{group.members?.length || 0} members</span>
-                      </div>
-                    ))}
+                          {getFilteredStudents(group.student_ids).length === 0 && searchTerm && (
+                            <div className="text-center py-4 text-gray-500 text-sm">
+                              No students found matching "{searchTerm}"
                   </div>
-                ) : (
-                  <div className="ml-5 text-xs text-gray-500 italic">No groups currently linked</div>
                 )}
               </div>
-
-              {/* Available Groups Section */}
-              <div>
-                <div className="flex items-center space-x-2 mb-2">
-                  <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                  <span className="font-medium text-gray-700">Available Groups to Add</span>
-                  <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                    {groups.length - selectedGroupIds.length} group{(groups.length - selectedGroupIds.length) !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                {groups.length - selectedGroupIds.length > 0 ? (
-                  <div className="ml-5 space-y-1">
-                    {groups.filter(group => !selectedGroupIds.includes(group.id)).map((group, index) => (
-                      <div key={group.id} className="flex items-center justify-between text-xs bg-gray-50 px-2 py-1 rounded">
-                        <span className="text-gray-700">{group.name}</span>
-                        <span className="text-gray-500">{group.members?.length || 0} members</span>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                ) : (
-                  <div className="ml-5 text-xs text-gray-500 italic">All groups are already linked</div>
-                )}
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
           {/* Action Buttons */}

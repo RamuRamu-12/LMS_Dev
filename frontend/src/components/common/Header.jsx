@@ -62,7 +62,7 @@ const Header = () => {
               Realtime Projects
             </button>
             <button
-              onClick={() => handleProtectedClick('/hackathons')}
+              onClick={() => handleProtectedClick(user?.role === 'admin' ? '/admin/hackathons' : '/hackathons')}
               className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
             >
               Hackathons
@@ -184,7 +184,7 @@ const Header = () => {
                 <button
                   onClick={() => {
                     setIsMenuOpen(false)
-                    handleProtectedClick('/hackathons')
+                    handleProtectedClick(user?.role === 'admin' ? '/admin/hackathons' : '/hackathons')
                   }}
                   className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
                 >

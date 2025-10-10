@@ -19,7 +19,6 @@ const {
   addGroupMembers,
   removeGroupMembers,
   deleteHackathonGroup,
-  linkGroupToHackathon,
   createOrUpdateSubmission,
   submitSubmission,
   getMySubmission,
@@ -65,7 +64,6 @@ router.put('/:id/publish', requireAdmin, toggleHackathonPublish);
 router.get('/:id/groups', requireAdmin, getHackathonGroups);
 router.post('/:id/groups', requireAdmin, createHackathonGroup);
 router.post('/:id/groups/:groupId/members', requireAdmin, addGroupMembers);
-router.post('/:id/groups/:groupId/link', requireAdmin, linkGroupToHackathon);
 router.delete('/:id/groups/:groupId/members', requireAdmin, removeGroupMembers);
 router.delete('/:id/groups/:groupId', requireAdmin, deleteHackathonGroup);
 

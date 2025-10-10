@@ -17,17 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    group_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'groups',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL',
-      comment: 'Reference to standalone group if this hackathon group was created from a standalone group'
-    },
     name: {
       type: DataTypes.STRING(255),
       allowNull: false,
@@ -98,11 +87,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'hackathon'
     });
 
-    // HackathonGroup belongs to Group (if created from standalone group)
-    HackathonGroup.belongsTo(models.Group, {
-      foreignKey: 'group_id',
-      as: 'group'
-    });
 
     // HackathonGroup belongs to User (creator)
     HackathonGroup.belongsTo(models.User, {

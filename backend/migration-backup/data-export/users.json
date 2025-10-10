@@ -1,6 +1,24 @@
 {
   "tableName": "users",
-  "data": [],
-  "count": 0,
-  "exportedAt": "2025-10-08T13:31:57.754Z"
+  "data": [
+    {
+      "id": 1,
+      "google_id": null,
+      "name": "Admin User",
+      "email": "admin@aishani.com",
+      "password": "$2a$12$lcKd5OHpr0o3pTVdn0vof.i749.XsWfC70QqybAAcG/7VlZIYo.y6",
+      "avatar": null,
+      "role": "admin",
+      "is_active": true,
+      "last_login": null,
+      "preferences": null,
+      "bio": null,
+      "phone": null,
+      "location": null,
+      "created_at": null,
+      "updated_at": null
+    }
+  ],
+  "count": 1,
+  "exportedAt": "2025-10-09T13:34:40.224Z"
 }

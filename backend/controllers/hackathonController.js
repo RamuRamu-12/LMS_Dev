@@ -1,4 +1,4 @@
-const { Hackathon, HackathonParticipant, HackathonSubmission, HackathonGroup, HackathonGroupMember, Group, GroupMember, User, sequelize } = require('../models');
+const { Hackathon, HackathonParticipant, HackathonSubmission, HackathonGroup, HackathonGroupMember, User, sequelize } = require('../models');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
 
@@ -411,12 +411,7 @@ const createHackathon = async (req, res, next) => {
 const updateHackathon = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { selectedGroupIds, ...updateData } = req.body;
-    
-    // Filter out invalid group IDs
-    const validGroupIds = selectedGroupIds ? selectedGroupIds.filter(id => 
-      id && id !== '' && !isNaN(parseInt(id))
-    ).map(id => parseInt(id)) : [];
+    const updateData = req.body;
     
     // Add updated_by field
     updateData.updated_by = req.user.id;
@@ -443,74 +438,8 @@ const updateHackathon = async (req, res, next) => {
       }
     }
 
-    // Use transaction to ensure data consistency
-    await sequelize.transaction(async (transaction) => {
-      // Update hackathon basic data
-      await hackathon.update(updateData, { transaction });
-
-      // Handle group relationships if selectedGroupIds is provided
-      if (selectedGroupIds !== undefined) {
-        // Remove existing group links
-        await HackathonGroup.destroy({
-          where: { hackathon_id: id },
-          transaction
-        });
-
-        // Create new group links if groups are selected
-        if (validGroupIds && validGroupIds.length > 0) {
-          for (const groupId of validGroupIds) {
-            console.log(`Processing group ID: ${groupId}`);
-            
-            // Check if group exists
-            const group = await Group.findByPk(groupId, {
-              include: [
-                {
-                  model: User,
-                  as: 'members',
-                  attributes: ['id']
-                }
-              ],
-              transaction
-            });
-
-            console.log(`Group found: ${!!group}, Members count: ${group?.members?.length || 0}`);
-
-            if (group) {
-              // Create hackathon group
-              const hackathonGroup = await HackathonGroup.create({
-                hackathon_id: id,
-                group_id: groupId,
-                name: group.name,
-                description: group.description,
-                max_members: group.max_members,
-                current_members: group.members ? group.members.length : 0,
-                created_by: req.user.id
-              }, { transaction });
-
-              console.log(`Created hackathon group with ID: ${hackathonGroup.id}`);
-
-              // Copy group members to hackathon group
-              if (group.members && group.members.length > 0) {
-                const groupMembers = group.members.map(member => ({
-                  group_id: hackathonGroup.id,
-                  student_id: member.id,
-                  joined_at: new Date(),
-                  is_leader: false,
-                  status: 'active',
-                  added_by: req.user.id
-                }));
-
-                console.log(`Creating ${groupMembers.length} group members`);
-                await HackathonGroupMember.bulkCreate(groupMembers, { transaction });
-                console.log(`Successfully created group members`);
-              }
-            } else {
-              console.log(`Group with ID ${groupId} not found`);
-            }
-          }
-        }
-      }
-    });
+    // Update hackathon basic data
+    await hackathon.update(updateData);
 
     // Fetch updated hackathon with groups
     console.log('Fetching updated hackathon with ID:', id);
@@ -1134,79 +1063,6 @@ const deleteHackathonGroup = async (req, res, next) => {
   }
 };
 
-const linkGroupToHackathon = async (req, res, next) => {
-  try {
-    const { id, groupId } = req.params;
-
-    // Check if hackathon exists
-    const hackathon = await Hackathon.findByPk(id);
-    if (!hackathon) {
-      return next(new AppError('Hackathon not found', 404));
-    }
-
-    // Check if group exists
-    const group = await Group.findByPk(groupId, {
-      include: [
-        {
-          model: User,
-          as: 'members',
-          attributes: ['id']
-        }
-      ]
-    });
-
-    if (!group) {
-      return next(new AppError('Group not found', 404));
-    }
-
-    // Check if group is already linked to this hackathon
-    const existingLink = await HackathonGroup.findOne({
-      where: {
-        hackathon_id: id,
-        group_id: groupId
-      }
-    });
-
-    if (existingLink) {
-      return next(new AppError('Group is already linked to this hackathon', 400));
-    }
-
-    // Create hackathon group
-    const hackathonGroup = await HackathonGroup.create({
-      hackathon_id: id,
-      group_id: groupId,
-      name: group.name,
-      description: group.description,
-      max_members: group.max_members,
-      current_members: group.members.length,
-      created_by: req.user.id
-    });
-
-    // Copy group members to hackathon group
-    if (group.members.length > 0) {
-      const hackathonGroupMembers = group.members.map((member, index) => ({
-        group_id: hackathonGroup.id,
-        student_id: member.id,
-        is_leader: index === 0, // First member is leader
-        added_by: req.user.id
-      }));
-
-      await HackathonGroupMember.bulkCreate(hackathonGroupMembers);
-    }
-
-    // Update hackathon participant count
-    hackathon.current_participants += group.members.length;
-    await hackathon.save();
-
-    res.json({
-      success: true,
-      data: hackathonGroup,
-      message: 'Group linked to hackathon successfully'
-    });
-  } catch (error) {
-    next(new AppError('Failed to link group to hackathon', 500));
-  }
-};
 
 /**
  * Create or update hackathon submission (Student only)
@@ -1640,7 +1496,6 @@ module.exports = {
   addGroupMembers,
   removeGroupMembers,
   deleteHackathonGroup,
-  linkGroupToHackathon,
   createOrUpdateSubmission,
   submitSubmission,
   getMySubmission,

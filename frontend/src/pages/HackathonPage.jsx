@@ -5,6 +5,8 @@ import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import HackathonDetailsModal from '../components/HackathonDetailsModal';
 import StudentHackathonCard from '../components/hackathon/StudentHackathonCard';
+import AccessDenied from '../components/common/AccessDenied';
+import { usePermissions } from '../hooks/usePermissions';
 
 const HackathonPage = () => {
   const [hackathons, setHackathons] = useState([]);
@@ -13,10 +15,21 @@ const HackathonPage = () => {
   const [selectedHackathon, setSelectedHackathon] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const navigate = useNavigate();
+  const { permissions, loading: permissionsLoading, hasAccess, isAdmin } = usePermissions();
 
   useEffect(() => {
-    fetchHackathons();
-  }, []);
+    // Only fetch hackathons if user has access or is admin
+    if (isAdmin || hasAccess('hackathons')) {
+      fetchHackathons();
+    } else {
+      setLoading(false);
+    }
+  }, [isAdmin, permissions]);
+
+  const handleContactAdmin = () => {
+    // You can implement email functionality or redirect to contact page
+    window.location.href = 'mailto:admin@gnanamai.com?subject=Request for Hackathon Access&body=Hello, I would like to request access to participate in hackathons. My student ID is: [Your Student ID]';
+  };
 
   const fetchHackathons = async () => {
     try {
@@ -34,7 +47,6 @@ const HackathonPage = () => {
         token = sessionStorage.getItem('token');
       }
       
-      console.log('HackathonPage - Token found:', token ? `${token.substring(0, 20)}...` : 'null');
       
       const response = await fetch('/api/hackathons', {
         headers: {
@@ -94,6 +106,24 @@ const HackathonPage = () => {
         <Footer />
       </div>
     );
+  }
+
+  // Check permissions
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show access denied if user doesn't have permission and is not admin
+  if (!isAdmin && !hasAccess('hackathons')) {
+    return <AccessDenied feature="hackathons" onContactAdmin={handleContactAdmin} />;
   }
 
   return (
