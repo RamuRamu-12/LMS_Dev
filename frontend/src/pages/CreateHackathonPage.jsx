@@ -248,6 +248,10 @@ const CreateHackathonPage = () => {
       }
 
       console.log('Creating hackathon with data:', formData);
+      console.log('Hackathon groups before filtering:', hackathonGroups);
+      
+      const filteredGroups = hackathonGroups.filter(group => group.name && group.student_ids.length > 0);
+      console.log('Filtered groups being sent:', filteredGroups);
       
       const response = await fetch('/api/hackathons', {
         method: 'POST',
@@ -259,7 +263,7 @@ const CreateHackathonPage = () => {
           ...formData,
           max_participants: formData.max_participants ? parseInt(formData.max_participants) : null,
           max_groups: formData.max_groups ? parseInt(formData.max_groups) : null,
-          groups: hackathonGroups.filter(group => group.name && group.student_ids.length > 0)
+          groups: filteredGroups
         })
       });
       

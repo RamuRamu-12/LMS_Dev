@@ -210,6 +210,18 @@ const getHackathonById = async (req, res, next) => {
           through: {
             attributes: ['status', 'enrolled_at', 'submitted_at']
           }
+        },
+        {
+          model: HackathonGroup,
+          as: 'groups',
+          attributes: ['id', 'name', 'description', 'current_members'],
+          include: [
+            {
+              model: User,
+              as: 'members',
+              attributes: ['id', 'name', 'email', 'avatar']
+            }
+          ]
         }
       ]
     });
@@ -238,6 +250,10 @@ const getHackathonById = async (req, res, next) => {
  * Create new hackathon (Admin only)
  */
 const createHackathon = async (req, res, next) => {
+  console.log('=== HACKATHON CREATION START ===');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  console.log('User:', req.user);
+  
   try {
     const {
       name,
@@ -272,14 +288,21 @@ const createHackathon = async (req, res, next) => {
 
     // Validate groups if provided
     if (groups && groups.length > 0) {
+      console.log('Validating groups...');
       for (const group of groups) {
+        console.log('Validating group:', group);
         if (!group.name || !group.student_ids || !Array.isArray(group.student_ids)) {
+          console.log('Group validation failed: missing name or student_ids');
           return next(new AppError('Each group must have a name and student_ids array', 400));
         }
         if (group.student_ids.length === 0) {
+          console.log('Group validation failed: no students in group');
           return next(new AppError('Each group must have at least one student', 400));
         }
       }
+      console.log('Groups validation passed');
+    } else {
+      console.log('No groups to validate');
     }
 
     // Create hackathon
@@ -319,88 +342,135 @@ const createHackathon = async (req, res, next) => {
     const hackathon = await Hackathon.create(hackathonData);
     
     console.log('Hackathon created successfully with ID:', hackathon.id);
+    console.log('Hackathon data:', JSON.stringify(hackathon.toJSON(), null, 2));
 
     // Create groups and add members if groups provided
+    console.log('Groups received in createHackathon:', groups);
+    console.log('Groups type:', typeof groups);
+    console.log('Groups isArray:', Array.isArray(groups));
+    console.log('Groups length:', groups ? groups.length : 'null');
+    
     if (groups && groups.length > 0) {
+      console.log('Processing groups:', JSON.stringify(groups, null, 2));
       let totalParticipants = 0;
       
-      for (const groupData of groups) {
-        // Validate student IDs exist and are students
-        const students = await User.findAll({
-          where: {
-            id: { [Op.in]: groupData.student_ids },
-            role: 'student'
+      try {
+        for (const groupData of groups) {
+          console.log('Processing group:', groupData);
+          
+          // Validate student IDs exist and are students
+          const students = await User.findAll({
+            where: {
+              id: { [Op.in]: groupData.student_ids },
+              role: 'student'
+            }
+          });
+
+          console.log(`Found ${students.length} students for group "${groupData.name}", expected ${groupData.student_ids.length}`);
+
+          if (students.length !== groupData.student_ids.length) {
+            throw new Error(`Some student IDs in group "${groupData.name}" are invalid or not students`);
           }
-        });
 
-        if (students.length !== groupData.student_ids.length) {
-          return next(new AppError(`Some student IDs in group "${groupData.name}" are invalid or not students`, 400));
+          // Create the group
+          const group = await HackathonGroup.create({
+            hackathon_id: hackathon.id,
+            name: groupData.name,
+            description: groupData.description || null,
+            max_members: groupData.max_members || null,
+            current_members: groupData.student_ids.length,
+            created_by: req.user.id
+          });
+
+          console.log('Group created with ID:', group.id);
+
+          // Add members to the group
+          const members = groupData.student_ids.map((student_id, index) => ({
+            group_id: group.id,
+            student_id,
+            joined_at: new Date(),
+            is_leader: index === 0, // First student becomes leader
+            status: 'active',
+            added_by: req.user.id
+          }));
+
+          console.log('Creating members:', members);
+          const createdMembers = await HackathonGroupMember.bulkCreate(members);
+          console.log('Members created successfully:', createdMembers.length);
+          totalParticipants += groupData.student_ids.length;
         }
-
-        // Create the group
-        const group = await HackathonGroup.create({
-          hackathon_id: hackathon.id,
-          name: groupData.name,
-          description: groupData.description || null,
-          max_members: groupData.max_members || null,
-          current_members: groupData.student_ids.length,
-          created_by: req.user.id
-        });
-
-        // Add members to the group
-        const members = groupData.student_ids.map((student_id, index) => ({
-          group_id: group.id,
-          student_id,
-          joined_at: new Date(),
-          is_leader: index === 0, // First student becomes leader
-          status: 'active',
-          added_by: req.user.id
-        }));
-
-        await HackathonGroupMember.bulkCreate(members);
-        totalParticipants += groupData.student_ids.length;
+        
+        // Update current_participants count
+        hackathon.current_participants = totalParticipants;
+        await hackathon.save();
+        console.log('Total participants set to:', totalParticipants);
+      } catch (groupError) {
+        console.error('Error creating groups:', groupError);
+        throw groupError;
       }
-      
-      // Update current_participants count
-      hackathon.current_participants = totalParticipants;
-      await hackathon.save();
+    } else {
+      console.log('No groups provided, skipping group creation');
     }
 
-    // Fetch created hackathon with associations
-    const createdHackathon = await Hackathon.findByPk(hackathon.id, {
-      include: [
-        {
-          model: User,
-          as: 'creator',
-          attributes: ['id', 'name', 'email']
-        },
-        {
-          model: HackathonGroup,
-          as: 'groups',
-          attributes: ['id', 'name', 'description', 'current_members'],
-          include: [
-            {
-              model: User,
-              as: 'members',
-              attributes: ['id', 'name', 'email'],
-              through: {
-                attributes: ['is_leader', 'joined_at']
-              }
-            }
-          ]
-        }
-      ]
-    });
+    console.log('Hackathon creation completed successfully');
 
-    res.status(201).json({
-      success: true,
-      message: 'Hackathon created successfully',
-      data: createdHackathon
-    });
+    // Fetch created hackathon with basic associations only
+    console.log('Fetching created hackathon with basic associations...');
+    try {
+      const createdHackathon = await Hackathon.findByPk(hackathon.id, {
+        include: [
+          {
+            model: User,
+            as: 'creator',
+            attributes: ['id', 'name', 'email']
+          }
+        ]
+      });
+      console.log('Hackathon fetched successfully:', !!createdHackathon);
+
+      res.status(201).json({
+        success: true,
+        message: 'Hackathon created successfully',
+        data: createdHackathon
+      });
+    } catch (fetchError) {
+      console.error('Error fetching created hackathon:', fetchError);
+      // Even if fetch fails, the hackathon was created successfully
+      res.status(201).json({
+        success: true,
+        message: 'Hackathon created successfully',
+        data: { id: hackathon.id, name: hackathon.name }
+      });
+    }
   } catch (error) {
+    console.log('=== HACKATHON CREATION ERROR ===');
+    console.error('Hackathon creation error:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      sql: error.sql,
+      original: error.original
+    });
+    
+    // Log error details
+    
     if (error.name === 'SequelizeValidationError') {
+      console.log('Validation error:', error.errors);
       return next(new AppError(error.errors[0].message, 400));
     }
+    
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      console.log('Foreign key constraint error');
+      return next(new AppError('Invalid reference to user or hackathon', 400));
+    }
+    
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      console.log('Unique constraint error');
+      return next(new AppError('A hackathon with this name already exists', 400));
+    }
+    
+    console.log('Generic error, returning 500');
     next(new AppError('Failed to create hackathon', 500));
   }
 };
@@ -440,6 +510,69 @@ const updateHackathon = async (req, res, next) => {
 
     // Update hackathon basic data
     await hackathon.update(updateData);
+
+    // Handle groups if provided
+    console.log('Received updateData.groups:', updateData.groups);
+    console.log('updateData.groups type:', typeof updateData.groups);
+    console.log('updateData.groups isArray:', Array.isArray(updateData.groups));
+    
+    if (updateData.groups && Array.isArray(updateData.groups)) {
+      console.log('Processing groups for update:', updateData.groups);
+      
+      // Delete existing groups for this hackathon
+      await HackathonGroup.destroy({
+        where: { hackathon_id: id }
+      });
+      console.log('Deleted existing groups');
+      
+      // Create new groups
+      let totalParticipants = 0;
+      for (const groupData of updateData.groups) {
+        if (groupData.name && groupData.student_ids && Array.isArray(groupData.student_ids) && groupData.student_ids.length > 0) {
+          console.log('Creating group:', groupData.name);
+          
+          // Validate student IDs exist and are students
+          const students = await User.findAll({
+            where: {
+              id: { [Op.in]: groupData.student_ids },
+              role: 'student'
+            }
+          });
+
+          if (students.length === groupData.student_ids.length) {
+            // Create the group
+            const group = await HackathonGroup.create({
+              hackathon_id: id,
+              name: groupData.name,
+              description: groupData.description || null,
+              max_members: groupData.max_members || null,
+              current_members: groupData.student_ids.length,
+              created_by: req.user.id
+            });
+
+            // Add members to the group
+            const members = groupData.student_ids.map((student_id, index) => ({
+              group_id: group.id,
+              student_id,
+              joined_at: new Date(),
+              is_leader: index === 0,
+              status: 'active',
+              added_by: req.user.id
+            }));
+
+            const createdMembers = await HackathonGroupMember.bulkCreate(members);
+            console.log('Members created successfully:', createdMembers.length);
+            totalParticipants += groupData.student_ids.length;
+            console.log('Group created with ID:', group.id);
+          }
+        }
+      }
+      
+      // Update current_participants count
+      hackathon.current_participants = totalParticipants;
+      await hackathon.save();
+      console.log('Total participants set to:', totalParticipants);
+    }
 
     // Fetch updated hackathon with groups
     console.log('Fetching updated hackathon with ID:', id);
@@ -768,12 +901,22 @@ const getHackathonMultimedia = async (req, res, next) => {
 const getHackathonGroups = async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log('Fetching groups for hackathon ID:', id);
 
     const hackathon = await Hackathon.findByPk(id);
     if (!hackathon) {
+      console.log('Hackathon not found for ID:', id);
       return next(new AppError('Hackathon not found', 404));
     }
 
+    console.log('Hackathon found, fetching groups...');
+    
+    // First, let's check if there are any groups at all
+    const groupCount = await HackathonGroup.count({
+      where: { hackathon_id: id }
+    });
+    console.log('Total groups found for hackathon:', groupCount);
+    
     const groups = await HackathonGroup.findAll({
       where: { hackathon_id: id },
       include: [
@@ -781,24 +924,43 @@ const getHackathonGroups = async (req, res, next) => {
           model: User,
           as: 'creator',
           attributes: ['id', 'name', 'email']
-        },
-        {
-          model: User,
-          as: 'members',
-          attributes: ['id', 'name', 'email'],
-          through: {
-            attributes: ['is_leader', 'joined_at', 'status']
-          }
         }
       ],
       order: [['created_at', 'ASC']]
     });
 
+    console.log('Groups fetched from database:', groups.length);
+    console.log('Group details:', groups.map(g => ({ id: g.id, name: g.name, hackathon_id: g.hackathon_id })));
+
+    // Fetch group members separately for each group
+    for (let group of groups) {
+      console.log(`Fetching members for group ${group.id} (${group.name})`);
+      const groupMembers = await HackathonGroupMember.findAll({
+        where: { group_id: group.id },
+        include: [
+          {
+            model: User,
+            as: 'student',
+            attributes: ['id', 'name', 'email']
+          }
+        ]
+      });
+      console.log(`Found ${groupMembers.length} members for group ${group.id}`);
+      group.dataValues.groupMembers = groupMembers;
+    }
+
+    console.log('Groups fetched successfully, count:', groups.length);
     res.json({
       success: true,
       data: groups
     });
   } catch (error) {
+    console.error('Error fetching hackathon groups:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     next(new AppError('Failed to fetch hackathon groups', 500));
   }
 };

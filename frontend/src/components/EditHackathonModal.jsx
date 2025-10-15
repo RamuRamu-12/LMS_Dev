@@ -153,7 +153,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
           name: group.name,
           description: group.description,
           max_members: group.max_members,
-          student_ids: group.members ? group.members.map(member => member.id) : []
+          student_ids: group.groupMembers ? group.groupMembers.map(member => member.student.id) : []
         }));
         setHackathonGroups(groupsWithMembers);
       } else {
@@ -287,8 +287,10 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
     try {
         const updateData = {
           ...formData,
-          groups: hackathonGroups.filter(group => group.name && group.student_ids.length > 0)
+          groups: hackathonGroups.filter(group => group.name && group.student_ids && group.student_ids.length > 0)
         };
+        
+        console.log('EditHackathonModal - Sending groups data:', updateData.groups);
       await onSave(updateData);
     } catch (error) {
       console.error('Error saving hackathon:', error);
