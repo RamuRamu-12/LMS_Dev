@@ -384,19 +384,28 @@ const createHackathon = async (req, res, next) => {
 
           console.log('Group created with ID:', group.id);
 
-          // Add members to the group
-          const members = groupData.student_ids.map((student_id, index) => ({
-            group_id: group.id,
-            student_id,
-            joined_at: new Date(),
-            is_leader: index === 0, // First student becomes leader
-            status: 'active',
-            added_by: req.user.id
-          }));
-
-          console.log('Creating members:', members);
-          const createdMembers = await HackathonGroupMember.bulkCreate(members);
-          console.log('Members created successfully:', createdMembers.length);
+          // Add members to the group using raw SQL
+          for (let index = 0; index < groupData.student_ids.length; index++) {
+            const student_id = groupData.student_ids[index];
+            await sequelize.query(`
+              INSERT INTO hackathon_group_members 
+              (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
+              VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+            `, {
+              replacements: {
+                group_id: group.id,
+                student_id: student_id,
+                joined_at: new Date(),
+                is_leader: index === 0,
+                status: 'active',
+                added_by: req.user.id,
+                created_at: new Date(),
+                updated_at: new Date()
+              },
+              type: sequelize.QueryTypes.INSERT
+            });
+          }
+          console.log('Members created successfully:', groupData.student_ids.length);
           totalParticipants += groupData.student_ids.length;
         }
         
@@ -519,7 +528,15 @@ const updateHackathon = async (req, res, next) => {
     if (updateData.groups && Array.isArray(updateData.groups)) {
       console.log('Processing groups for update:', updateData.groups);
       
-      // Delete existing groups for this hackathon
+      // Delete existing groups for this hackathon using raw SQL
+      await sequelize.query(`
+        DELETE FROM hackathon_group_members 
+        WHERE group_id IN (SELECT id FROM hackathon_groups WHERE hackathon_id = :hackathon_id)
+      `, {
+        replacements: { hackathon_id: id },
+        type: sequelize.QueryTypes.DELETE
+      });
+      
       await HackathonGroup.destroy({
         where: { hackathon_id: id }
       });
@@ -539,32 +556,47 @@ const updateHackathon = async (req, res, next) => {
             }
           });
 
-          if (students.length === groupData.student_ids.length) {
-            // Create the group
-            const group = await HackathonGroup.create({
-              hackathon_id: id,
-              name: groupData.name,
-              description: groupData.description || null,
-              max_members: groupData.max_members || null,
-              current_members: groupData.student_ids.length,
-              created_by: req.user.id
-            });
+          console.log(`Found ${students.length} students for group "${groupData.name}", expected ${groupData.student_ids.length}`);
 
-            // Add members to the group
-            const members = groupData.student_ids.map((student_id, index) => ({
-              group_id: group.id,
-              student_id,
-              joined_at: new Date(),
-              is_leader: index === 0,
-              status: 'active',
-              added_by: req.user.id
-            }));
-
-            const createdMembers = await HackathonGroupMember.bulkCreate(members);
-            console.log('Members created successfully:', createdMembers.length);
-            totalParticipants += groupData.student_ids.length;
-            console.log('Group created with ID:', group.id);
+          if (students.length !== groupData.student_ids.length) {
+            console.log(`Some student IDs in group "${groupData.name}" are invalid or not students`);
+            throw new Error(`Some student IDs in group "${groupData.name}" are invalid or not students`);
           }
+
+          // Create the group
+          const group = await HackathonGroup.create({
+            hackathon_id: id,
+            name: groupData.name,
+            description: groupData.description || null,
+            max_members: groupData.max_members || null,
+            current_members: groupData.student_ids.length,
+            created_by: req.user.id
+          });
+
+            // Add members to the group using raw SQL
+            for (let index = 0; index < groupData.student_ids.length; index++) {
+              const student_id = groupData.student_ids[index];
+              await sequelize.query(`
+                INSERT INTO hackathon_group_members 
+                (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
+                VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+              `, {
+                replacements: {
+                  group_id: group.id,
+                  student_id: student_id,
+                  joined_at: new Date(),
+                  is_leader: index === 0,
+                  status: 'active',
+                  added_by: req.user.id,
+                  created_at: new Date(),
+                  updated_at: new Date()
+                },
+                type: sequelize.QueryTypes.INSERT
+              });
+            }
+            console.log('Members created successfully:', groupData.student_ids.length);
+          totalParticipants += groupData.student_ids.length;
+          console.log('Group created with ID:', group.id);
         }
       }
       
@@ -602,9 +634,31 @@ const updateHackathon = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Error updating hackathon:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      sql: error.sql,
+      original: error.original
+    });
+    
     if (error.name === 'SequelizeValidationError') {
       return next(new AppError(error.errors[0].message, 400));
     }
+    
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return next(new AppError('Invalid reference to user or hackathon', 400));
+    }
+    
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return next(new AppError('A group with this name already exists for this hackathon', 400));
+    }
+    
+    // Return the actual error message if it's a custom error
+    if (error.message && error.message.includes('student IDs')) {
+      return next(new AppError(error.message, 400));
+    }
+    
     next(new AppError('Failed to update hackathon', 500));
   }
 };
@@ -919,34 +973,60 @@ const getHackathonGroups = async (req, res, next) => {
     
     const groups = await HackathonGroup.findAll({
       where: { hackathon_id: id },
-      include: [
-        {
-          model: User,
-          as: 'creator',
-          attributes: ['id', 'name', 'email']
-        }
-      ],
       order: [['created_at', 'ASC']]
     });
 
     console.log('Groups fetched from database:', groups.length);
     console.log('Group details:', groups.map(g => ({ id: g.id, name: g.name, hackathon_id: g.hackathon_id })));
 
-    // Fetch group members separately for each group
+    // Fetch group members separately for each group using raw SQL
     for (let group of groups) {
       console.log(`Fetching members for group ${group.id} (${group.name})`);
-      const groupMembers = await HackathonGroupMember.findAll({
-        where: { group_id: group.id },
-        include: [
-          {
-            model: User,
-            as: 'student',
-            attributes: ['id', 'name', 'email']
-          }
-        ]
+      
+      // Use raw SQL to avoid column issues
+      const memberResults = await sequelize.query(`
+        SELECT 
+          hgm.id,
+          hgm.group_id,
+          hgm.student_id,
+          hgm.joined_at,
+          hgm.is_leader,
+          hgm.status,
+          hgm.added_by,
+          hgm.created_at,
+          hgm.updated_at,
+          u.id as student_id,
+          u.name as student_name,
+          u.email as student_email
+        FROM hackathon_group_members hgm
+        LEFT JOIN users u ON hgm.student_id = u.id
+        WHERE hgm.group_id = :group_id
+      `, {
+        replacements: { group_id: group.id },
+        type: sequelize.QueryTypes.SELECT
       });
-      console.log(`Found ${groupMembers.length} members for group ${group.id}`);
-      group.dataValues.groupMembers = groupMembers;
+      
+      console.log(`Found ${memberResults.length} members for group ${group.id}`);
+      
+      // Transform the raw SQL results to match expected format
+      const transformedMembers = memberResults.map(member => ({
+        id: member.id,
+        group_id: member.group_id,
+        student_id: member.student_id,
+        joined_at: member.joined_at,
+        is_leader: member.is_leader,
+        status: member.status,
+        added_by: member.added_by,
+        created_at: member.created_at,
+        updated_at: member.updated_at,
+        student: {
+          id: member.student_id,
+          name: member.student_name,
+          email: member.student_email
+        }
+      }));
+      
+      group.dataValues.groupMembers = transformedMembers;
     }
 
     console.log('Groups fetched successfully, count:', groups.length);
@@ -959,8 +1039,19 @@ const getHackathonGroups = async (req, res, next) => {
     console.error('Error details:', {
       name: error.name,
       message: error.message,
-      stack: error.stack
+      stack: error.stack,
+      sql: error.sql,
+      original: error.original
     });
+    
+    if (error.name === 'SequelizeValidationError') {
+      return next(new AppError(error.errors[0].message, 400));
+    }
+    
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return next(new AppError('Invalid reference to hackathon', 400));
+    }
+    
     next(new AppError('Failed to fetch hackathon groups', 500));
   }
 };
@@ -1012,17 +1103,27 @@ const createHackathonGroup = async (req, res, next) => {
       created_by: req.user.id
     });
 
-    // Add members to the group
-    const members = student_ids.map((student_id, index) => ({
-      group_id: group.id,
-      student_id,
-      joined_at: new Date(),
-      is_leader: index === 0, // First student becomes leader
-      status: 'active',
-      added_by: req.user.id
-    }));
-
-    await HackathonGroupMember.bulkCreate(members);
+    // Add members to the group using raw SQL
+    for (let index = 0; index < student_ids.length; index++) {
+      const student_id = student_ids[index];
+      await sequelize.query(`
+        INSERT INTO hackathon_group_members 
+        (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
+        VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+      `, {
+        replacements: {
+          group_id: group.id,
+          student_id: student_id,
+          joined_at: new Date(),
+          is_leader: index === 0,
+          status: 'active',
+          added_by: req.user.id,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        type: sequelize.QueryTypes.INSERT
+      });
+    }
 
     // Update hackathon participant count
     hackathon.current_participants += student_ids.length;
@@ -1110,17 +1211,26 @@ const addGroupMembers = async (req, res, next) => {
       return next(new AppError('All provided students are already members of this group', 400));
     }
 
-    // Add new members
-    const members = newStudentIds.map(student_id => ({
-      group_id: groupId,
-      student_id,
-      joined_at: new Date(),
-      is_leader: false,
-      status: 'active',
-      added_by: req.user.id
-    }));
-
-    await HackathonGroupMember.bulkCreate(members);
+    // Add new members using raw SQL
+    for (const student_id of newStudentIds) {
+      await sequelize.query(`
+        INSERT INTO hackathon_group_members 
+        (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
+        VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+      `, {
+        replacements: {
+          group_id: groupId,
+          student_id: student_id,
+          joined_at: new Date(),
+          is_leader: false,
+          status: 'active',
+          added_by: req.user.id,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        type: sequelize.QueryTypes.INSERT
+      });
+    }
 
     // Update group member count
     group.current_members += newStudentIds.length;
@@ -1165,12 +1275,16 @@ const removeGroupMembers = async (req, res, next) => {
       return next(new AppError('Group not found', 404));
     }
 
-    // Remove members
-    const deletedCount = await HackathonGroupMember.destroy({
-      where: {
+    // Remove members using raw SQL
+    const [deletedCount] = await sequelize.query(`
+      DELETE FROM hackathon_group_members 
+      WHERE group_id = :group_id AND student_id = ANY(:student_ids)
+    `, {
+      replacements: {
         group_id: groupId,
-        student_id: { [Op.in]: student_ids }
-      }
+        student_ids: student_ids
+      },
+      type: sequelize.QueryTypes.DELETE
     });
 
     // Update group member count
@@ -1209,6 +1323,14 @@ const deleteHackathonGroup = async (req, res, next) => {
     }
 
     const memberCount = group.current_members;
+
+    // Delete group members first using raw SQL
+    await sequelize.query(`
+      DELETE FROM hackathon_group_members WHERE group_id = :group_id
+    `, {
+      replacements: { group_id: groupId },
+      type: sequelize.QueryTypes.DELETE
+    });
 
     await group.destroy();
 

@@ -128,10 +128,12 @@ module.exports = (sequelize, DataTypes) => {
       role: this.role,
       is_active: this.is_active,
       last_login: this.last_login,
-      bio: this.bio,
-      phone: this.phone,
-      location: this.location,
-      created_at: this.created_at
+      bio: this.bio || null,
+      phone: this.phone || null,
+      location: this.location || null,
+      preferences: this.preferences,
+      created_at: this.created_at,
+      updated_at: this.updated_at
     };
   };
 

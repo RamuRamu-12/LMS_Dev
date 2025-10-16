@@ -141,26 +141,40 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
           window.location.href = '/login';
           return;
         }
-        throw new Error(`Failed to fetch hackathon groups: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to fetch hackathon groups: ${response.status}`);
       }
 
       const data = await response.json();
       
       if (data.success && data.data) {
         // Convert hackathon groups to the format expected by the UI
-        const groupsWithMembers = data.data.map(group => ({
-          id: group.id,
-          name: group.name,
-          description: group.description,
-          max_members: group.max_members,
-          student_ids: group.groupMembers ? group.groupMembers.map(member => member.student.id) : []
-        }));
+        const groupsWithMembers = data.data.map(group => {
+          // Ensure groupMembers is an array and handle edge cases
+          const groupMembers = Array.isArray(group.groupMembers) ? group.groupMembers : [];
+          
+          return {
+            id: group.id,
+            name: group.name,
+            description: group.description,
+            max_members: group.max_members,
+            student_ids: groupMembers.map(member => {
+              // Handle case where member.student might be null/undefined
+              return member.student ? member.student.id : member.student_id;
+            }).filter(id => id != null) // Remove any null/undefined IDs
+          };
+        });
+        console.log('EditHackathonModal - Groups fetched successfully:', groupsWithMembers);
         setHackathonGroups(groupsWithMembers);
       } else {
+        console.log('EditHackathonModal - No groups data received');
         setHackathonGroups([]);
       }
     } catch (error) {
       console.error('Error fetching hackathon groups:', error);
+      // Show error to user but don't break the UI
+      console.warn('Failed to load hackathon groups, continuing with empty groups');
+      setHackathonGroups([]);
     } finally {
       setLoadingGroups(false);
     }
@@ -291,9 +305,19 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
         };
         
         console.log('EditHackathonModal - Sending groups data:', updateData.groups);
+        console.log('EditHackathonModal - Total groups to send:', updateData.groups.length);
+        
+        // Validate groups before sending
+        for (const group of updateData.groups) {
+          if (!group.name || !group.student_ids || group.student_ids.length === 0) {
+            throw new Error(`Group "${group.name || 'Unnamed'}" is missing required information`);
+          }
+        }
+        
       await onSave(updateData);
     } catch (error) {
       console.error('Error saving hackathon:', error);
+      alert(`Failed to update hackathon: ${error.message}`);
     } finally {
       setLoading(false);
     }

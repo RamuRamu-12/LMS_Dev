@@ -137,9 +137,10 @@ const AdminHackathonsPage = () => {
         console.log('AdminHackathonsPage - Error condition met:', {
           responseOk: response.ok,
           dataSuccess: updateData.success,
-          message: updateData.message
+          message: updateData.message,
+          error: updateData.error
         });
-        throw new Error(updateData.message || 'Failed to update hackathon');
+        throw new Error(updateData.message || updateData.error || 'Failed to update hackathon');
       }
 
       console.log('AdminHackathonsPage - Update successful, proceeding with modal close');
@@ -156,7 +157,7 @@ const AdminHackathonsPage = () => {
       
     } catch (error) {
       console.error('Error updating hackathon:', error);
-      alert('Failed to update hackathon');
+      alert(`Failed to update hackathon: ${error.message}`);
     }
   };
 
