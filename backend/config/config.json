@@ -1,60 +1,18 @@
 {
   "development": {
-    "username": "Admin",
-    "password": "npg_eBHirts68bJg",
-    "database": "LMS_Dev",
-    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
-    "port": "5432",
+    "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
-    "logging": true,
-    "pool": {
-      "max": 5,
-      "min": 0,
-      "acquire": 30000,
-      "idle": 10000
-    },
-    "dialectOptions": {
-      "ssl": {
-        "require": true,
-        "rejectUnauthorized": false
-      }
-    }
+    "logging": true
   },
   "test": {
-    "username": "Admin",
-    "password": "npg_eBHirts68bJg",
-    "database": "LMS_Dev",
-    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
-    "port": "5432",
+    "use_env_variable": "DATABASE_URL_TEST",
     "dialect": "postgres",
-    "logging": false,
-    "pool": {
-      "max": 5,
-      "min": 0,
-      "acquire": 30000,
-      "idle": 10000
-    },
-    "dialectOptions": {
-      "ssl": {
-        "require": true,
-        "rejectUnauthorized": false
-      }
-    }
+    "logging": false
   },
   "production": {
-    "username": "Admin",
-    "password": "npg_eBHirts68bJg",
-    "database": "LMS_Dev",
-    "host": "ep-floral-mode-afczlfe1-pooler.c-2.us-west-2.aws.neon.tech",
-    "port": "5432",
+    "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
     "logging": false,
-    "pool": {
-      "max": 20,
-      "min": 5,
-      "acquire": 30000,
-      "idle": 10000
-    },
     "dialectOptions": {
       "ssl": {
         "require": true,

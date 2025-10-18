@@ -156,11 +156,10 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Drop tables in reverse order
-    await queryInterface.dropTable('hackathon_group_members');
-    await queryInterface.dropTable('hackathon_groups');
-    
-    // Remove max_groups column from hackathons table
-    await queryInterface.removeColumn('hackathons', 'max_groups');
+    try {
+      await queryInterface.removeColumn('hackathons', 'max_groups');
+    } catch (error) {
+      // Column may not exist
+    }
   }
 };

@@ -70,6 +70,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('student_permissions');
+    // Rollback disabled to preserve data
   }
 };

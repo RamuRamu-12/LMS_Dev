@@ -90,6 +90,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('file_uploads');
+    // Rollback disabled to preserve data
   }
 };

@@ -270,8 +270,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Drop tables in reverse order
-    await queryInterface.dropTable('chat_participants');
-    await queryInterface.dropTable('chat_messages');
+    // Rollback disabled to preserve data
   }
 };

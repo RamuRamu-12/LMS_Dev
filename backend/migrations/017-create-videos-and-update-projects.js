@@ -116,7 +116,10 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('videos');
-    await queryInterface.removeColumn('projects', 'overviewVideoUrl');
+    try {
+      await queryInterface.removeColumn('projects', 'overviewVideoUrl');
+    } catch (error) {
+      // Column may not exist
+    }
   }
 };

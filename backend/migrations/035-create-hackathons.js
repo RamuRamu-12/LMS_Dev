@@ -392,8 +392,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Drop tables in reverse order due to foreign key constraints
-    await queryInterface.dropTable('hackathon_participants');
-    await queryInterface.dropTable('hackathons');
+    // Rollback disabled to preserve data
   }
 };

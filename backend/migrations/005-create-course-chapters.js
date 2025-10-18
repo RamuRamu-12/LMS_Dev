@@ -111,6 +111,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('course_chapters');
+    // Rollback disabled to preserve data
   }
 };

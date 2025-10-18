@@ -97,11 +97,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    try {
-      await queryInterface.dropTable('activity_logs');
-      console.log('✅ Dropped activity_logs table');
-    } catch (error) {
-      console.log('ℹ️ Activity logs rollback skipped:', error.message);
-    }
+    // Rollback disabled to preserve data
   }
 };

@@ -106,11 +106,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    try {
-      await queryInterface.dropTable('achievements');
-      console.log('✅ Dropped achievements table');
-    } catch (error) {
-      console.log('ℹ️ Achievements rollback skipped:', error.message);
-    }
+    // Rollback disabled to preserve data
   }
 };

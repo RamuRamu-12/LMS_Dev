@@ -130,11 +130,10 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Remove group_id column from hackathon_groups table
-    await queryInterface.removeColumn('hackathon_groups', 'group_id');
-    
-    // Drop tables in reverse order
-    await queryInterface.dropTable('group_members');
-    await queryInterface.dropTable('groups');
+    try {
+      await queryInterface.removeColumn('hackathon_groups', 'group_id');
+    } catch (error) {
+      // Column may not exist
+    }
   }
 };

@@ -28,15 +28,9 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    try {
-      // Remove the added columns
-      await queryInterface.removeColumn('users', 'bio');
-      await queryInterface.removeColumn('users', 'phone');
-      await queryInterface.removeColumn('users', 'location');
-      
-      console.log('✅ Removed profile fields from users table');
-    } catch (error) {
-      console.log('ℹ️ Profile fields rollback skipped:', error.message);
-    }
+    // Rollback disabled to preserve user profile data
+    // If you need to remove these columns, do it manually with a backup
+    console.log('⚠️ Skipping column removal for data safety');
+    console.log('ℹ️ User profile fields (bio, phone, location) will be preserved');
   }
 };

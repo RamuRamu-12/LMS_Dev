@@ -135,6 +135,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('hackathon_submissions');
+    // Rollback disabled to preserve data
   }
 };
