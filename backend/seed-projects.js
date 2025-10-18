@@ -21,7 +21,7 @@ const seedProjects = async () => {
       title: 'E-Commerce Web Application',
       description: 'Build a complete e-commerce platform with modern technologies including React, Node.js, and PostgreSQL. Learn full-stack development through hands-on project experience.',
       shortDescription: 'Full-stack e-commerce platform with React, Node.js, and PostgreSQL',
-      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
+      overview_video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       readmeContent: `# E-Commerce Web Application
 
 ## Project Overview
@@ -43,10 +43,11 @@ This project will guide you through building a complete e-commerce web applicati
 ## Project Structure
 The project is divided into 5 phases, each building upon the previous one.`,
       difficulty: 'intermediate',
-      estimatedDuration: 40,
+      estimated_duration: 40,
       order: 1,
-      isActive: true,
-      createdBy: adminUser.id
+      is_active: true,
+      is_published: true,
+      created_by: adminUser.id
     });
 
     // Create phases for Project 1
@@ -117,7 +118,7 @@ The project is divided into 5 phases, each building upon the previous one.`,
       title: 'Data Analytics Dashboard',
       description: 'Create an interactive data analytics dashboard using modern visualization libraries and real-time data processing. Learn data science and visualization techniques.',
       shortDescription: 'Interactive data analytics dashboard with real-time visualization',
-      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
+      overview_video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       readmeContent: `# Data Analytics Dashboard
 
 ## Project Overview
@@ -139,10 +140,11 @@ Build a comprehensive data analytics dashboard that processes and visualizes dat
 ## Project Structure
 The project is divided into 5 phases focusing on data collection, processing, visualization, and deployment.`,
       difficulty: 'intermediate',
-      estimatedDuration: 35,
+      estimated_duration: 35,
       order: 2,
-      isActive: true,
-      createdBy: adminUser.id
+      is_active: true,
+      is_published: true,
+      created_by: adminUser.id
     });
 
     // Create phases for Project 2
@@ -213,7 +215,7 @@ The project is divided into 5 phases focusing on data collection, processing, vi
       title: 'AI-Powered Learning Assistant',
       description: 'Develop an intelligent learning assistant using AI and machine learning technologies. Learn about natural language processing and AI integration.',
       shortDescription: 'Intelligent learning assistant with AI and machine learning',
-      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
+      overview_video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Replace with actual video URL
       readmeContent: `# AI-Powered Learning Assistant
 
 ## Project Overview
@@ -235,10 +237,11 @@ Build an intelligent learning assistant that helps students learn more effective
 ## Project Structure
 The project is divided into 5 phases covering AI integration, learning algorithms, and deployment.`,
       difficulty: 'advanced',
-      estimatedDuration: 45,
+      estimated_duration: 45,
       order: 3,
-      isActive: true,
-      createdBy: adminUser.id
+      is_active: true,
+      is_published: true,
+      created_by: adminUser.id
     });
 
     // Create phases for Project 3

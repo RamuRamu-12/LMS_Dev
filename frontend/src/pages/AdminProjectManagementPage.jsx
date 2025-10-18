@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { projectService } from '../services/projectService';
+import toast from 'react-hot-toast';
 
 const AdminProjectManagementPage = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Use React Query to fetch projects
   const { data: projectsData, isLoading: loading, error } = useQuery(
@@ -17,6 +19,20 @@ const AdminProjectManagementPage = () => {
     {
       refetchOnWindowFocus: false,
       retry: 3
+    }
+  );
+
+  // Seed projects mutation
+  const seedProjectsMutation = useMutation(
+    () => projectService.seedProjects(),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('admin-projects');
+        toast.success('Projects seeded successfully!');
+      },
+      onError: (error) => {
+        toast.error(`Failed to seed projects: ${error.message}`);
+      }
     }
   );
 
@@ -48,13 +64,11 @@ const AdminProjectManagementPage = () => {
             </div>
             {projects.length === 0 && (
               <button
-                onClick={() => {
-                  // This would typically call a seeding endpoint
-                  alert('Please run: cd backend && node run-project-seeding.js');
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => seedProjectsMutation.mutate()}
+                disabled={seedProjectsMutation.isLoading}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Seed Projects
+                {seedProjectsMutation.isLoading ? 'Seeding...' : 'Seed Projects'}
               </button>
             )}
           </div>

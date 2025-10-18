@@ -99,5 +99,16 @@ export const projectService = {
       console.error('Error updating project video URL:', error);
       throw error;
     }
+  },
+
+  // Seed projects (Admin only)
+  seedProjects: async () => {
+    try {
+      const response = await api.post('/projects/admin/seed');
+      return response.data;
+    } catch (error) {
+      console.error('Error seeding projects:', error);
+      throw error;
+    }
   }
 };

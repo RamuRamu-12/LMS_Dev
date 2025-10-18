@@ -4,9 +4,11 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const passport = require('passport');
 require('dotenv').config();
 
 const { sequelize } = require('./models');
+const passportConfig = require('./config/passport');
 const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courses');
 const userRoutes = require('./routes/users');
@@ -89,6 +91,9 @@ app.use(limiter);
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Compression middleware
 app.use(compression());

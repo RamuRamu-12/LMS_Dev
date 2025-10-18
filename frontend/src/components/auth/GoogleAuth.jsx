@@ -30,34 +30,45 @@ const GoogleAuth = ({ onSuccess, onError }) => {
 
   const handleCredentialResponse = async (response) => {
     try {
-      // Decode the JWT token to get user info
-      const payload = JSON.parse(atob(response.credential.split('.')[1]))
-      
-      // For now, we'll simulate a successful login
-      // In a real app, you'd send this to your backend for verification
-      const mockUser = {
-        id: 1,
-        name: payload.name,
-        email: payload.email,
-        avatar: payload.picture,
-        role: 'student' // Default role, can be changed by admin
+      // Send the Google credential to backend for verification
+      const backendResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/google/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          credential: response.credential
+        })
+      })
+
+      if (!backendResponse.ok) {
+        throw new Error(`HTTP error! status: ${backendResponse.status}`)
       }
 
-      const mockTokens = {
-        accessToken: 'mock-access-token',
-        refreshToken: 'mock-refresh-token'
-      }
+      const data = await backendResponse.json()
 
-      const result = await login(mockTokens.accessToken, mockTokens.refreshToken, false)
-      
-      if (result.success) {
-        onSuccess?.(result.user)
+      if (data.success) {
+        const result = await login(
+          data.data.tokens.accessToken, 
+          data.data.tokens.refreshToken, 
+          data.data.isNewUser
+        )
+        
+        if (result.success) {
+          onSuccess?.(result.user)
+        } else {
+          onError?.(result.error)
+        }
       } else {
-        onError?.(result.error)
+        onError?.(data.message || 'Google authentication failed')
       }
     } catch (error) {
       console.error('Google auth error:', error)
-      onError?.(error.message)
+      if (error.message.includes('Failed to fetch')) {
+        onError?.('Unable to connect to server. Please check your connection and try again.')
+      } else {
+        onError?.(error.message)
+      }
     }
   }
 

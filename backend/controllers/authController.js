@@ -155,6 +155,89 @@ const login = async (req, res, next) => {
 };
 
 /**
+ * Verify Google credential and authenticate user
+ */
+const verifyGoogleCredential = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+    
+    if (!credential) {
+      throw new AppError('Google credential is required', 400);
+    }
+    
+    // Verify the Google credential using Google's API
+    const { OAuth2Client } = require('google-auth-library');
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    const { sub: googleId, name: displayName, email, picture: avatar } = payload;
+    
+    // Check if user already exists
+    let user = await User.findByGoogleId(googleId);
+    let isNewUser = false;
+    
+    if (user) {
+      // Update existing user's information
+      await user.update({
+        name: displayName,
+        email: email,
+        avatar: avatar,
+        last_login: new Date(),
+        is_active: true
+      });
+    } else {
+      // Check if user exists with same email
+      user = await User.findByEmail(email);
+      
+      if (user) {
+        // Link Google account to existing user
+        await user.update({
+          google_id: googleId,
+          avatar: avatar,
+          last_login: new Date(),
+          is_active: true
+        });
+      } else {
+        // Create new user
+        user = await User.create({
+          google_id: googleId,
+          name: displayName,
+          email: email,
+          avatar: avatar,
+          role: 'student', // Default role
+          is_active: true,
+          last_login: new Date()
+        });
+        isNewUser = true;
+      }
+    }
+    
+    // Generate tokens
+    const tokens = generateTokenPair(user);
+    
+    logger.info(`User ${user.email} ${isNewUser ? 'registered' : 'logged in'} via Google credential verification`);
+    
+    res.json({
+      success: true,
+      message: isNewUser ? 'Account created successfully' : 'Login successful',
+      data: {
+        user: user.getPublicProfile(),
+        tokens,
+        isNewUser
+      }
+    });
+  } catch (error) {
+    logger.error('Google credential verification error:', error);
+    next(error);
+  }
+};
+
+/**
  * Google OAuth callback handler
  */
 const googleCallback = async (req, res, next) => {
@@ -337,6 +420,7 @@ const getAuthStatus = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  verifyGoogleCredential,
   googleCallback,
   refreshToken,
   logout,
