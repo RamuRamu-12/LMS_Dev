@@ -1,202 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
+import AccessDenied from '../components/common/AccessDenied';
+import { usePermissions } from '../hooks/usePermissions';
 import { useProjectProgress } from '../context/ProjectProgressContext';
+import { projectService } from '../services/projectService';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const RealtimeProjectsPageSimple = () => {
-  const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { initializeProject } = useProjectProgress();
+  const { permissions, loading: permissionsLoading, hasAccess, isAdmin } = usePermissions();
 
+  // Fetch projects from API
+  const { data: projectsData, isLoading: loading, error } = useQuery(
+    'realtime-projects',
+    () => projectService.getProjects(),
+    {
+      refetchOnWindowFocus: false,
+      retry: 3
+    }
+  );
+
+  const projects = projectsData?.data?.projects || projectsData?.data || [];
+
+  // Set first project as selected when projects are loaded
   useEffect(() => {
-    // Mock data for testing
-    const mockProjects = [
-      {
-        id: 1,
-        title: 'E-Commerce Web Application',
-        description: 'Build a complete e-commerce platform with modern technologies including React, Node.js, and PostgreSQL.',
-        shortDescription: 'Full-stack e-commerce platform with React, Node.js, and PostgreSQL',
-        videoUrl: null,
-        difficulty: 'intermediate',
-        estimatedDuration: 40,
-        isActive: true,
-        order: 1,
-        phases: [
-          {
-            id: 1,
-            title: 'Phase 1 - BRD (Business Requirements Document)',
-            description: 'Define project scope, requirements, and technical specifications',
-            phaseNumber: 1,
-            phaseType: 'BRD',
-            estimatedDuration: 8,
-            order: 1
-          },
-          {
-            id: 2,
-            title: 'Phase 2 - UI/UX (User Interface/User Experience)',
-            description: 'Design user interface and user experience for the e-commerce platform',
-            phaseNumber: 2,
-            phaseType: 'UI/UX',
-            estimatedDuration: 8,
-            order: 2
-          },
-          {
-            id: 3,
-            title: 'Phase 3 - Development',
-            description: 'Implement the e-commerce application using React, Node.js, and PostgreSQL',
-            phaseNumber: 3,
-            phaseType: 'Development',
-            estimatedDuration: 16,
-            order: 3
-          },
-          {
-            id: 4,
-            title: 'Phase 4 - Testing & Quality Assurance',
-            description: 'Test the application thoroughly and ensure quality standards',
-            phaseNumber: 4,
-            phaseType: 'Testing',
-            estimatedDuration: 4,
-            order: 4
-          },
-          {
-            id: 5,
-            title: 'Phase 5 - Deployment & Launch',
-            description: 'Deploy the application to production and launch',
-            phaseNumber: 5,
-            phaseType: 'Deployment',
-            estimatedDuration: 4,
-            order: 5
-          }
-        ]
-      },
-      {
-        id: 2,
-        title: 'Data Analytics Dashboard',
-        description: 'Create an interactive data analytics dashboard using modern visualization libraries and real-time data processing.',
-        shortDescription: 'Interactive data analytics dashboard with real-time visualization',
-        videoUrl: null,
-        difficulty: 'intermediate',
-        estimatedDuration: 35,
-        isActive: true,
-        order: 2,
-        phases: [
-          {
-            id: 6,
-            title: 'Phase 1 - BRD (Business Requirements Document)',
-            description: 'Define data requirements and analytics objectives',
-            phaseNumber: 1,
-            phaseType: 'BRD',
-            estimatedDuration: 7,
-            order: 1
-          },
-          {
-            id: 7,
-            title: 'Phase 2 - UI/UX (User Interface/User Experience)',
-            description: 'Design dashboard interface and user experience',
-            phaseNumber: 2,
-            phaseType: 'UI/UX',
-            estimatedDuration: 7,
-            order: 2
-          },
-          {
-            id: 8,
-            title: 'Phase 3 - Development',
-            description: 'Build the analytics dashboard with data processing and visualization',
-            phaseNumber: 3,
-            phaseType: 'Development',
-            estimatedDuration: 14,
-            order: 3
-          },
-          {
-            id: 9,
-            title: 'Phase 4 - Testing & Quality Assurance',
-            description: 'Test dashboard functionality and data accuracy',
-            phaseNumber: 4,
-            phaseType: 'Testing',
-            estimatedDuration: 3,
-            order: 4
-          },
-          {
-            id: 10,
-            title: 'Phase 5 - Deployment & Launch',
-            description: 'Deploy dashboard and set up monitoring',
-            phaseNumber: 5,
-            phaseType: 'Deployment',
-            estimatedDuration: 4,
-            order: 5
-          }
-        ]
-      },
-      {
-        id: 3,
-        title: 'AI-Powered Learning Assistant',
-        description: 'Develop an intelligent learning assistant using AI and machine learning technologies.',
-        shortDescription: 'Intelligent learning assistant with AI and machine learning',
-        videoUrl: null,
-        difficulty: 'advanced',
-        estimatedDuration: 45,
-        isActive: true,
-        order: 3,
-        phases: [
-          {
-            id: 11,
-            title: 'Phase 1 - BRD (Business Requirements Document)',
-            description: 'Define AI requirements and learning objectives',
-            phaseNumber: 1,
-            phaseType: 'BRD',
-            estimatedDuration: 9,
-            order: 1
-          },
-          {
-            id: 12,
-            title: 'Phase 2 - UI/UX (User Interface/User Experience)',
-            description: 'Design AI-powered learning interface',
-            phaseNumber: 2,
-            phaseType: 'UI/UX',
-            estimatedDuration: 9,
-            order: 2
-          },
-          {
-            id: 13,
-            title: 'Phase 3 - Development',
-            description: 'Implement AI learning assistant with machine learning',
-            phaseNumber: 3,
-            phaseType: 'Development',
-            estimatedDuration: 18,
-            order: 3
-          },
-          {
-            id: 14,
-            title: 'Phase 4 - Testing & Quality Assurance',
-            description: 'Test AI functionality and learning effectiveness',
-            phaseNumber: 4,
-            phaseType: 'Testing',
-            estimatedDuration: 5,
-            order: 4
-          },
-          {
-            id: 15,
-            title: 'Phase 5 - Deployment & Launch',
-            description: 'Deploy AI assistant and monitor performance',
-            phaseNumber: 5,
-            phaseType: 'Deployment',
-            estimatedDuration: 4,
-            order: 5
-          }
-        ]
-      }
-    ];
-
-    setTimeout(() => {
-      setProjects(mockProjects);
-      setSelectedProject(mockProjects[0]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    if (projects.length > 0 && !selectedProject) {
+      setSelectedProject(projects[0]);
+    }
+  }, [projects, selectedProject]);
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
@@ -211,13 +48,54 @@ const RealtimeProjectsPageSimple = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading projects...</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" />
         </div>
       </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">Error loading projects: {error.message}</p>
+            <p className="text-gray-500">Please check:</p>
+            <ul className="text-sm text-gray-400 mt-2">
+              <li>1. Backend server is running (npm start in backend folder)</li>
+              <li>2. Database is seeded with projects</li>
+              <li>3. Check browser console for errors</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const handleContactAdmin = () => {
+    // You can implement email functionality or redirect to contact page
+    window.location.href = 'mailto:admin@gnanamai.com?subject=Request for Realtime Projects Access&body=Hello, I would like to request access to realtime projects. My student ID is: [Your Student ID]';
+  };
+
+  // Check permissions
+  if (permissionsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied if user doesn't have permission and is not admin
+  if (!isAdmin && !hasAccess('realtimeProjects')) {
+    return <AccessDenied feature="realtimeProjects" onContactAdmin={handleContactAdmin} />;
   }
 
   return (
@@ -240,14 +118,38 @@ const RealtimeProjectsPageSimple = () => {
         </motion.div>
 
         {/* Project Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-8"
-        >
-          <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
-            {projects.map((project, index) => (
+        {projects.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center py-12"
+          >
+            <div className="text-gray-400 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Projects Available</h3>
+            <p className="text-gray-600 mb-4">
+              No projects are currently available. Please check back later or contact an administrator.
+            </p>
+            <p className="text-sm text-gray-500">Please check:</p>
+            <ul className="text-sm text-gray-400 mt-2">
+              <li>1. Backend server is running (npm start in backend folder)</li>
+              <li>2. Database is seeded with projects</li>
+              <li>3. Check browser console for errors</li>
+            </ul>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mb-8"
+          >
+            <div className="flex flex-col md:flex-row gap-4 justify-center items-center">
+              {projects.map((project, index) => (
               <motion.button
                 key={project.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -280,12 +182,13 @@ const RealtimeProjectsPageSimple = () => {
                   {index + 1}
                 </div>
               </motion.button>
-            ))}
-          </div>
-        </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {/* Project Content */}
-        {selectedProject && (
+        {selectedProject && projects.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -311,7 +214,7 @@ const RealtimeProjectsPageSimple = () => {
                     </div>
                     <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full">
                       <span className="text-sm font-medium">Duration:</span>
-                      <span className="font-semibold">{selectedProject.estimatedDuration}h</span>
+                      <span className="font-semibold">{selectedProject.estimated_duration || selectedProject.estimatedDuration}h</span>
                     </div>
                     <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full">
                       <span className="text-sm font-medium">Phases:</span>
@@ -330,9 +233,9 @@ const RealtimeProjectsPageSimple = () => {
                 {/* Video Display Area */}
                 <div className="mb-8">
                   <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden shadow-2xl relative">
-                    {selectedProject.videoUrl ? (
+                    {(selectedProject.video_url || selectedProject.videoUrl) ? (
                       <iframe
-                        src={selectedProject.videoUrl.replace('watch?v=', 'embed/')}
+                        src={(selectedProject.video_url || selectedProject.videoUrl).replace('watch?v=', 'embed/')}
                         className="w-full h-full"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen

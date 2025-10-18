@@ -337,6 +337,26 @@ const getProjectStats = async (req, res) => {
   }
 };
 
+// Seed projects (Admin only)
+const seedProjects = async (req, res) => {
+  try {
+    const seedProjectsScript = require('../seed-projects');
+    await seedProjectsScript();
+    
+    res.json({
+      success: true,
+      message: 'Projects seeded successfully'
+    });
+  } catch (error) {
+    logger.error('Error seeding projects:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error seeding projects',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllProjects,
   getProjectById,
@@ -344,5 +364,6 @@ module.exports = {
   updateProject,
   deleteProject,
   toggleProjectStatus,
-  getProjectStats
+  getProjectStats,
+  seedProjects
 };

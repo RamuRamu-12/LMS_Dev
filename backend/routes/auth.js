@@ -29,6 +29,9 @@ router.get('/google/callback',
   authController.googleCallback
 );
 
+// Google credential verification (for frontend Google Sign-In)
+router.post('/google/verify', authController.verifyGoogleCredential);
+
 // Token refresh
 router.post('/refresh', authController.refreshToken);
 

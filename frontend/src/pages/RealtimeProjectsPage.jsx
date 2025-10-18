@@ -31,7 +31,9 @@ const RealtimeProjectsPage = () => {
       setLoading(true);
       const response = await projectService.getProjects();
       if (response.success) {
-        setProjects(response.data);
+        // Extract projects array from response.data.projects
+        const projectsArray = response.data?.projects || response.data || [];
+        setProjects(projectsArray);
       } else {
         throw new Error(response.message || 'Failed to fetch projects');
       }
@@ -139,7 +141,7 @@ const RealtimeProjectsPage = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
-            {projects.map((project, index) => (
+            {(projects || []).map((project, index) => (
               <div key={project.id} className="bg-white rounded-lg shadow-lg p-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {project.title}

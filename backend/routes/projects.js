@@ -25,6 +25,7 @@ router.put('/:id', projectController.updateProject);
 router.delete('/:id', projectController.deleteProject);
 router.patch('/:id/status', projectController.toggleProjectStatus);
 router.get('/admin/stats', projectController.getProjectStats);
+router.post('/admin/seed', projectController.seedProjects);
 
 // Document management
 router.post('/:projectId/documents', documentController.upload.single('file'), documentController.uploadDocument);

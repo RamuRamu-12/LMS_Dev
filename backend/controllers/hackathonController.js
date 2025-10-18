@@ -983,10 +983,9 @@ const getHackathonGroups = async (req, res, next) => {
     for (let group of groups) {
       console.log(`Fetching members for group ${group.id} (${group.name})`);
       
-      // Use raw SQL to avoid column issues
+      // Use raw SQL to avoid column issues - no id column exists
       const memberResults = await sequelize.query(`
         SELECT 
-          hgm.id,
           hgm.group_id,
           hgm.student_id,
           hgm.joined_at,
@@ -1009,8 +1008,8 @@ const getHackathonGroups = async (req, res, next) => {
       console.log(`Found ${memberResults.length} members for group ${group.id}`);
       
       // Transform the raw SQL results to match expected format
-      const transformedMembers = memberResults.map(member => ({
-        id: member.id,
+      const transformedMembers = memberResults.map((member, index) => ({
+        id: `${group.id}_${member.student_id}_${index}`, // Generate unique ID since no id column exists
         group_id: member.group_id,
         student_id: member.student_id,
         joined_at: member.joined_at,
@@ -1423,7 +1422,6 @@ const createOrUpdateSubmission = async (req, res, next) => {
       console.log(`Group membership found:`, !!groupMembership);
       if (groupMembership) {
         console.log(`Group membership details:`, {
-          id: groupMembership.id,
           student_id: groupMembership.student_id,
           group_id: groupMembership.group_id,
           group_name: groupMembership.group?.name,
@@ -1470,6 +1468,43 @@ const createOrUpdateSubmission = async (req, res, next) => {
     }
 
     console.log(`Final eligibility result: ${isEligible}`);
+    
+    // If not eligible, check if user is in any group for this hackathon
+    if (!isEligible) {
+      console.log(`User not enrolled, checking group membership...`);
+      
+      try {
+        // Simple direct query: check if user is in any group for this hackathon
+        const userGroupMembership = await HackathonGroupMember.findOne({
+          where: {
+            student_id: req.user.id
+          },
+          include: [
+            {
+              model: HackathonGroup,
+              as: 'group',
+              where: {
+                hackathon_id: id
+              }
+            }
+          ]
+        });
+        
+        console.log(`Group membership found:`, !!userGroupMembership);
+        
+        if (userGroupMembership) {
+          console.log(`User is in group: ${userGroupMembership.group?.name} for hackathon ${id}`);
+          isEligible = true;
+        } else {
+          console.log(`User ${req.user.id} is not in any group for hackathon ${id}`);
+        }
+      } catch (error) {
+        console.error(`Error checking group membership:`, error.message);
+        console.error(`Full error:`, error);
+        // Don't set isEligible = true if there's an error
+      }
+    }
+    
     console.log(`=== END ELIGIBILITY CHECK ===\n`);
 
     if (!isEligible) {

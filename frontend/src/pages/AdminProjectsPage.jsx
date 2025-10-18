@@ -1,93 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useQuery } from 'react-query';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { projectService } from '../services/projectService';
 import ProjectVideoManager from '../components/admin/ProjectVideoManager';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { FiVideo, FiEdit, FiEye, FiExternalLink } from 'react-icons/fi';
 import Header from '../components/common/Header';
+import toast from 'react-hot-toast';
 
 const AdminProjectsPage = () => {
   const [selectedProject, setSelectedProject] = useState(null);
   const [showVideoManager, setShowVideoManager] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Mock data for now - in real app, this would come from API
-  const mockProjects = [
+  // Fetch projects from API
+  const { data: projectsData, isLoading: loading, error } = useQuery(
+    'admin-projects',
+    () => projectService.getProjects(),
     {
-      id: 1,
-      title: 'E-Commerce Web Application',
-      description: 'Build a complete e-commerce platform with modern technologies including React, Node.js, and PostgreSQL.',
-      difficulty: 'intermediate',
-      estimatedDuration: 40,
-       videoUrl: null,
-      isActive: true,
-      createdAt: '2024-01-15',
-      phases: [
-        {
-          id: 1,
-          title: 'Phase 1 - BRD (Business Requirements Document)',
-          description: 'Define project scope, requirements, and technical specifications',
-          phaseNumber: 1,
-          phaseType: 'BRD',
-          estimatedDuration: 8,
-          order: 1
-        }
-      ]
-    },
-    {
-      id: 2,
-      title: 'Data Analytics Dashboard',
-      description: 'Create an interactive data analytics dashboard using modern visualization libraries and real-time data processing.',
-      difficulty: 'intermediate',
-      estimatedDuration: 35,
-      videoUrl: null,
-      isActive: true,
-      createdAt: '2024-01-20',
-      phases: [
-        {
-          id: 6,
-          title: 'Phase 1 - BRD (Business Requirements Document)',
-          description: 'Define data requirements and analytics objectives',
-          phaseNumber: 1,
-          phaseType: 'BRD',
-          estimatedDuration: 7,
-          order: 1
-        }
-      ]
-    },
-    {
-      id: 3,
-      title: 'AI-Powered Learning Assistant',
-      description: 'Develop an intelligent learning assistant using AI and machine learning technologies.',
-      difficulty: 'advanced',
-      estimatedDuration: 45,
-      videoUrl: null,
-      isActive: true,
-      createdAt: '2024-01-25',
-      phases: [
-        {
-          id: 11,
-          title: 'Phase 1 - BRD (Business Requirements Document)',
-          description: 'Define AI requirements and learning objectives',
-          phaseNumber: 1,
-          phaseType: 'BRD',
-          estimatedDuration: 9,
-          order: 1
-        }
-      ]
+      refetchOnWindowFocus: false,
+      retry: 3
     }
-  ];
+  );
 
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Seed projects mutation
+  const seedProjectsMutation = useMutation(
+    () => projectService.seedProjects(),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('admin-projects');
+        toast.success('Projects seeded successfully!');
+      },
+      onError: (error) => {
+        toast.error(`Failed to seed projects: ${error.message}`);
+      }
+    }
+  );
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProjects(mockProjects);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const projects = projectsData?.data?.projects || projectsData?.data || [];
 
   const handleManageVideo = (project) => {
     setSelectedProject(project);
@@ -101,8 +51,26 @@ const AdminProjectsPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-        <Header />
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-8">
+            <p className="text-red-500 mb-4">Error loading projects: {error.message}</p>
+            <p className="text-gray-500">Please check:</p>
+            <ul className="text-sm text-gray-400 mt-2">
+              <li>1. Backend server is running (npm start in backend folder)</li>
+              <li>2. Database is seeded with projects</li>
+              <li>3. Check browser console for errors</li>
+            </ul>
+          </div>
+        </div>
       </div>
     );
   }
@@ -118,17 +86,40 @@ const AdminProjectsPage = () => {
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Realtime Projects Management
-          </h1>
-          <p className="text-gray-600">
-            Manage project videos and content for the realtime projects section
-          </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Realtime Projects Management
+              </h1>
+              <p className="text-gray-600">
+                Manage project videos and content for the realtime projects section
+              </p>
+            </div>
+            {projects.length === 0 && (
+              <button
+                onClick={() => seedProjectsMutation.mutate()}
+                disabled={seedProjectsMutation.isLoading}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {seedProjectsMutation.isLoading ? 'Seeding...' : 'Seed Projects'}
+              </button>
+            )}
+          </div>
         </motion.div>
 
         {/* Projects Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {projects.map((project, index) => (
+          {projects.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <p className="text-gray-500 mb-4">No projects found. Please check:</p>
+              <ul className="text-sm text-gray-400">
+                <li>1. Backend server is running (npm start in backend folder)</li>
+                <li>2. Database is seeded with projects</li>
+                <li>3. Check browser console for errors</li>
+              </ul>
+            </div>
+          ) : (
+            projects.map((project, index) => (
             <motion.div
               key={project.id}
               initial={{ opacity: 0, y: 20 }}
@@ -148,11 +139,11 @@ const AdminProjectsPage = () => {
                     </p>
                   </div>
                   <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    project.isActive 
+                    project.is_published 
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-gray-100 text-gray-700'
                   }`}>
-                    {project.isActive ? 'Active' : 'Inactive'}
+                    {project.is_published ? 'Published' : 'Draft'}
                   </div>
                 </div>
 
@@ -162,10 +153,10 @@ const AdminProjectsPage = () => {
                     <span className="font-medium capitalize">{project.difficulty}</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                    <span className="font-medium">{project.estimatedDuration}h</span>
+                    <span className="font-medium">{project.estimated_duration || project.estimatedDuration}h</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                    <span className="font-medium">{project.phases?.length || 5} phases</span>
+                    <span className="font-medium">{project.phases?.length || 0} phases</span>
                   </div>
                 </div>
               </div>
@@ -175,7 +166,7 @@ const AdminProjectsPage = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      project.videoUrl 
+                      project.video_url || project.videoUrl
                         ? 'bg-green-100 text-green-600' 
                         : 'bg-gray-100 text-gray-400'
                     }`}>
@@ -183,10 +174,10 @@ const AdminProjectsPage = () => {
                     </div>
                     <div>
                       <p className="font-medium text-gray-800">
-                        {project.videoUrl ? 'Video Uploaded' : 'No Video'}
+                        {project.video_url || project.videoUrl ? 'Video Uploaded' : 'No Video'}
                       </p>
                       <p className="text-sm text-gray-500">
-                        {project.videoUrl ? 'Ready for students' : 'Upload required'}
+                        {project.video_url || project.videoUrl ? 'Ready for students' : 'Upload required'}
                       </p>
                     </div>
                   </div>
@@ -209,9 +200,9 @@ const AdminProjectsPage = () => {
                   >
                     <FiEye className="w-4 h-4" />
                   </button>
-                  {project.videoUrl && (
+                  {(project.video_url || project.videoUrl) && (
                     <a
-                      href={project.videoUrl}
+                      href={project.video_url || project.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
@@ -222,7 +213,8 @@ const AdminProjectsPage = () => {
                 </div>
               </div>
             </motion.div>
-          ))}
+            ))
+          )}
         </div>
 
         {/* Stats Summary */}
@@ -251,7 +243,7 @@ const AdminProjectsPage = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  {projects.filter(p => p.videoUrl).length}
+                  {projects.filter(p => p.video_url || p.videoUrl).length}
                 </p>
                 <p className="text-gray-600 text-sm">Videos Uploaded</p>
               </div>
@@ -265,7 +257,7 @@ const AdminProjectsPage = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  {projects.reduce((total, p) => total + p.estimatedDuration, 0)}h
+                  {projects.reduce((total, p) => total + (p.estimated_duration || p.estimatedDuration || 0), 0)}h
                 </p>
                 <p className="text-gray-600 text-sm">Total Duration</p>
               </div>
@@ -279,7 +271,7 @@ const AdminProjectsPage = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-800">
-                  {Math.round((projects.filter(p => p.videoUrl).length / projects.length) * 100)}%
+                  {projects.length > 0 ? Math.round((projects.filter(p => p.video_url || p.videoUrl).length / projects.length) * 100) : 0}%
                 </p>
                 <p className="text-gray-600 text-sm">Completion Rate</p>
               </div>
