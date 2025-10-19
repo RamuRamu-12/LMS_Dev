@@ -48,7 +48,8 @@ const HackathonPage = () => {
       }
       
       
-      const response = await fetch('/api/hackathons', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/hackathons`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

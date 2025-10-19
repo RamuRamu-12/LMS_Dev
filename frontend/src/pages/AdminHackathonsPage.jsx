@@ -6,6 +6,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import EditHackathonModal from '../components/EditHackathonModal';
 import HackathonSubmissionsManagement from '../components/admin/HackathonSubmissionsManagement';
 import Header from '../components/common/Header';
+import { api } from '../services/api';
 
 const AdminHackathonsPage = () => {
   const [hackathons, setHackathons] = useState([]);
@@ -60,22 +61,12 @@ const AdminHackathonsPage = () => {
         throw new Error('Authentication token not found. Please login again.');
       }
       
-      const response = await fetch('/api/hackathons', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.get('/hackathons');
 
       console.log('AdminHackathonsPage - Response status:', response.status);
-      
-      if (!response.ok) {
-        console.error('AdminHackathonsPage - Response not OK:', response.status, response.statusText);
-        throw new Error(`Failed to fetch hackathons: ${response.status}`);
-      }
+      console.log('AdminHackathonsPage - Response data:', response.data);
 
-      const data = await response.json();
-      console.log('AdminHackathonsPage - Response data:', data);
+      const data = response.data;
       console.log('AdminHackathonsPage - First hackathon groups:', data.data?.hackathons?.[0]?.groups);
       setHackathons(data.data?.hackathons || []);
     } catch (err) {
@@ -116,26 +107,18 @@ const AdminHackathonsPage = () => {
       console.log('AdminHackathonsPage - Sending update request for hackathon:', selectedHackathon.id);
       console.log('AdminHackathonsPage - Update data:', updatedData);
       
-      const response = await fetch(`/api/hackathons/${selectedHackathon.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedData)
-      });
+      const response = await api.put(`/hackathons/${selectedHackathon.id}`, updatedData);
 
       console.log('AdminHackathonsPage - Response status:', response.status);
-      console.log('AdminHackathonsPage - Response ok:', response.ok);
+      console.log('AdminHackathonsPage - Response data:', response.data);
 
-      const updateData = await response.json();
+      const updateData = response.data;
       console.log('AdminHackathonsPage - Update response:', updateData);
       console.log('AdminHackathonsPage - Response success:', updateData.success);
       console.log('AdminHackathonsPage - Updated hackathon groups:', updateData.data?.groups);
 
-      if (!response.ok || !updateData.success) {
+      if (!updateData.success) {
         console.log('AdminHackathonsPage - Error condition met:', {
-          responseOk: response.ok,
           dataSuccess: updateData.success,
           message: updateData.message,
           error: updateData.error
@@ -183,16 +166,10 @@ const AdminHackathonsPage = () => {
         throw new Error('Authentication token not found');
       }
       
-      const response = await fetch(`/api/hackathons/${hackathonId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await api.delete(`/hackathons/${hackathonId}`);
 
-      if (!response.ok) {
-        throw new Error('Failed to delete hackathon');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to delete hackathon');
       }
 
       // Remove from local state
@@ -226,19 +203,12 @@ const AdminHackathonsPage = () => {
         throw new Error('Authentication token not found');
       }
       
-      const response = await fetch(`/api/hackathons/${hackathon.id}/publish`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          is_published: !hackathon.is_published
-        })
+      const response = await api.put(`/hackathons/${hackathon.id}/publish`, {
+        is_published: !hackathon.is_published
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to update hackathon');
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to update hackathon');
       }
 
       // Update local state

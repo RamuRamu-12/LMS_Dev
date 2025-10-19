@@ -22,7 +22,8 @@ export const usePermissions = () => {
 
       // Fetch permissions from backend API
       console.log('Attempting to fetch permissions from /api/rbac/my-permissions');
-      const response = await fetch('/api/rbac/my-permissions', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/rbac/my-permissions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

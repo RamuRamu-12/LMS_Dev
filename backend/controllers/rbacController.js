@@ -83,6 +83,7 @@ const updateStudentPermissions = async (req, res) => {
     }
 
     console.log('Updating student permissions in bulk');
+    console.log('Received permissions data:', JSON.stringify(permissions, null, 2));
 
     const updatePromises = Object.entries(permissions).map(async ([studentId, studentPermissions]) => {
       try {
@@ -99,6 +100,15 @@ const updateStudentPermissions = async (req, res) => {
           return;
         }
 
+        // Skip if studentPermissions is empty or has no valid values
+        if (!studentPermissions || 
+            (studentPermissions.courses === undefined && 
+             studentPermissions.hackathons === undefined && 
+             studentPermissions.realtimeProjects === undefined)) {
+          console.log(`Skipping student ${studentId} - no permission values provided`);
+          return;
+        }
+
         // Find or create permission record
         const [permission, created] = await StudentPermission.findOrCreate({
           where: { student_id: studentId },
@@ -111,15 +121,36 @@ const updateStudentPermissions = async (req, res) => {
         });
 
         if (!created) {
-          // Update existing permission
-          await permission.update({
-            courses: studentPermissions.courses !== undefined ? studentPermissions.courses : permission.courses,
-            hackathons: studentPermissions.hackathons !== undefined ? studentPermissions.hackathons : permission.hackathons,
-            realtime_projects: studentPermissions.realtimeProjects !== undefined ? studentPermissions.realtimeProjects : permission.realtime_projects
-          });
+          // Update existing permission - only update fields that are explicitly provided
+          const updateData = {};
+          
+          if (studentPermissions.courses !== undefined) {
+            updateData.courses = studentPermissions.courses;
+          }
+          if (studentPermissions.hackathons !== undefined) {
+            updateData.hackathons = studentPermissions.hackathons;
+          }
+          if (studentPermissions.realtimeProjects !== undefined) {
+            updateData.realtime_projects = studentPermissions.realtimeProjects;
+          }
+          
+          // Only update if there are actual changes
+          if (Object.keys(updateData).length > 0) {
+            console.log(`Updating student ${studentId} with data:`, updateData);
+            await permission.update(updateData);
+            console.log(`✅ Successfully updated permissions for student ${studentId}`);
+          } else {
+            console.log(`No changes needed for student ${studentId}`);
+          }
+        } else {
+          console.log(`✅ Created new permission record for student ${studentId}`);
         }
 
-        console.log(`Updated permissions for student ${studentId}:`, studentPermissions);
+        console.log(`Final permissions for student ${studentId}:`, {
+          courses: permission.courses,
+          hackathons: permission.hackathons,
+          realtime_projects: permission.realtime_projects
+        });
       } catch (error) {
         console.error(`Error updating permissions for student ${studentId}:`, error);
         throw error;
