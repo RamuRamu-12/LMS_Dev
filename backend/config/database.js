@@ -16,7 +16,12 @@ module.exports = {
       idle: 10000
     },
     dialectOptions: {
-      ssl: false
+      ssl: process.env.DB_HOST && process.env.DB_HOST.includes('neon.tech') 
+        ? {
+            require: true,
+            rejectUnauthorized: false
+          }
+        : false
     }
   },
   test: {
@@ -34,7 +39,12 @@ module.exports = {
       idle: 10000
     },
     dialectOptions: {
-      ssl: false
+      ssl: process.env.DB_HOST && process.env.DB_HOST.includes('neon.tech') 
+        ? {
+            require: true,
+            rejectUnauthorized: false
+          }
+        : false
     }
   },
   production: {
