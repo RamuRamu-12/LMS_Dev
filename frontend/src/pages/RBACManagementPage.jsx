@@ -37,10 +37,22 @@ const RBACManagementPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data && data.success && data.data) {
-          setPermissions(data.data);
+          console.log('Fetched permissions from backend:', data.data);
+          // Merge fetched permissions with existing ones, but don't override with empty objects
+          setPermissions(prev => {
+            const merged = { ...prev };
+            Object.entries(data.data).forEach(([studentId, permissions]) => {
+              // Only update if the fetched permissions are not empty
+              if (permissions && Object.keys(permissions).length > 0) {
+                merged[studentId] = permissions;
+              }
+            });
+            return merged;
+          });
         }
       } else {
         // If response is not ok, use default permissions
+        console.log('Failed to fetch permissions, response not ok:', response.status);
         return;
       }
     } catch (error) {
@@ -81,10 +93,12 @@ const RBACManagementPage = () => {
             realtimeProjects: false
           };
         });
+        console.log('Initial permissions created for students:', initialPermissions);
         setPermissions(initialPermissions);
         
         // Try to fetch existing permissions, but don't fail if it doesn't work
-        fetchStudentPermissions().catch(() => {
+        fetchStudentPermissions().catch((error) => {
+          console.log('Failed to fetch existing permissions, using defaults:', error);
           // Use defaults if fetch fails
         });
       } else {
@@ -119,6 +133,7 @@ const RBACManagementPage = () => {
       Object.entries(permissions).forEach(([studentId, studentPermissions]) => {
         // Only include students that have actual permission values (not empty objects)
         if (studentPermissions && 
+            Object.keys(studentPermissions).length > 0 &&
             (studentPermissions.courses !== undefined || 
              studentPermissions.hackathons !== undefined || 
              studentPermissions.realtimeProjects !== undefined)) {
@@ -127,6 +142,7 @@ const RBACManagementPage = () => {
       });
       
       console.log('Saving permissions (filtered):', filteredPermissions);
+      console.log('Original permissions object:', permissions);
       
       // Don't send request if no permissions to update
       if (Object.keys(filteredPermissions).length === 0) {
@@ -151,9 +167,10 @@ const RBACManagementPage = () => {
 
       if (response.ok) {
         if (responseData && responseData.success) {
+          console.log('✅ Permissions saved successfully!');
           alert('Permissions saved successfully!');
-          // Refresh permissions after saving
-          await fetchStudentPermissions();
+          // Don't refresh - keep the current state since it's already correct
+          console.log('✅ Permissions state maintained - no refresh needed');
         } else {
           alert('Failed to save permissions. Please try again.');
         }
@@ -176,13 +193,16 @@ const RBACManagementPage = () => {
         realtimeProjects: false
       };
       
-      return {
+      const newPermissions = {
         ...prev,
         [studentId]: {
           ...currentStudentPerms,
           [permissionType]: !currentStudentPerms[permissionType]
         }
       };
+      
+      console.log(`Toggled ${permissionType} for student ${studentId}:`, newPermissions[studentId]);
+      return newPermissions;
     });
   };
 

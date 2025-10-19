@@ -28,7 +28,7 @@ const getProjectVideos = async (req, res) => {
           attributes: ['id', 'name', 'email']
         }
       ],
-      order: [['video_type', 'ASC'], ['phase_number', 'ASC'], ['createdAt', 'DESC']]
+      order: [['video_type', 'ASC'], ['phase_number', 'ASC'], ['created_at', 'DESC']]
     });
 
     res.json({
@@ -429,7 +429,7 @@ const getVideoStats = async (req, res) => {
           attributes: ['id', 'title']
         }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
       limit: 10
     });
 

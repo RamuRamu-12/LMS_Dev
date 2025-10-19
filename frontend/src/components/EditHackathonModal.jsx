@@ -615,7 +615,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
                         </div>
                         
                         <textarea
-                          value={group.description}
+                          value={group.description || ''}
                           onChange={(e) => updateGroup(group.id, { description: e.target.value })}
                           placeholder="Group description (optional)"
                           rows={2}

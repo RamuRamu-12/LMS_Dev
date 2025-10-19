@@ -58,11 +58,22 @@ module.exports = {
         allowNull: true,
         comment: 'Maximum number of participants allowed'
       },
+      max_groups: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        comment: 'Maximum number of groups allowed'
+      },
       current_participants: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 0,
         comment: 'Current number of participants'
+      },
+      is_temp: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+        comment: 'Flag to identify temporary hackathons for group management'
       },
       prize_description: {
         type: Sequelize.TEXT,

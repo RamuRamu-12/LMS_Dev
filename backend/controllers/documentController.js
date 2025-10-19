@@ -62,11 +62,11 @@ const getProjectDocuments = async (req, res) => {
     const { projectId } = req.params;
     const { documentType, phase, isPublic } = req.query;
     
-    const whereClause = { projectId };
+    const whereClause = { project_id: projectId };
     
-    if (documentType) whereClause.documentType = documentType;
+    if (documentType) whereClause.document_type = documentType;
     if (phase) whereClause.phase = phase;
-    if (isPublic !== undefined) whereClause.isPublic = isPublic === 'true';
+    if (isPublic !== undefined) whereClause.is_public = isPublic === 'true';
 
     const documents = await Document.findAll({
       where: whereClause,
@@ -79,10 +79,10 @@ const getProjectDocuments = async (req, res) => {
         {
           model: User,
           as: 'uploader',
-          attributes: ['id', 'firstName', 'lastName', 'email']
+          attributes: ['id', 'name', 'email']
         }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['created_at', 'DESC']]
     });
 
     res.json({
@@ -114,7 +114,7 @@ const getDocumentById = async (req, res) => {
         {
           model: User,
           as: 'uploader',
-          attributes: ['id', 'firstName', 'lastName', 'email']
+          attributes: ['id', 'name', 'email']
         }
       ]
     });
@@ -176,22 +176,22 @@ const uploadDocument = async (req, res) => {
     const fileUrl = `/uploads/documents/${req.file.filename}`;
 
     const document = await Document.create({
-      projectId,
+      project_id: projectId,
       title,
       description,
-      fileName: req.file.originalname,
-      filePath: req.file.path,
-      fileUrl,
-      fileSize: req.file.size,
-      mimeType: req.file.mimetype,
-      fileExtension: path.extname(req.file.originalname).toLowerCase(),
-      documentType,
+      file_name: req.file.originalname,
+      file_path: req.file.path,
+      file_url: fileUrl,
+      file_size: req.file.size,
+      mime_type: req.file.mimetype,
+      file_extension: path.extname(req.file.originalname).toLowerCase(),
+      document_type: documentType,
       phase,
       version,
       tags: tags ? JSON.parse(tags) : null,
-      isPublic,
-      uploadedBy: req.user.id,
-      updatedBy: req.user.id
+      is_public: isPublic,
+      uploaded_by: req.user.id,
+      updated_by: req.user.id
     });
 
     // Fetch the created document with associations
@@ -205,7 +205,7 @@ const uploadDocument = async (req, res) => {
         {
           model: User,
           as: 'uploader',
-          attributes: ['id', 'firstName', 'lastName', 'email']
+          attributes: ['id', 'name', 'email']
         }
       ]
     });
@@ -271,7 +271,7 @@ const updateDocument = async (req, res) => {
         {
           model: User,
           as: 'uploader',
-          attributes: ['id', 'firstName', 'lastName', 'email']
+          attributes: ['id', 'name', 'email']
         }
       ]
     });
@@ -307,7 +307,7 @@ const deleteDocument = async (req, res) => {
 
     // Delete the file from filesystem
     try {
-      await fs.unlink(document.filePath);
+      await fs.unlink(document.file_path);
     } catch (fileError) {
       logger.warn('Error deleting file from filesystem:', fileError);
       // Continue with database deletion even if file deletion fails
@@ -357,7 +357,7 @@ const downloadDocument = async (req, res) => {
 
     // Check if file exists
     try {
-      await fs.access(document.filePath);
+      await fs.access(document.file_path);
     } catch (error) {
       return res.status(404).json({
         success: false,
@@ -366,17 +366,17 @@ const downloadDocument = async (req, res) => {
     }
 
     // Increment download count
-    await Document.increment('downloadCount', {
+    await Document.increment('download_count', {
       where: { id }
     });
 
     // Set appropriate headers
-    res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
-    res.setHeader('Content-Type', document.mimeType);
-    res.setHeader('Content-Length', document.fileSize);
+    res.setHeader('Content-Disposition', `attachment; filename="${document.file_name}"`);
+    res.setHeader('Content-Type', document.mime_type);
+    res.setHeader('Content-Length', document.file_size);
 
     // Stream the file
-    const fileStream = require('fs').createReadStream(document.filePath);
+    const fileStream = require('fs').createReadStream(document.file_path);
     fileStream.pipe(res);
 
   } catch (error) {
@@ -393,15 +393,15 @@ const downloadDocument = async (req, res) => {
 const getDocumentStats = async (req, res) => {
   try {
     const totalDocuments = await Document.count();
-    const publicDocuments = await Document.count({ where: { isPublic: true } });
-    const totalDownloads = await Document.sum('downloadCount') || 0;
+    const publicDocuments = await Document.count({ where: { is_public: true } });
+    const totalDownloads = await Document.sum('download_count') || 0;
     
     const documentsByType = await Document.findAll({
       attributes: [
-        'documentType',
+        'document_type',
         [Document.sequelize.fn('COUNT', Document.sequelize.col('id')), 'count']
       ],
-      group: ['documentType'],
+      group: ['document_type'],
       raw: true
     });
 
@@ -413,7 +413,7 @@ const getDocumentStats = async (req, res) => {
           attributes: ['id', 'title']
         }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
       limit: 10
     });
 
