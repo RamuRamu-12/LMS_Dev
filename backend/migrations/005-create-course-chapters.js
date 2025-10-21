@@ -2,6 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Check if table already exists
+    const [tableExists] = await queryInterface.sequelize.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'course_chapters' AND table_schema = 'public'
+    `);
+
+    if (tableExists.length > 0) {
+      console.log('Course_chapters table already exists, skipping creation');
+      return;
+    }
+
     await queryInterface.createTable('course_chapters', {
       id: {
         type: Sequelize.INTEGER,
@@ -59,6 +71,34 @@ module.exports = {
           isUrl: true
         }
       },
+      content_url: {
+        type: Sequelize.TEXT,
+        allowNull: true
+      },
+      file_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'file_uploads',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
+      },
+      embed_url: {
+        type: Sequelize.TEXT,
+        allowNull: true
+      },
+      url_analysis: {
+        type: Sequelize.JSONB,
+        allowNull: true,
+        defaultValue: null
+      },
+      test_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        // Foreign key reference will be added later after course_tests table is created
+      },
       chapter_order: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -96,7 +136,8 @@ module.exports = {
       { columns: ['content_type'], name: 'course_chapters_content_type' },
       { columns: ['chapter_order'], name: 'course_chapters_chapter_order' },
       { columns: ['is_published'], name: 'course_chapters_is_published' },
-      { columns: ['course_id', 'chapter_order'], name: 'course_chapters_course_chapter_order' }
+      { columns: ['course_id', 'chapter_order'], name: 'course_chapters_course_chapter_order' },
+      { columns: ['test_id'], name: 'idx_course_chapters_test_id' }
     ];
 
     for (const index of indexes) {

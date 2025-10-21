@@ -24,12 +24,18 @@ async function setupDevelopmentDatabase() {
   console.log('\n');
 
   try {
+    // Force SSL to false for local development
+    if (!process.env.DB_HOST || process.env.DB_HOST === 'localhost' || process.env.DB_HOST === '127.0.0.1') {
+      process.env.DB_SSL = 'false';
+    }
+
     // Display current configuration
     console.log('📋 Environment: DEVELOPMENT\n');
     console.log('   Database:', process.env.DB_DATABASE || process.env.DB_NAME || 'Not set');
     console.log('   Host:', process.env.DB_HOST || 'localhost');
     console.log('   Port:', process.env.DB_PORT || '5432');
     console.log('   User:', process.env.DB_USER || 'Not set');
+    console.log('   SSL:', process.env.DB_SSL || 'false');
     console.log('\n');
 
     // Test connection

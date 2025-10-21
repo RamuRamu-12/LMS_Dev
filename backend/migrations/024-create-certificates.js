@@ -2,6 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Check if table already exists
+    const [tableExists] = await queryInterface.sequelize.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'certificates' AND table_schema = 'public'
+    `);
+
+    if (tableExists.length > 0) {
+      console.log('Certificates table already exists, skipping creation');
+      return;
+    }
+
     await queryInterface.createTable('certificates', {
       id: {
         type: Sequelize.INTEGER,

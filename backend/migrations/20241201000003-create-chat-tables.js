@@ -2,6 +2,18 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Check if chat_messages table already exists
+    const [chatMessagesExists] = await queryInterface.sequelize.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'chat_messages' AND table_schema = 'public'
+    `);
+
+    if (chatMessagesExists.length > 0) {
+      console.log('Chat_messages table already exists, skipping creation');
+      return;
+    }
+
     // Create chat_messages table
     await queryInterface.createTable('chat_messages', {
       id: {

@@ -400,6 +400,165 @@ module.exports = {
       }
       console.log('Hackathon_participants table already exists, skipping creation');
     }
+
+    // Create hackathon_groups table (with error handling)
+    try {
+      await queryInterface.createTable('hackathon_groups', {
+        id: {
+          type: Sequelize.INTEGER,
+          primaryKey: true,
+          autoIncrement: true
+        },
+        hackathon_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'hackathons',
+            key: 'id'
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE'
+        },
+        name: {
+          type: Sequelize.STRING(255),
+          allowNull: false
+        },
+        description: {
+          type: Sequelize.TEXT,
+          allowNull: true
+        },
+        max_members: {
+          type: Sequelize.INTEGER,
+          allowNull: true
+        },
+        current_members: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          defaultValue: 0
+        },
+        is_active: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: true
+        },
+        created_by: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'users',
+            key: 'id'
+          }
+        },
+        created_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.NOW
+        },
+        updated_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.NOW
+        }
+      });
+
+      // Create indexes for hackathon_groups
+      await queryInterface.addIndex('hackathon_groups', ['hackathon_id']);
+      await queryInterface.addIndex('hackathon_groups', ['name']);
+      await queryInterface.addIndex('hackathon_groups', ['is_active']);
+      await queryInterface.addIndex('hackathon_groups', ['created_by']);
+      
+      // Create unique constraint for hackathon_id + name
+      await queryInterface.addIndex('hackathon_groups', ['hackathon_id', 'name'], {
+        unique: true,
+        name: 'unique_hackathon_group_name'
+      });
+    } catch (error) {
+      if (!error.message.includes('already exists')) {
+        throw error;
+      }
+      console.log('Hackathon_groups table already exists, skipping creation');
+    }
+
+    // Create hackathon_group_members table (with error handling)
+    try {
+      await queryInterface.createTable('hackathon_group_members', {
+        id: {
+          type: Sequelize.INTEGER,
+          primaryKey: true,
+          autoIncrement: true
+        },
+        group_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'hackathon_groups',
+            key: 'id'
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE'
+        },
+        student_id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'users',
+            key: 'id'
+          },
+          onUpdate: 'CASCADE',
+          onDelete: 'CASCADE'
+        },
+        joined_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.NOW
+        },
+        is_leader: {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          defaultValue: false
+        },
+        status: {
+          type: Sequelize.ENUM('active', 'inactive', 'removed'),
+          allowNull: false,
+          defaultValue: 'active'
+        },
+        added_by: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          references: {
+            model: 'users',
+            key: 'id'
+          }
+        },
+        created_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.NOW
+        },
+        updated_at: {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.NOW
+        }
+      });
+
+      // Create indexes for hackathon_group_members
+      await queryInterface.addIndex('hackathon_group_members', ['group_id']);
+      await queryInterface.addIndex('hackathon_group_members', ['student_id']);
+      await queryInterface.addIndex('hackathon_group_members', ['status']);
+      await queryInterface.addIndex('hackathon_group_members', ['is_leader']);
+      
+      // Create unique constraint for group_id + student_id
+      await queryInterface.addIndex('hackathon_group_members', ['group_id', 'student_id'], {
+        unique: true,
+        name: 'unique_group_student'
+      });
+    } catch (error) {
+      if (!error.message.includes('already exists')) {
+        throw error;
+      }
+      console.log('Hackathon_group_members table already exists, skipping creation');
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

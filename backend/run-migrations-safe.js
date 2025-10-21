@@ -81,17 +81,22 @@ async function runMigrationsSafely() {
     // Step 5: Run migrations
     console.log('🚀 Step 3: Running pending migrations...\n');
     
-    const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate', {
-      cwd: __dirname,
-      env: { ...process.env, NODE_ENV: env }
-    });
+    try {
+      const { stdout, stderr } = await execAsync('npx sequelize-cli db:migrate', {
+        cwd: __dirname,
+        env: { ...process.env, NODE_ENV: env }
+      });
 
-    if (stdout) {
-      console.log(stdout);
-    }
-    
-    if (stderr && !stderr.includes('Executing')) {
-      console.error('⚠️  Warnings:', stderr);
+      if (stdout) {
+        console.log(stdout);
+      }
+      
+      if (stderr && !stderr.includes('Executing')) {
+        console.error('⚠️  Warnings:', stderr);
+      }
+    } catch (migrationError) {
+      // If migration fails, throw the error to be caught by the main catch block
+      throw new Error(`Migration failed: ${migrationError.message}`);
     }
 
     // Step 6: Verify final status
@@ -140,6 +145,16 @@ async function runMigrationsSafely() {
     }
     if (error.stderr) {
       console.error('\nError output:', error.stderr);
+    }
+    
+    // Show more detailed error information
+    if (error.message.includes('Migration failed:')) {
+      console.log('\n🔍 Detailed Error Information:');
+      console.log('   The migration command failed. This could be due to:');
+      console.log('   - Syntax errors in migration files');
+      console.log('   - Foreign key reference issues');
+      console.log('   - Database connection problems');
+      console.log('   - Table already exists conflicts');
     }
     console.log('\n');
     console.log('💡 Troubleshooting:\n');

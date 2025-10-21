@@ -2,6 +2,18 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Check if table already exists
+    const [tableExists] = await queryInterface.sequelize.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'hackathon_submissions' AND table_schema = 'public'
+    `);
+
+    if (tableExists.length > 0) {
+      console.log('Hackathon_submissions table already exists, skipping creation');
+      return;
+    }
+
     await queryInterface.createTable('hackathon_submissions', {
       id: {
         type: Sequelize.INTEGER,
@@ -118,20 +130,63 @@ module.exports = {
       }
     });
 
-    // Add indexes
-    await queryInterface.addIndex('hackathon_submissions', ['hackathon_id']);
-    await queryInterface.addIndex('hackathon_submissions', ['student_id']);
-    await queryInterface.addIndex('hackathon_submissions', ['status']);
-    await queryInterface.addIndex('hackathon_submissions', ['submitted_at']);
-    await queryInterface.addIndex('hackathon_submissions', ['is_winner']);
-    await queryInterface.addIndex('hackathon_submissions', ['ranking']);
+    // Add indexes (with error handling for existing indexes)
+    const indexes = [
+      { columns: ['hackathon_id'], name: 'hackathon_submissions_hackathon_id' },
+      { columns: ['student_id'], name: 'hackathon_submissions_student_id' },
+      { columns: ['status'], name: 'hackathon_submissions_status' },
+      { columns: ['submitted_at'], name: 'hackathon_submissions_submitted_at' },
+      { columns: ['is_winner'], name: 'hackathon_submissions_is_winner' },
+      { columns: ['ranking'], name: 'hackathon_submissions_ranking' }
+    ];
+
+    for (const index of indexes) {
+      try {
+        // Check if index already exists
+        const [indexExists] = await queryInterface.sequelize.query(`
+          SELECT indexname 
+          FROM pg_indexes 
+          WHERE indexname = '${index.name}' AND tablename = 'hackathon_submissions'
+        `);
+        
+        if (indexExists.length === 0) {
+          await queryInterface.addIndex('hackathon_submissions', index.columns, { name: index.name });
+          console.log(`Created index: ${index.name}`);
+        } else {
+          console.log(`Index ${index.name} already exists, skipping`);
+        }
+      } catch (error) {
+        if (!error.message.includes('already exists')) {
+          throw error;
+        }
+        console.log(`Index ${index.name} already exists, skipping`);
+      }
+    }
     
-    // Add unique constraint
-    await queryInterface.addIndex('hackathon_submissions', {
-      fields: ['hackathon_id', 'student_id'],
-      unique: true,
-      name: 'unique_hackathon_student_submission'
-    });
+    // Add unique constraint (with error handling)
+    try {
+      const [uniqueIndexExists] = await queryInterface.sequelize.query(`
+        SELECT indexname 
+        FROM pg_indexes 
+        WHERE indexname = 'unique_hackathon_student_submission' AND tablename = 'hackathon_submissions'
+      `);
+      
+      if (uniqueIndexExists.length === 0) {
+        await queryInterface.addIndex('hackathon_submissions', {
+          fields: ['hackathon_id', 'student_id'],
+          unique: true,
+          name: 'unique_hackathon_student_submission'
+        });
+        console.log('Created unique constraint: unique_hackathon_student_submission');
+      } else {
+        console.log('Unique constraint unique_hackathon_student_submission already exists, skipping');
+      }
+    } catch (error) {
+      if (!error.message.includes('already exists')) {
+        throw error;
+      }
+      console.log('Unique constraint unique_hackathon_student_submission already exists, skipping');
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
