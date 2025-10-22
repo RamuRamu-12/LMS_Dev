@@ -177,42 +177,72 @@ const getProjectVideos = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    // First check if project exists
     const project = await Project.findByPk(id, {
-      attributes: [
-        'id',
-        'title',
-        'overview_video_url',
-        'brd_video_url',
-        'uiux_video_url',
-        'architectural_video_url',
-        'code_development_video_url',
-        'testing_video_url',
-        'deployment_video_url',
-        'videos_last_updated',
-        'videos_uploaded_by'
-      ]
+      attributes: ['id', 'title']
     });
 
     if (!project) {
       return next(new AppError('Project not found', 404));
     }
 
+    // Import Video model
+    const { Video } = require('../models');
+
+    // Fetch videos from Video table
+    const videos = await Video.findAll({
+      where: { project_id: id },
+      attributes: ['id', 'title', 'video_url', 'video_type', 'phase', 'phase_number', 'duration', 'view_count']
+    });
+
+    // Organize videos by type and phase
+    const organizedVideos = {
+      overview: null,
+      brd: null,
+      uiux: null,
+      architectural: null,
+      codeDevelopment: null,
+      testing: null,
+      deployment: null
+    };
+
+    videos.forEach(video => {
+      if (video.video_type === 'overview') {
+        organizedVideos.overview = video.video_url;
+      } else if (video.video_type === 'phase') {
+        switch (video.phase?.toLowerCase()) {
+          case 'brd':
+            organizedVideos.brd = video.video_url;
+            break;
+          case 'ui/ux':
+          case 'uiux':
+            organizedVideos.uiux = video.video_url;
+            break;
+          case 'architectural':
+          case 'architecture':
+            organizedVideos.architectural = video.video_url;
+            break;
+          case 'code development':
+          case 'development':
+            organizedVideos.codeDevelopment = video.video_url;
+            break;
+          case 'testing':
+            organizedVideos.testing = video.video_url;
+            break;
+          case 'deployment':
+            organizedVideos.deployment = video.video_url;
+            break;
+        }
+      }
+    });
+
     res.json({
       success: true,
       data: {
         projectId: project.id,
         projectTitle: project.title,
-        videos: {
-          overview: project.overview_video_url,
-          brd: project.brd_video_url,
-          uiux: project.uiux_video_url,
-          architectural: project.architectural_video_url,
-          codeDevelopment: project.code_development_video_url,
-          testing: project.testing_video_url,
-          deployment: project.deployment_video_url
-        },
-        lastUpdated: project.videos_last_updated,
-        uploadedBy: project.videos_uploaded_by
+        videos: organizedVideos,
+        rawVideos: videos // Include raw videos for debugging
       }
     });
   } catch (error) {

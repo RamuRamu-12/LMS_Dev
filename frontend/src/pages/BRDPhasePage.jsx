@@ -6,14 +6,40 @@ import Footer from '../components/common/Footer';
 import PhaseNavigationBar from '../components/projects/PhaseNavigationBar';
 import NextButton from '../components/projects/NextButton';
 import { useProjectProgress } from '../context/ProjectProgressContext';
+import { api } from '../services/api';
 
 const BRDPhasePage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState('overview');
   const [project, setProject] = useState(null);
+  const [projectVideos, setProjectVideos] = useState(null);
   const [loading, setLoading] = useState(true);
   const { isModuleUnlocked, unlockNextPhase } = useProjectProgress();
+
+  // Fetch project videos from API
+  const fetchProjectVideos = async () => {
+    try {
+      console.log('Fetching videos for project ID:', projectId);
+      const response = await api.get(`/realtime-projects/${projectId}/videos`);
+      console.log('API Response:', response.data);
+      setProjectVideos(response.data.data);
+    } catch (error) {
+      console.error('Error fetching project videos:', error);
+      // Set default empty videos object if API fails
+      setProjectVideos({
+        videos: {
+          overview: null,
+          brd: null,
+          uiux: null,
+          architectural: null,
+          codeDevelopment: null,
+          testing: null,
+          deployment: null
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     // Mock data for testing - in real app, fetch based on projectId
@@ -78,6 +104,10 @@ const BRDPhasePage = () => {
     if (foundProject) {
       setProject(foundProject);
     }
+    
+    // Fetch project videos from API
+    fetchProjectVideos();
+    
     setLoading(false);
   }, [projectId]);
 
@@ -156,21 +186,41 @@ const BRDPhasePage = () => {
             <div className="mb-8">
               <div className="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
                 <div className="aspect-video w-full">
-                  <video
-                    className="w-full h-full object-cover"
-                    controls
-                    poster="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=450&fit=crop"
-                    preload="metadata"
-                  >
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+                  {projectVideos?.videos?.brd ? (
+                    <video
+                      className="w-full h-full object-cover"
+                      controls
+                      preload="metadata"
+                    >
+                      <source src={projectVideos.videos.brd} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white">
+                      <div className="text-center">
+                        <div className="text-6xl mb-4">🎥</div>
+                        <h4 className="text-xl font-semibold mb-2">No BRD Video Available</h4>
+                        <p className="text-gray-300">
+                          The BRD phase overview video has not been uploaded yet.
+                        </p>
+                        {/* Debug info */}
+                        <div className="mt-4 text-xs text-gray-400">
+                          <p>Debug: projectVideos = {JSON.stringify(projectVideos)}</p>
+                          <p>Debug: rawVideos = {JSON.stringify(projectVideos?.rawVideos)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 bg-gray-800 text-white">
-                  <h4 className="text-lg font-semibold mb-2">BRD Phase Overview Video</h4>
+                  <h4 className="text-lg font-semibold mb-2">
+                    {projectVideos?.videos?.brd ? 'BRD Phase Overview Video' : 'BRD Phase Overview'}
+                  </h4>
                   <p className="text-sm text-gray-300">
-                    Watch this comprehensive overview of the Business Requirements Document phase for the {project.title} project.
+                    {projectVideos?.videos?.brd 
+                      ? `Watch this comprehensive overview of the Business Requirements Document phase for the ${project.title} project.`
+                      : `This section will contain the comprehensive overview of the Business Requirements Document phase for the ${project.title} project once the video is uploaded.`
+                    }
                   </p>
                 </div>
               </div>
