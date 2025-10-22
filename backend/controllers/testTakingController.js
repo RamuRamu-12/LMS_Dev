@@ -337,31 +337,45 @@ const submitTest = async (req, res, next) => {
         });
       }
 
-      // Auto-generate certificate for passing the test
+      // Auto-generate certificate for passing the test ONLY for the completed course
       const { Certificate } = require('../models');
       
-      // Check if certificate already exists
+      // CRITICAL: Verify we have the correct course_id before generating certificate
+      const courseIdForCertificate = test.course_id;
+      
+      logger.info(`Checking for existing certificate: student_id=${req.user.id}, course_id=${courseIdForCertificate}`);
+      
+      // Check if certificate already exists for THIS SPECIFIC COURSE ONLY
       const existingCertificate = await Certificate.findOne({
         where: {
           student_id: req.user.id,
-          course_id: test.course_id
+          course_id: courseIdForCertificate
         }
       });
 
-      if (!existingCertificate) {
-        // Generate certificate number and verification code
-        const certificateNumber = await Certificate.generateCertificateNumber(req.user.id, test.course_id);
+      if (existingCertificate) {
+        logger.info(`Certificate already exists for student ${req.user.id} and course ${courseIdForCertificate}. Skipping certificate generation.`);
+      } else {
+        // Generate certificate ONLY for the specific course that was completed
+        logger.info(`Generating certificate for student ${req.user.id} and course ${courseIdForCertificate}`);
+        
+        const certificateNumber = await Certificate.generateCertificateNumber(req.user.id, courseIdForCertificate);
         const verificationCode = Certificate.generateVerificationCode();
 
         // Get course info for metadata
-        const course = await Course.findByPk(test.course_id, {
+        const course = await Course.findByPk(courseIdForCertificate, {
           attributes: ['id', 'title', 'category', 'difficulty']
         });
 
-        // Create certificate
-        await Certificate.create({
+        if (!course) {
+          logger.error(`Course ${courseIdForCertificate} not found. Cannot generate certificate.`);
+          throw new AppError('Course not found for certificate generation', 404);
+        }
+
+        // Create certificate for THIS SPECIFIC COURSE ONLY
+        const newCertificate = await Certificate.create({
           student_id: req.user.id,
-          course_id: test.course_id,
+          course_id: courseIdForCertificate,
           test_attempt_id: attemptId,
           certificate_number: certificateNumber,
           verification_code: verificationCode,
@@ -376,7 +390,7 @@ const submitTest = async (req, res, next) => {
           }
         });
 
-        logger.info(`Certificate ${certificateNumber} automatically generated for student ${req.user.email} after passing test ${test.id}`);
+        logger.info(`Certificate ${certificateNumber} successfully generated for student ${req.user.email}, course ${course.title} (ID: ${courseIdForCertificate}), test ${test.id}`);
       }
     }
 
