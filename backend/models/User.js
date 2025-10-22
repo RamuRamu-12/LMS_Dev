@@ -30,18 +30,18 @@ module.exports = (sequelize, DataTypes) => {
         notEmpty: true
       }
     },
-    password: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      validate: {
-        len: [6, 255]
-      }
-    },
     avatar: {
       type: DataTypes.TEXT,
       allowNull: true,
       validate: {
         isUrl: true
+      }
+    },
+    password: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      validate: {
+        len: [6, 255]
       }
     },
     role: {
@@ -57,22 +57,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     },
-    preferences: {
-      type: DataTypes.JSONB,
-      defaultValue: {}
-    },
-    bio: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    phone: {
-      type: DataTypes.STRING(20),
-      allowNull: true
-    },
-    location: {
-      type: DataTypes.STRING(255),
-      allowNull: true
-    }
   }, {
     tableName: 'users',
     indexes: [
@@ -96,6 +80,7 @@ module.exports = (sequelize, DataTypes) => {
         }
         // Hash password if provided
         if (user.password) {
+          const bcrypt = require('bcryptjs');
           user.password = await bcrypt.hash(user.password, 12);
         }
       },
@@ -105,6 +90,7 @@ module.exports = (sequelize, DataTypes) => {
         }
         // Hash password if it's being updated
         if (user.changed('password') && user.password) {
+          const bcrypt = require('bcryptjs');
           user.password = await bcrypt.hash(user.password, 12);
         }
       }
@@ -128,10 +114,6 @@ module.exports = (sequelize, DataTypes) => {
       role: this.role,
       is_active: this.is_active,
       last_login: this.last_login,
-      bio: this.bio || null,
-      phone: this.phone || null,
-      location: this.location || null,
-      preferences: this.preferences,
       created_at: this.created_at,
       updated_at: this.updated_at
     };
@@ -149,8 +131,10 @@ module.exports = (sequelize, DataTypes) => {
     if (!this.password) {
       return false;
     }
+    const bcrypt = require('bcryptjs');
     return await bcrypt.compare(candidatePassword, this.password);
   };
+
 
   // Class methods
   User.findByEmail = function(email) {

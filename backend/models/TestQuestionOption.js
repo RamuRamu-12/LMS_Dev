@@ -27,10 +27,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: false
     },
-    order: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    }
   }, {
     tableName: 'test_question_options',
     indexes: [
@@ -40,9 +36,6 @@ module.exports = (sequelize, DataTypes) => {
       {
         fields: ['is_correct']
       },
-      {
-        fields: ['order']
-      }
     ]
   });
 
@@ -58,7 +51,6 @@ module.exports = (sequelize, DataTypes) => {
       question_id: this.question_id,
       option_text: this.option_text,
       is_correct: this.is_correct,
-      order: this.order,
       created_at: this.created_at,
       updated_at: this.updated_at
     };
@@ -68,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
   TestQuestionOption.findByQuestion = function(questionId) {
     return this.findAll({
       where: { question_id: questionId },
-      order: [['order', 'ASC']]
+      order: [['id', 'ASC']]
     });
   };
 

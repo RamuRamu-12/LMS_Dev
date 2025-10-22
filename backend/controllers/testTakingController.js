@@ -66,9 +66,7 @@ const startTest = async (req, res, next) => {
       throw new AppError('You have already received a certificate for this course. No retakes allowed.', 400);
     }
 
-    if (test.max_attempts && existingAttempts.length >= test.max_attempts) {
-      throw new AppError(`You have reached the maximum number of attempts (${test.max_attempts})`, 400);
-    }
+    // Note: max_attempts column was removed, so no attempt limit checking
 
     // Check if there's an active attempt
     const activeAttempt = existingAttempts.find(attempt => attempt.status === 'in_progress');
@@ -152,7 +150,7 @@ const submitAnswer = async (req, res, next) => {
         {
           model: TestQuestionOption,
           as: 'options',
-          order: [['order', 'ASC']]
+          order: [['id', 'ASC']]
         }
       ]
     });
@@ -241,10 +239,10 @@ const submitTest = async (req, res, next) => {
         {
           model: TestQuestionOption,
           as: 'options',
-          order: [['order', 'ASC']]
+          order: [['id', 'ASC']]
         }
       ],
-      order: [['order', 'ASC']]
+      order: [['id', 'ASC']]
     });
 
     let totalPoints = 0;
@@ -448,7 +446,7 @@ const getTestAttempt = async (req, res, next) => {
         {
           model: CourseTest,
           as: 'test',
-          attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes']
+          attributes: ['id', 'title', 'description', 'passing_score']
         }
       ]
     });
@@ -570,7 +568,7 @@ const getTestQuestions = async (req, res, next) => {
         test_id: testId,
         is_active: true 
       },
-      order: [['order', 'ASC']]
+      order: [['id', 'ASC']]
     });
 
     // Then get options for each question (excluding correct answers for students)
@@ -578,7 +576,7 @@ const getTestQuestions = async (req, res, next) => {
       questions.map(async (question) => {
         const options = await TestQuestionOption.findAll({
           where: { question_id: question.id },
-          order: [['order', 'ASC']]
+          order: [['id', 'ASC']]
         });
         
         return {

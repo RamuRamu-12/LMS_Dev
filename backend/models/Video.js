@@ -58,12 +58,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       comment: 'Video duration in seconds'
     },
-    is_public: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-      comment: 'Whether video is publicly accessible'
-    },
     view_count: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -106,9 +100,6 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
         fields: ['phase_number']
-      },
-      {
-        fields: ['is_public']
       },
       {
         fields: ['uploaded_by']

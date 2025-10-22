@@ -43,10 +43,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
-    explanation: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    }
   }, {
     tableName: 'test_questions',
     indexes: [
@@ -56,9 +52,6 @@ module.exports = (sequelize, DataTypes) => {
       {
         fields: ['is_active']
       },
-      {
-        fields: ['order']
-      }
     ]
   });
 

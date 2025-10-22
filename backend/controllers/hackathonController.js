@@ -154,7 +154,7 @@ const getMyHackathons = async (req, res, next) => {
             user_id: studentId
           },
           required: false,
-          attributes: ['id', 'user_id', 'joined_at']
+          attributes: ['id', 'user_id']
         },
         {
           model: HackathonGroup,
@@ -389,16 +389,12 @@ const createHackathon = async (req, res, next) => {
             const student_id = groupData.student_ids[index];
             await sequelize.query(`
               INSERT INTO hackathon_group_members 
-              (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
-              VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+              (group_id, student_id, created_at, updated_at)
+              VALUES (:group_id, :student_id, :created_at, :updated_at)
             `, {
               replacements: {
                 group_id: group.id,
                 student_id: student_id,
-                joined_at: new Date(),
-                is_leader: index === 0,
-                status: 'active',
-                added_by: req.user.id,
                 created_at: new Date(),
                 updated_at: new Date()
               },
@@ -406,6 +402,14 @@ const createHackathon = async (req, res, next) => {
             });
           }
           console.log('Members created successfully:', groupData.student_ids.length);
+          
+          // Update the current_members count in the group
+          await HackathonGroup.update(
+            { current_members: groupData.student_ids.length },
+            { where: { id: group.id } }
+          );
+          console.log('Updated group member count to:', groupData.student_ids.length);
+          
           totalParticipants += groupData.student_ids.length;
         }
         
@@ -578,16 +582,12 @@ const updateHackathon = async (req, res, next) => {
               const student_id = groupData.student_ids[index];
               await sequelize.query(`
                 INSERT INTO hackathon_group_members 
-                (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
-                VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+                (group_id, student_id, created_at, updated_at)
+                VALUES (:group_id, :student_id, :created_at, :updated_at)
               `, {
                 replacements: {
                   group_id: group.id,
                   student_id: student_id,
-                  joined_at: new Date(),
-                  is_leader: index === 0,
-                  status: 'active',
-                  added_by: req.user.id,
                   created_at: new Date(),
                   updated_at: new Date()
                 },
@@ -595,6 +595,14 @@ const updateHackathon = async (req, res, next) => {
               });
             }
             console.log('Members created successfully:', groupData.student_ids.length);
+            
+            // Update the current_members count in the group
+            await HackathonGroup.update(
+              { current_members: groupData.student_ids.length },
+              { where: { id: group.id } }
+            );
+            console.log('Updated group member count to:', groupData.student_ids.length);
+            
           totalParticipants += groupData.student_ids.length;
           console.log('Group created with ID:', group.id);
         }
@@ -988,10 +996,6 @@ const getHackathonGroups = async (req, res, next) => {
         SELECT 
           hgm.group_id,
           hgm.student_id,
-          hgm.joined_at,
-          hgm.is_leader,
-          hgm.status,
-          hgm.added_by,
           hgm.created_at,
           hgm.updated_at,
           u.id as student_id,
@@ -1007,15 +1011,24 @@ const getHackathonGroups = async (req, res, next) => {
       
       console.log(`Found ${memberResults.length} members for group ${group.id}`);
       
+      // Fix discrepancy: if current_members count doesn't match actual members
+      if (group.current_members !== memberResults.length) {
+        console.log(`Fixing member count discrepancy: current_members=${group.current_members}, actual_members=${memberResults.length}`);
+        await HackathonGroup.update(
+          { current_members: memberResults.length },
+          { where: { id: group.id } }
+        );
+        group.current_members = memberResults.length;
+      }
+      
       // Transform the raw SQL results to match expected format
       const transformedMembers = memberResults.map((member, index) => ({
         id: `${group.id}_${member.student_id}_${index}`, // Generate unique ID since no id column exists
         group_id: member.group_id,
         student_id: member.student_id,
-        joined_at: member.joined_at,
-        is_leader: member.is_leader,
-        status: member.status,
-        added_by: member.added_by,
+        is_leader: index === 0, // First member is leader by default
+        status: 'active', // Default status
+        added_by: 1, // Default admin user
         created_at: member.created_at,
         updated_at: member.updated_at,
         student: {
@@ -1107,22 +1120,25 @@ const createHackathonGroup = async (req, res, next) => {
       const student_id = student_ids[index];
       await sequelize.query(`
         INSERT INTO hackathon_group_members 
-        (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
-        VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+        (group_id, student_id, created_at, updated_at)
+        VALUES (:group_id, :student_id, :created_at, :updated_at)
       `, {
         replacements: {
           group_id: group.id,
           student_id: student_id,
-          joined_at: new Date(),
-          is_leader: index === 0,
-          status: 'active',
-          added_by: req.user.id,
           created_at: new Date(),
           updated_at: new Date()
         },
         type: sequelize.QueryTypes.INSERT
       });
     }
+
+    // Update group member count
+    await HackathonGroup.update(
+      { current_members: student_ids.length },
+      { where: { id: group.id } }
+    );
+    console.log('Updated group member count to:', student_ids.length);
 
     // Update hackathon participant count
     hackathon.current_participants += student_ids.length;
@@ -1141,7 +1157,7 @@ const createHackathonGroup = async (req, res, next) => {
           as: 'members',
           attributes: ['id', 'name', 'email'],
           through: {
-            attributes: ['is_leader', 'joined_at', 'status']
+            attributes: []
           }
         }
       ]
@@ -1214,16 +1230,12 @@ const addGroupMembers = async (req, res, next) => {
     for (const student_id of newStudentIds) {
       await sequelize.query(`
         INSERT INTO hackathon_group_members 
-        (group_id, student_id, joined_at, is_leader, status, added_by, created_at, updated_at)
-        VALUES (:group_id, :student_id, :joined_at, :is_leader, :status, :added_by, :created_at, :updated_at)
+        (group_id, student_id, created_at, updated_at)
+        VALUES (:group_id, :student_id, :created_at, :updated_at)
       `, {
         replacements: {
           group_id: groupId,
           student_id: student_id,
-          joined_at: new Date(),
-          is_leader: false,
-          status: 'active',
-          added_by: req.user.id,
           created_at: new Date(),
           updated_at: new Date()
         },
@@ -1232,8 +1244,12 @@ const addGroupMembers = async (req, res, next) => {
     }
 
     // Update group member count
-    group.current_members += newStudentIds.length;
-    await group.save();
+    const newMemberCount = group.current_members + newStudentIds.length;
+    await HackathonGroup.update(
+      { current_members: newMemberCount },
+      { where: { id: groupId } }
+    );
+    console.log('Updated group member count to:', newMemberCount);
 
     // Update hackathon participant count
     hackathon.current_participants += newStudentIds.length;
@@ -1404,19 +1420,19 @@ const createOrUpdateSubmission = async (req, res, next) => {
     if (!isEligible) {
       console.log(`Checking group membership for user ${req.user.id} in hackathon ${id}`);
       
-      const groupMembership = await HackathonGroupMember.findOne({
-        where: {
-          student_id: req.user.id
+      // Use raw SQL to check group membership
+      const [groupMembership] = await sequelize.query(`
+        SELECT hgm.group_id, hgm.student_id, hg.name as group_name, hg.hackathon_id
+        FROM hackathon_group_members hgm
+        JOIN hackathon_groups hg ON hgm.group_id = hg.id
+        WHERE hgm.student_id = :student_id AND hg.hackathon_id = :hackathon_id
+        LIMIT 1
+      `, {
+        replacements: {
+          student_id: req.user.id,
+          hackathon_id: id
         },
-        include: [
-          {
-            model: HackathonGroup,
-            as: 'group',
-            where: {
-              hackathon_id: id
-            }
-          }
-        ]
+        type: sequelize.QueryTypes.SELECT
       });
       
       console.log(`Group membership found:`, !!groupMembership);
@@ -1424,9 +1440,8 @@ const createOrUpdateSubmission = async (req, res, next) => {
         console.log(`Group membership details:`, {
           student_id: groupMembership.student_id,
           group_id: groupMembership.group_id,
-          group_name: groupMembership.group?.name,
-          hackathon_id: groupMembership.group?.hackathon_id,
-          status: groupMembership.status
+          group_name: groupMembership.group_name,
+          hackathon_id: groupMembership.hackathon_id
         });
       } else {
         // Let's check what groups exist for this hackathon
@@ -1448,19 +1463,22 @@ const createOrUpdateSubmission = async (req, res, next) => {
           });
         });
         
-        // Let's also check if user is in any groups at all
-        const userGroups = await HackathonGroupMember.findAll({
-          where: { student_id: req.user.id },
-          include: [{
-            model: HackathonGroup,
-            as: 'group',
-            attributes: ['id', 'name', 'hackathon_id']
-          }]
+        // Let's also check if user is in any groups at all using raw SQL
+        const userGroups = await sequelize.query(`
+          SELECT hgm.group_id, hgm.student_id, hg.name as group_name, hg.hackathon_id
+          FROM hackathon_group_members hgm
+          JOIN hackathon_groups hg ON hgm.group_id = hg.id
+          WHERE hgm.student_id = :student_id
+        `, {
+          replacements: {
+            student_id: req.user.id
+          },
+          type: sequelize.QueryTypes.SELECT
         });
         
         console.log(`User ${req.user.id} is in ${userGroups.length} groups total:`);
         userGroups.forEach((membership, index) => {
-          console.log(`  Group ${index + 1}: ${membership.group?.name} (Hackathon ID: ${membership.group?.hackathon_id})`);
+          console.log(`  Group ${index + 1}: ${membership.group_name} (Hackathon ID: ${membership.hackathon_id})`);
         });
       }
       
@@ -1474,26 +1492,25 @@ const createOrUpdateSubmission = async (req, res, next) => {
       console.log(`User not enrolled, checking group membership...`);
       
       try {
-        // Simple direct query: check if user is in any group for this hackathon
-        const userGroupMembership = await HackathonGroupMember.findOne({
-          where: {
-            student_id: req.user.id
+        // Simple direct query: check if user is in any group for this hackathon using raw SQL
+        const [userGroupMembership] = await sequelize.query(`
+          SELECT hgm.group_id, hgm.student_id, hg.name as group_name, hg.hackathon_id
+          FROM hackathon_group_members hgm
+          JOIN hackathon_groups hg ON hgm.group_id = hg.id
+          WHERE hgm.student_id = :student_id AND hg.hackathon_id = :hackathon_id
+          LIMIT 1
+        `, {
+          replacements: {
+            student_id: req.user.id,
+            hackathon_id: id
           },
-          include: [
-            {
-              model: HackathonGroup,
-              as: 'group',
-              where: {
-                hackathon_id: id
-              }
-            }
-          ]
+          type: sequelize.QueryTypes.SELECT
         });
         
         console.log(`Group membership found:`, !!userGroupMembership);
         
         if (userGroupMembership) {
-          console.log(`User is in group: ${userGroupMembership.group?.name} for hackathon ${id}`);
+          console.log(`User is in group: ${userGroupMembership.group_name} for hackathon ${id}`);
           isEligible = true;
         } else {
           console.log(`User ${req.user.id} is not in any group for hackathon ${id}`);
@@ -1601,19 +1618,19 @@ const submitSubmission = async (req, res, next) => {
     let isEligible = !!participant;
     
     if (!isEligible) {
-      const groupMembership = await HackathonGroupMember.findOne({
-        where: {
-          student_id: req.user.id
+      // Use raw SQL to check group membership
+      const [groupMembership] = await sequelize.query(`
+        SELECT hgm.group_id, hgm.student_id, hg.name as group_name, hg.hackathon_id
+        FROM hackathon_group_members hgm
+        JOIN hackathon_groups hg ON hgm.group_id = hg.id
+        WHERE hgm.student_id = :student_id AND hg.hackathon_id = :hackathon_id
+        LIMIT 1
+      `, {
+        replacements: {
+          student_id: req.user.id,
+          hackathon_id: id
         },
-        include: [
-          {
-            model: HackathonGroup,
-            as: 'group',
-            where: {
-              hackathon_id: id
-            }
-          }
-        ]
+        type: sequelize.QueryTypes.SELECT
       });
       
       isEligible = !!groupMembership;

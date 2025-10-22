@@ -103,40 +103,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.TEXT),
       defaultValue: []
     },
-    video_url: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    published_at: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    prerequisites: {
-      type: DataTypes.ARRAY(DataTypes.INTEGER),
-      defaultValue: []
-    },
-    intro_content_type: {
-      type: DataTypes.ENUM('video', 'pdf', 'url'),
-      allowNull: true,
-      defaultValue: 'video'
-    },
-    intro_file_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'file_uploads',
-        key: 'id'
-      }
-    },
-    external_url: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    url_analysis: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-      defaultValue: null
-    }
   }, {
     tableName: 'courses',
     indexes: [

@@ -32,8 +32,7 @@ const getAllProjects = async (req, res) => {
         {
           model: Document,
           as: 'documents',
-          attributes: ['id', 'title', 'document_type', 'phase', 'file_url', 'download_count'],
-          where: { is_public: true },
+          attributes: ['id', 'title', 'document_type', 'phase', 'file_url'],
           required: false
         }
       ],
@@ -85,8 +84,7 @@ const getProjectById = async (req, res) => {
         {
           model: Document,
           as: 'documents',
-          attributes: ['id', 'title', 'description', 'document_type', 'phase', 'file_url', 'file_size', 'mime_type', 'download_count', 'created_at'],
-          where: { is_public: true },
+          attributes: ['id', 'title', 'description', 'document_type', 'phase', 'file_url', 'file_size', 'mime_type', 'created_at'],
           required: false,
           order: [['createdAt', 'DESC']]
         }

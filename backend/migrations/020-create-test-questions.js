@@ -48,10 +48,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         defaultValue: 0
       },
-      explanation: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
       metadata: {
         type: Sequelize.JSONB,
         defaultValue: {}

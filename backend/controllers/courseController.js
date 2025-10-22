@@ -288,7 +288,7 @@ const getCourseById = async (req, res, next) => {
         {
           model: CourseTest,
           as: 'tests',
-          attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes', 'max_attempts', 'is_active'],
+          attributes: ['id', 'title', 'description', 'passing_score', 'is_active'],
           where: { is_active: true },
           required: false
         }
@@ -345,8 +345,6 @@ const getCourseById = async (req, res, next) => {
           description: test.description,
           type: 'test',
           passing_score: test.passing_score,
-          time_limit_minutes: test.time_limit_minutes,
-          max_attempts: test.max_attempts,
           chapter_order: 9999 + test.id // Place tests at the end
         });
       });
@@ -751,7 +749,7 @@ const getCourseContent = async (req, res, next) => {
             {
               model: CourseTest,
               as: 'test',
-              attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes', 'max_attempts', 'is_active', 'instructions'],
+              attributes: ['id', 'title', 'description', 'passing_score', 'is_active', 'instructions'],
               required: false
             }
           ]
@@ -759,7 +757,7 @@ const getCourseContent = async (req, res, next) => {
         {
           model: CourseTest,
           as: 'tests',
-          attributes: ['id', 'title', 'description', 'passing_score', 'time_limit_minutes', 'max_attempts', 'is_active'],
+          attributes: ['id', 'title', 'description', 'passing_score', 'is_active'],
           where: { is_active: true },
           required: false
         }
@@ -873,8 +871,6 @@ const getCourseContent = async (req, res, next) => {
           description: test.description,
           type: 'test',
           passing_score: test.passing_score,
-          time_limit_minutes: test.time_limit_minutes,
-          max_attempts: test.max_attempts,
           chapter_order: 9999 + test.id // Place tests at the end
         });
       });

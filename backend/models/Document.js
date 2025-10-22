@@ -74,18 +74,6 @@ module.exports = (sequelize, DataTypes) => {
     defaultValue: '1.0',
     comment: 'Document version'
   },
-  is_public: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: true,
-    comment: 'Whether document is publicly accessible'
-  },
-  download_count: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-    comment: 'Number of times document has been downloaded'
-  },
   tags: {
     type: DataTypes.JSON,
     allowNull: true,
@@ -119,9 +107,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       fields: ['phase']
-    },
-    {
-      fields: ['is_public']
     },
     {
       fields: ['uploaded_by']

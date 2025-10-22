@@ -10,17 +10,14 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import toast from 'react-hot-toast'
 
 const ProfilePage = () => {
-  const { user, updateProfile, deleteAccount } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
     bio: user?.bio || '',
-    phone: user?.phone || '',
-    location: user?.location || ''
   })
 
   // Update form data when user data changes
@@ -29,8 +26,6 @@ const ProfilePage = () => {
       name: user?.name || '',
       email: user?.email || '',
       bio: user?.bio || '',
-      phone: user?.phone || '',
-      location: user?.location || ''
     })
   }, [user])
 
@@ -107,24 +102,6 @@ const ProfilePage = () => {
     }
   }
 
-  const handleDeleteAccount = async () => {
-    try {
-      setIsLoading(true)
-      const result = await deleteAccount()
-      if (result.success) {
-        // Redirect to home page after successful deletion
-        window.location.href = '/'
-      } else {
-        toast.error(result.error || 'Failed to delete account. Please try again.')
-      }
-    } catch (error) {
-      console.error('Error deleting account:', error)
-      toast.error(error.message || 'Failed to delete account. Please try again.')
-    } finally {
-      setIsLoading(false)
-      setShowDeleteConfirm(false)
-    }
-  }
 
   const handleDownloadCertificate = async (achievementId) => {
     try {
@@ -181,8 +158,6 @@ const ProfilePage = () => {
       name: user?.name || '',
       email: user?.email || '',
       bio: user?.bio || '',
-      phone: user?.phone || '',
-      location: user?.location || ''
     })
     setIsEditing(false)
   }
@@ -316,14 +291,6 @@ const ProfilePage = () => {
                             <span className="mr-2">📧</span>
                             {user.email}
                           </div>
-                          <div className="flex items-center justify-center text-sm text-gray-600">
-                            <span className="mr-2">📱</span>
-                            {user.phone || 'Not provided'}
-                          </div>
-                          <div className="flex items-center justify-center text-sm text-gray-600">
-                            <span className="mr-2">📍</span>
-                            {user.location || 'Not provided'}
-                          </div>
                         </div>
                   </div>
                 </div>
@@ -380,34 +347,6 @@ const ProfilePage = () => {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Location
-                        </label>
-                        <input
-                          type="text"
-                          name="location"
-                          value={formData.location}
-                          onChange={handleInputChange}
-                          disabled={!isEditing}
-                              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50 disabled:text-gray-500 transition-colors"
-                        />
-                      </div>
-                    </div>
 
                     {isEditing && (
                       <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
@@ -633,72 +572,175 @@ const ProfilePage = () => {
 
               {activeTab === 'settings' && (
                 <div className="space-y-6">
+                  {/* Security Settings */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between py-4">
+                      {/* Two-Factor Authentication */}
+                      <div className="flex items-center justify-between py-4 border-b border-gray-100">
                         <div className="flex items-center">
-                          <div className="p-2 bg-red-100 rounded-lg mr-4">
-                            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <div className="p-2 bg-blue-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                           </div>
                           <div>
-                            <h4 className="text-sm font-medium text-gray-900">Delete Account</h4>
-                            <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
+                            <h4 className="text-sm font-medium text-gray-900">Two-Factor Authentication</h4>
+                            <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
                           </div>
                         </div>
                         <button 
-                          onClick={() => setShowDeleteConfirm(true)}
-                          disabled={isLoading}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => alert('Two-factor authentication setup will be implemented soon!')}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                          {isLoading ? 'Deleting...' : 'Delete'}
+                          Enable
+                        </button>
+                      </div>
+
+                      {/* Change Password */}
+                      <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-green-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">Change Password</h4>
+                            <p className="text-sm text-gray-500">Update your account password</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => alert('Password change functionality will be implemented soon!')}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          Change
+                        </button>
+                      </div>
+
+                      {/* Sign Out */}
+                      <div className="flex items-center justify-between py-4">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-orange-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">Sign Out</h4>
+                            <p className="text-sm text-gray-500">Sign out of your account on this device</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => {
+                            localStorage.removeItem('token');
+                            window.location.href = '/login';
+                          }}
+                          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                        >
+                          Sign Out
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Delete Confirmation Modal */}
-                  {showDeleteConfirm && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                      <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
-                        <div className="flex items-center mb-4">
-                          <div className="p-2 bg-red-100 rounded-lg mr-3">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  {/* Privacy Settings */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Privacy Settings</h3>
+                    <div className="space-y-4">
+                      {/* Profile Visibility */}
+                      <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-purple-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </div>
-                          <h3 className="text-lg font-semibold text-gray-900">Delete Account</h3>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">Profile Visibility</h4>
+                            <p className="text-sm text-gray-500">Control who can see your profile information</p>
+                          </div>
                         </div>
-                        <p className="text-gray-600 mb-6">
-                          Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data, including:
-                        </p>
-                        <ul className="text-sm text-gray-600 mb-6 space-y-1">
-                          <li>• Your profile information</li>
-                          <li>• All course enrollments and progress</li>
-                          <li>• Certificates and achievements</li>
-                          <li>• All other account data</li>
-                        </ul>
-                        <div className="flex space-x-3">
-                          <button
-                            onClick={() => setShowDeleteConfirm(false)}
-                            disabled={isLoading}
-                            className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleDeleteAccount}
-                            disabled={isLoading}
-                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                          >
-                            {isLoading ? 'Deleting...' : 'Delete Account'}
-                          </button>
+                        <div className="flex items-center">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" defaultChecked className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Email Notifications */}
+                      <div className="flex items-center justify-between py-4">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-indigo-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">Email Notifications</h4>
+                            <p className="text-sm text-gray-500">Receive updates about courses and activities</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" defaultChecked className="sr-only peer" />
+                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                          </label>
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Account Management */}
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Management</h3>
+                    <div className="space-y-4">
+                      {/* Download Data */}
+                      <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-teal-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">Download My Data</h4>
+                            <p className="text-sm text-gray-500">Export all your account data and progress</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => alert('Data export functionality will be implemented soon!')}
+                          className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                        >
+                          Download
+                        </button>
+                      </div>
+
+                      {/* Contact Support */}
+                      <div className="flex items-center justify-between py-4">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-gray-100 rounded-lg mr-4">
+                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-medium text-gray-900">Contact Support</h4>
+                            <p className="text-sm text-gray-500">Get help with your account or courses</p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => window.open('mailto:support@gnanamai.com?subject=Support Request', '_blank')}
+                          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        >
+                          Contact
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               )}
             </motion.div>

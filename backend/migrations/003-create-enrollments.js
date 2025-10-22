@@ -48,10 +48,6 @@ module.exports = {
         type: Sequelize.ENUM('enrolled', 'completed', 'dropped'),
         defaultValue: 'enrolled'
       },
-      notes: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
       rating: {
         type: Sequelize.INTEGER,
         allowNull: true
@@ -60,17 +56,9 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true
       },
-      completion_percentage: {
-        type: Sequelize.DECIMAL(5, 2),
-        defaultValue: 0
-      },
       time_spent: {
         type: Sequelize.INTEGER,
         defaultValue: 0
-      },
-      last_lesson_completed: {
-        type: Sequelize.STRING(255),
-        allowNull: true
       },
       created_at: {
         type: Sequelize.DATE,

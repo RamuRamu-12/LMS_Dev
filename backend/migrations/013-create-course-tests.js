@@ -43,14 +43,6 @@ module.exports = {
         allowNull: false,
         defaultValue: 70
       },
-      time_limit_minutes: {
-        type: Sequelize.INTEGER,
-        allowNull: true
-      },
-      max_attempts: {
-        type: Sequelize.INTEGER,
-        allowNull: true
-      },
       is_active: {
         type: Sequelize.BOOLEAN,
         defaultValue: true

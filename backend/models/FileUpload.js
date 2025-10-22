@@ -48,28 +48,9 @@ module.exports = (sequelize, DataTypes) => {
         isUrl: true
       }
     },
-    s3_key: {
-      type: DataTypes.STRING(500),
-      allowNull: false
-    },
-    s3_bucket: {
-      type: DataTypes.STRING(255),
-      allowNull: false
-    },
     file_type: {
       type: DataTypes.ENUM('pdf', 'docx'),
       allowNull: false
-    },
-    download_count: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-      validate: {
-        min: 0
-      }
-    },
-    is_public: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
     },
     metadata: {
       type: DataTypes.JSONB,
@@ -86,9 +67,6 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
         fields: ['mimetype']
-      },
-      {
-        fields: ['is_public']
       },
       {
         fields: ['created_at']
@@ -120,15 +98,10 @@ module.exports = (sequelize, DataTypes) => {
       file_type: this.file_type,
       size: this.size,
       url: this.url,
-      download_count: this.download_count,
       created_at: this.created_at
     };
   };
 
-  FileUpload.prototype.incrementDownloadCount = function() {
-    this.download_count += 1;
-    return this.save();
-  };
 
   FileUpload.prototype.getDownloadUrl = function() {
     // Return signed URL for secure download
@@ -167,8 +140,8 @@ module.exports = (sequelize, DataTypes) => {
   };
 
   FileUpload.findPublic = function() {
+    // Since is_public column was removed, return all files
     return this.findAll({
-      where: { is_public: true },
       order: [['created_at', 'DESC']]
     });
   };
@@ -185,8 +158,7 @@ module.exports = (sequelize, DataTypes) => {
       attributes: [
         'file_type',
         [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-        [sequelize.fn('SUM', sequelize.col('size')), 'total_size'],
-        [sequelize.fn('SUM', sequelize.col('download_count')), 'total_downloads']
+        [sequelize.fn('SUM', sequelize.col('size')), 'total_size']
       ],
       group: ['file_type']
     });

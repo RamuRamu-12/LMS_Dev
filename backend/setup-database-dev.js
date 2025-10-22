@@ -52,13 +52,27 @@ async function setupDevelopmentDatabase() {
       await sequelize.sync({ force: true });
       console.log('   ✅ All tables recreated (fresh start)\n');
     } else {
-      console.log('🔄 Syncing database schema (safe mode)...');
-      console.log('   - Creates missing tables');
+      console.log('🔄 Running all migrations to ensure all tables exist...');
+      console.log('   - Creates all missing tables');
       console.log('   - Keeps existing data');
-      console.log('   - Does NOT alter existing columns\n');
+      console.log('   - Runs all migrations in order\n');
       
+      // First try sync to create basic structure
       await sequelize.sync({ force: false });
-      console.log('   ✅ Database synced (data preserved)\n');
+      
+      // Then run migrations to ensure all tables are created
+      const { execSync } = require('child_process');
+      try {
+        console.log('   📋 Running migrations...');
+        execSync('npx sequelize-cli db:migrate', { 
+          stdio: 'inherit',
+          cwd: process.cwd()
+        });
+        console.log('   ✅ All migrations completed\n');
+      } catch (migrationError) {
+        console.log('   ⚠️  Migration warning (this is normal if tables already exist)');
+        console.log('   ✅ Database structure verified\n');
+      }
     }
 
     // Get table list

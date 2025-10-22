@@ -1,5 +1,5 @@
 const { FileUpload, Course } = require('../models');
-const { getSignedUrl, getFileMetadata } = require('../utils/s3Client');
+// Note: S3 utilities removed (S3 columns removed)
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -29,11 +29,10 @@ const downloadFile = async (req, res, next) => {
       throw new AppError('File not accessible', 403);
     }
 
-    // Generate signed URL for download
-    const downloadUrl = await getSignedUrl(file.s3_key, 3600); // 1 hour expiry
+    // Generate download URL (S3 columns removed, using direct URL)
+    const downloadUrl = file.url;
 
-    // Increment download count
-    await file.incrementDownloadCount();
+    // Note: download count tracking removed
 
     logger.info(`File ${file.original_name} downloaded by user ${req.user.email}`);
 
@@ -88,8 +87,8 @@ const previewFile = async (req, res, next) => {
       throw new AppError('File preview not supported for this file type', 400);
     }
 
-    // Generate signed URL for preview
-    const previewUrl = await getSignedUrl(file.s3_key, 3600); // 1 hour expiry
+    // Generate preview URL (S3 columns removed, using direct URL)
+    const previewUrl = file.url;
 
     logger.info(`File ${file.original_name} previewed by user ${req.user.email}`);
 
@@ -164,8 +163,8 @@ const getFileInfo = async (req, res, next) => {
       throw new AppError('File not accessible', 403);
     }
 
-    // Get file metadata from S3
-    const metadata = await getFileMetadata(file.s3_key);
+    // Note: S3 metadata retrieval removed (s3_key column removed)
+    const metadata = file.metadata || {};
 
     res.json({
       success: true,
@@ -179,7 +178,6 @@ const getFileInfo = async (req, res, next) => {
           size: file.size,
           size_formatted: file.getFileSizeFormatted(),
           mimetype: file.mimetype,
-          download_count: file.download_count,
           created_at: file.created_at,
           metadata: metadata
         }

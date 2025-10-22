@@ -36,20 +36,6 @@ module.exports = (sequelize, DataTypes) => {
         max: 100
       }
     },
-    time_limit_minutes: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      validate: {
-        min: 1
-      }
-    },
-    max_attempts: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      validate: {
-        min: 1
-      }
-    },
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
@@ -98,8 +84,6 @@ module.exports = (sequelize, DataTypes) => {
       title: this.title,
       description: this.description,
       passing_score: this.passing_score,
-      time_limit_minutes: this.time_limit_minutes,
-      max_attempts: this.max_attempts,
       is_active: this.is_active,
       instructions: this.instructions,
       order: this.order,

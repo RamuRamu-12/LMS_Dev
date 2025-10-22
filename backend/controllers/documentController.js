@@ -66,7 +66,7 @@ const getProjectDocuments = async (req, res) => {
     
     if (documentType) whereClause.document_type = documentType;
     if (phase) whereClause.phase = phase;
-    if (isPublic !== undefined) whereClause.is_public = isPublic === 'true';
+    // Note: is_public column was removed, so no filtering by public status
 
     const documents = await Document.findAll({
       where: whereClause,
@@ -189,7 +189,6 @@ const uploadDocument = async (req, res) => {
       phase,
       version,
       tags: tags ? JSON.parse(tags) : null,
-      is_public: isPublic,
       uploaded_by: req.user.id,
       updated_by: req.user.id
     });
@@ -365,10 +364,7 @@ const downloadDocument = async (req, res) => {
       });
     }
 
-    // Increment download count
-    await Document.increment('download_count', {
-      where: { id }
-    });
+    // Note: download_count column was removed, so no download tracking
 
     // Set appropriate headers
     res.setHeader('Content-Disposition', `attachment; filename="${document.file_name}"`);
@@ -393,8 +389,8 @@ const downloadDocument = async (req, res) => {
 const getDocumentStats = async (req, res) => {
   try {
     const totalDocuments = await Document.count();
-    const publicDocuments = await Document.count({ where: { is_public: true } });
-    const totalDownloads = await Document.sum('download_count') || 0;
+    const publicDocuments = await Document.count(); // Note: is_public column was removed
+    const totalDownloads = 0; // Note: download_count column was removed
     
     const documentsByType = await Document.findAll({
       attributes: [

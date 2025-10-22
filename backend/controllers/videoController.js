@@ -12,7 +12,7 @@ const getProjectVideos = async (req, res) => {
     
     if (videoType) whereClause.video_type = videoType;
     if (phase) whereClause.phase = phase;
-    if (isPublic !== undefined) whereClause.is_public = isPublic === 'true';
+    // Note: is_public column was removed, so no filtering by public status
 
     const videos = await Video.findAll({
       where: whereClause,
@@ -105,7 +105,6 @@ const createVideo = async (req, res) => {
       duration,
       tags,
       isPublic,
-      is_public = true
     } = req.body;
 
     // Use the provided field names or fall back to snake_case
@@ -113,7 +112,6 @@ const createVideo = async (req, res) => {
     const finalThumbnailUrl = thumbnailUrl || thumbnail_url;
     const finalVideoType = videoType || video_type;
     const finalPhaseNumber = phaseNumber || phase_number;
-    const finalIsPublic = isPublic !== undefined ? isPublic : is_public;
 
     // Validate required fields
     if (!title || !finalVideoUrl || !finalVideoType) {
@@ -188,7 +186,6 @@ const createVideo = async (req, res) => {
       phase_number: finalPhaseNumber ? parseInt(finalPhaseNumber) : null,
       duration: duration ? parseInt(duration) : null,
       tags: parsedTags,
-      is_public: finalIsPublic,
       uploaded_by: req.user.id,
       updated_by: req.user.id
     });
@@ -275,10 +272,7 @@ const updateVideo = async (req, res) => {
       updateData.phase_number = updateData.phaseNumber;
       delete updateData.phaseNumber;
     }
-    if (updateData.isPublic !== undefined) {
-      updateData.is_public = updateData.isPublic;
-      delete updateData.isPublic;
-    }
+    // Note: is_public column was removed, so no public status updates
 
     const video = await Video.findByPk(id);
     if (!video) {
@@ -399,7 +393,7 @@ const incrementViewCount = async (req, res) => {
 const getVideoStats = async (req, res) => {
   try {
     const totalVideos = await Video.count();
-    const publicVideos = await Video.count({ where: { is_public: true } });
+    const publicVideos = await Video.count(); // Note: is_public column was removed
     const totalViews = await Video.sum('view_count') || 0;
     
     const videosByType = await Video.findAll({

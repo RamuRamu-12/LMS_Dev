@@ -26,17 +26,9 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      video_url: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
       is_published: {
         type: Sequelize.BOOLEAN,
         defaultValue: false
-      },
-      published_at: {
-        type: Sequelize.DATE,
-        allowNull: true
       },
       category: {
         type: Sequelize.STRING(100),
@@ -70,37 +62,9 @@ module.exports = {
         type: Sequelize.ARRAY(Sequelize.STRING),
         defaultValue: []
       },
-      prerequisites: {
-        type: Sequelize.ARRAY(Sequelize.INTEGER),
-        defaultValue: []
-      },
       learning_objectives: {
         type: Sequelize.ARRAY(Sequelize.TEXT),
         defaultValue: []
-      },
-      intro_content_type: {
-        type: Sequelize.ENUM('video', 'pdf', 'url'),
-        allowNull: true,
-        defaultValue: 'video'
-      },
-      intro_file_id: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'file_uploads',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
-      },
-      external_url: {
-        type: Sequelize.TEXT,
-        allowNull: true
-      },
-      url_analysis: {
-        type: Sequelize.JSONB,
-        allowNull: true,
-        defaultValue: null
       },
       logo: {
         type: Sequelize.TEXT,

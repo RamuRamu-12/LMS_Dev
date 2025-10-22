@@ -54,11 +54,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 'intermediate'
     },
-    max_participants: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Maximum number of participants allowed'
-    },
     max_groups: {
       type: DataTypes.INTEGER,
       allowNull: true,

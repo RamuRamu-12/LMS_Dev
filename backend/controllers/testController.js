@@ -14,7 +14,7 @@ const getTestsByCourse = async (req, res, next) => {
         course_id: courseId,
         is_active: true 
       },
-      order: [['order', 'ASC']]
+      order: [['id', 'ASC']]
     });
 
     res.json({
@@ -74,10 +74,7 @@ const createTest = async (req, res, next) => {
       title, 
       description, 
       passing_score, 
-      time_limit_minutes, 
-      max_attempts,
-      instructions,
-      order 
+      instructions
     } = req.body;
 
     // Verify course exists
@@ -91,10 +88,7 @@ const createTest = async (req, res, next) => {
       title,
       description,
       passing_score: passing_score || 70,
-      time_limit_minutes,
-      max_attempts,
       instructions,
-      order: order || 0,
       created_by: req.user.id,
       is_active: true
     });
@@ -223,7 +217,7 @@ const getTestQuestions = async (req, res, next) => {
         test_id: testId,
         is_active: true 
       },
-      order: [['order', 'ASC']]
+      order: [['id', 'ASC']]
     });
 
     console.log('Raw questions found:', questions.length);
@@ -233,7 +227,7 @@ const getTestQuestions = async (req, res, next) => {
       questions.map(async (question) => {
         const options = await TestQuestionOption.findAll({
           where: { question_id: question.id },
-          order: [['order', 'ASC']]
+          order: [['id', 'ASC']]
         });
         
         console.log(`Question ${question.id} has ${options.length} options`);
@@ -247,7 +241,6 @@ const getTestQuestions = async (req, res, next) => {
             id: opt.id,
             option_text: opt.option_text,
             is_correct: opt.is_correct,
-            order: opt.order
           }))
         };
       })
@@ -290,7 +283,6 @@ const createQuestion = async (req, res, next) => {
       question_text, 
       question_type, 
       points, 
-      order,
       explanation,
       options = []
     } = req.body;
@@ -334,7 +326,6 @@ const createQuestion = async (req, res, next) => {
       question_text,
       question_type: question_type || 'multiple_choice',
       points: points || 1,
-      order: order || 0,
       explanation,
       is_active: true
     });
@@ -360,7 +351,6 @@ const createQuestion = async (req, res, next) => {
           question_id: question.id,
           option_text: option.option_text.trim(),
           is_correct: option.is_correct || false,
-          order: index + 1
         });
       });
       
@@ -382,7 +372,7 @@ const createQuestion = async (req, res, next) => {
         {
           model: TestQuestionOption,
           as: 'options',
-          attributes: ['id', 'option_text', 'is_correct', 'order']
+          attributes: ['id', 'option_text', 'is_correct']
         }
       ]
     });
@@ -470,7 +460,7 @@ const deleteQuestion = async (req, res, next) => {
 const addOption = async (req, res, next) => {
   try {
     const { questionId } = req.params;
-    const { option_text, is_correct, order } = req.body;
+    const { option_text, is_correct } = req.body;
 
     const question = await TestQuestion.findByPk(questionId);
     if (!question) {
@@ -481,7 +471,6 @@ const addOption = async (req, res, next) => {
       question_id: questionId,
       option_text,
       is_correct: is_correct || false,
-      order: order || 0
     });
 
     logger.info(`Option added to question ${questionId} by ${req.user.email}`);

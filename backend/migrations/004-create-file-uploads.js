@@ -38,25 +38,9 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: false
       },
-      s3_key: {
-        type: Sequelize.STRING(500),
-        allowNull: false
-      },
-      s3_bucket: {
-        type: Sequelize.STRING(255),
-        allowNull: false
-      },
       file_type: {
         type: Sequelize.ENUM('pdf', 'docx'),
         allowNull: false
-      },
-      download_count: {
-        type: Sequelize.INTEGER,
-        defaultValue: 0
-      },
-      is_public: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
       },
       metadata: {
         type: Sequelize.JSONB,
@@ -74,7 +58,6 @@ module.exports = {
       { columns: ['course_id'], name: 'file_uploads_course_id' },
       { columns: ['file_type'], name: 'file_uploads_file_type' },
       { columns: ['mimetype'], name: 'file_uploads_mimetype' },
-      { columns: ['is_public'], name: 'file_uploads_is_public' },
       { columns: ['created_at'], name: 'file_uploads_created_at' }
     ];
 

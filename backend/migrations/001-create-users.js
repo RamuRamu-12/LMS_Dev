@@ -26,6 +26,13 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true
       },
+      password: {
+        type: Sequelize.STRING(255),
+        allowNull: true,
+        validate: {
+          len: [6, 255]
+        }
+      },
       role: {
         type: Sequelize.ENUM('admin', 'student'),
         defaultValue: 'student',
@@ -38,10 +45,6 @@ module.exports = {
       last_login: {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW
-      },
-      preferences: {
-        type: Sequelize.JSONB,
-        defaultValue: {}
       },
       created_at: {
         type: Sequelize.DATE,

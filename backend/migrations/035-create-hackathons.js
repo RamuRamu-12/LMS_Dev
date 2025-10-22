@@ -53,11 +53,6 @@ module.exports = {
         allowNull: false,
         defaultValue: 'intermediate'
       },
-      max_participants: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        comment: 'Maximum number of participants allowed'
-      },
       max_groups: {
         type: Sequelize.INTEGER,
         allowNull: true,
@@ -510,7 +505,8 @@ module.exports = {
         joined_at: {
           type: Sequelize.DATE,
           allowNull: false,
-          defaultValue: Sequelize.NOW
+          defaultValue: Sequelize.NOW,
+          comment: 'When the student joined the group'
         },
         is_leader: {
           type: Sequelize.BOOLEAN,

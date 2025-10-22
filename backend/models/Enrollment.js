@@ -59,21 +59,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW
     },
-    notes: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    completion_percentage: {
-      type: DataTypes.DECIMAL(5, 2),
-      defaultValue: 0
-    },
     time_spent: {
       type: DataTypes.INTEGER,
       defaultValue: 0
-    },
-    last_lesson_completed: {
-      type: DataTypes.STRING(255),
-      allowNull: true
     },
   }, {
     tableName: 'enrollments',
