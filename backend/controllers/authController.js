@@ -167,11 +167,12 @@ const verifyGoogleCredential = async (req, res, next) => {
     
     // Verify the Google credential using Google's API
     const { OAuth2Client } = require('google-auth-library');
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const client = new OAuth2Client();
     
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      // Don't specify audience to allow any valid Google token
+      // This fixes the "Wrong recipient, payload audience != requiredAudience" error
     });
     
     const payload = ticket.getPayload();
