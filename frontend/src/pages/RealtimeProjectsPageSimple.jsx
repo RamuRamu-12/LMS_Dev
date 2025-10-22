@@ -233,24 +233,67 @@ const RealtimeProjectsPageSimple = () => {
                 {/* Video Display Area */}
                 <div className="mb-8">
                   <div className="aspect-video bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl overflow-hidden shadow-2xl relative">
-                    {(selectedProject.video_url || selectedProject.videoUrl) ? (
-                      <iframe
-                        src={(selectedProject.video_url || selectedProject.videoUrl).replace('watch?v=', 'embed/')}
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white">
-                        <div className="text-center">
-                          <div className="text-8xl mb-6">🎥</div>
-                          <h4 className="text-2xl font-bold mb-3">Project Overview Video</h4>
-                          <p className="text-gray-300 text-lg max-w-md">
-                            Watch this video to understand the complete project journey and get comprehensive knowledge about what you'll build.
-                          </p>
+                    {(() => {
+                      // Find overview video from the videos array
+                      const overviewVideo = selectedProject.videos?.find(video => video.video_type === 'overview');
+                      const videoUrl = overviewVideo?.video_url || selectedProject.video_url || selectedProject.videoUrl;
+                      
+                      // Convert Google Drive URL to embeddable format
+                      const getEmbeddableUrl = (url) => {
+                        if (!url) return null;
+                        
+                        // Handle Google Drive URLs
+                        if (url.includes('drive.google.com')) {
+                          // Extract file ID from various Google Drive URL formats
+                          let fileId = '';
+                          
+                          // Format: https://drive.google.com/file/d/FILE_ID/view
+                          const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+                          if (fileMatch) {
+                            fileId = fileMatch[1];
+                          }
+                          
+                          // Format: https://drive.google.com/open?id=FILE_ID
+                          const openMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                          if (openMatch) {
+                            fileId = openMatch[1];
+                          }
+                          
+                          if (fileId) {
+                            return `https://drive.google.com/file/d/${fileId}/preview`;
+                          }
+                        }
+                        
+                        // Handle YouTube URLs
+                        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                          return url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/');
+                        }
+                        
+                        // Return original URL for other video platforms
+                        return url;
+                      };
+                      
+                      const embedUrl = getEmbeddableUrl(videoUrl);
+                      
+                      return embedUrl ? (
+                        <iframe
+                          src={embedUrl}
+                          className="w-full h-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white">
+                          <div className="text-center">
+                            <div className="text-8xl mb-6">🎥</div>
+                            <h4 className="text-2xl font-bold mb-3">Project Overview Video</h4>
+                            <p className="text-gray-300 text-lg max-w-md">
+                              Watch this video to understand the complete project journey and get comprehensive knowledge about what you'll build.
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
 

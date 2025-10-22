@@ -96,13 +96,27 @@ const ProjectManagementDetailPage = () => {
       
       const method = editingItem ? 'PUT' : 'POST';
       
+      // Convert camelCase to snake_case for backend compatibility
+      const backendData = {
+        title: videoForm.title,
+        description: videoForm.description,
+        video_url: videoForm.videoUrl,
+        thumbnail_url: videoForm.thumbnailUrl,
+        video_type: videoForm.videoType,
+        phase: videoForm.phase,
+        phase_number: videoForm.phaseNumber,
+        duration: videoForm.duration,
+        tags: videoForm.tags,
+        is_public: videoForm.isPublic
+      };
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
-        body: JSON.stringify(videoForm)
+        body: JSON.stringify(backendData)
       });
 
       const data = await response.json();
@@ -185,14 +199,14 @@ const ProjectManagementDetailPage = () => {
       setVideoForm({
         title: item.title,
         description: item.description || '',
-        videoUrl: item.videoUrl,
-        thumbnailUrl: item.thumbnailUrl || '',
-        videoType: item.videoType,
+        videoUrl: item.video_url || item.videoUrl,
+        thumbnailUrl: item.thumbnail_url || item.thumbnailUrl || '',
+        videoType: item.video_type || item.videoType,
         phase: item.phase || '',
-        phaseNumber: item.phaseNumber || '',
+        phaseNumber: item.phase_number || item.phaseNumber || '',
         duration: item.duration || '',
         tags: item.tags ? JSON.stringify(item.tags) : '',
-        isPublic: item.isPublic
+        isPublic: item.is_public !== undefined ? item.is_public : item.isPublic
       });
       setShowVideoModal(true);
     } else {
@@ -469,7 +483,7 @@ const ProjectManagementDetailPage = () => {
                   <div className="space-y-2 text-sm text-gray-500">
                     <div className="flex justify-between">
                       <span>Type:</span>
-                      <span className="capitalize">{video.videoType}</span>
+                      <span className="capitalize">{video.video_type || video.videoType || 'N/A'}</span>
                     </div>
                     {video.phase && (
                       <div className="flex justify-between">
@@ -483,13 +497,13 @@ const ProjectManagementDetailPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span>Views:</span>
-                      <span>{video.viewCount}</span>
+                      <span>{video.view_count || video.viewCount || 0}</span>
                     </div>
                   </div>
                   
                   <div className="mt-4">
                     <a
-                      href={video.videoUrl}
+                      href={video.video_url || video.videoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-800 text-sm"

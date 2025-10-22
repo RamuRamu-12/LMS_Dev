@@ -1,4 +1,4 @@
-const { Project, Document, User } = require('../models');
+const { Project, Document, User, Video } = require('../models');
 const { Op } = require('sequelize');
 const logger = require('../utils/logger');
 
@@ -33,6 +33,12 @@ const getAllProjects = async (req, res) => {
           model: Document,
           as: 'documents',
           attributes: ['id', 'title', 'document_type', 'phase', 'file_url'],
+          required: false
+        },
+        {
+          model: Video,
+          as: 'videos',
+          attributes: ['id', 'title', 'description', 'video_url', 'video_type', 'phase', 'phase_number', 'duration', 'view_count'],
           required: false
         }
       ],
@@ -87,6 +93,13 @@ const getProjectById = async (req, res) => {
           attributes: ['id', 'title', 'description', 'document_type', 'phase', 'file_url', 'file_size', 'mime_type', 'created_at'],
           required: false,
           order: [['createdAt', 'DESC']]
+        },
+        {
+          model: Video,
+          as: 'videos',
+          attributes: ['id', 'title', 'description', 'video_url', 'video_type', 'phase', 'phase_number', 'duration', 'view_count', 'created_at'],
+          required: false,
+          order: [['video_type', 'ASC'], ['phase_number', 'ASC'], ['created_at', 'DESC']]
         }
       ]
     });
