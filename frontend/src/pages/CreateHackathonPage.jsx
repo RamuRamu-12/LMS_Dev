@@ -75,7 +75,8 @@ const CreateHackathonPage = () => {
         return;
       }
 
-      const response = await fetch('/api/users?role=student', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/users?role=student`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -253,7 +254,8 @@ const CreateHackathonPage = () => {
       const filteredGroups = hackathonGroups.filter(group => group.name && group.student_ids.length > 0);
       console.log('Filtered groups being sent:', filteredGroups);
       
-      const response = await fetch('/api/hackathons', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/hackathons`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,

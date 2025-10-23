@@ -28,7 +28,8 @@ const ExternalPDFViewer = ({
       setIsLoading(true)
       
       // Try to get PDF info from our backend
-      const response = await fetch(`/api/pdf/info?url=${encodeURIComponent(pdfUrl)}`)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/pdf/info?url=${encodeURIComponent(pdfUrl)}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -60,7 +61,8 @@ const ExternalPDFViewer = ({
   }
 
   const handleOpenWithProxy = () => {
-    const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const proxyUrl = `${apiUrl}/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`
     window.open(proxyUrl, '_blank', 'noopener,noreferrer')
   }
 

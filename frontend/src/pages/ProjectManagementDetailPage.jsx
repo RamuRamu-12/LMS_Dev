@@ -55,14 +55,15 @@ const ProjectManagementDetailPage = () => {
 
   const fetchProjectData = async () => {
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const [projectRes, videosRes, documentsRes] = await Promise.all([
-        fetch(`/api/projects/${projectId}`, {
+        fetch(`${apiUrl}/api/projects/${projectId}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
         }),
-        fetch(`/api/projects/${projectId}/videos`, {
+        fetch(`${apiUrl}/api/projects/${projectId}/videos`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
         }),
-        fetch(`/api/projects/${projectId}/documents`, {
+        fetch(`${apiUrl}/api/projects/${projectId}/documents`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
         })
       ]);
@@ -88,9 +89,10 @@ const ProjectManagementDetailPage = () => {
     setSubmitting(true);
     
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = editingItem 
-        ? `/api/projects/videos/${editingItem.id}`
-        : `/api/projects/${projectId}/videos`;
+        ? `${apiUrl}/api/projects/videos/${editingItem.id}`
+        : `${apiUrl}/api/projects/${projectId}/videos`;
       
       const method = editingItem ? 'PUT' : 'POST';
       
@@ -136,9 +138,10 @@ const ProjectManagementDetailPage = () => {
     setSubmitting(true);
     
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = editingItem 
-        ? `/api/projects/documents/${editingItem.id}`
-        : `/api/projects/${projectId}/documents`;
+        ? `${apiUrl}/api/projects/documents/${editingItem.id}`
+        : `${apiUrl}/api/projects/${projectId}/documents`;
       
       const method = editingItem ? 'PUT' : 'POST';
       
@@ -210,9 +213,10 @@ const ProjectManagementDetailPage = () => {
     if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
 
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = type === 'video' 
-        ? `/api/projects/videos/${item.id}`
-        : `/api/projects/documents/${item.id}`;
+        ? `${apiUrl}/api/projects/videos/${item.id}`
+        : `${apiUrl}/api/projects/documents/${item.id}`;
       
       const response = await fetch(url, {
         method: 'DELETE',
@@ -570,7 +574,7 @@ const ProjectManagementDetailPage = () => {
                   
                   <div className="mt-4">
                     <a
-                      href={`/api/projects/documents/${document.id}/download`}
+                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/projects/documents/${document.id}/download`}
                       className="text-blue-600 hover:text-blue-800 text-sm"
                     >
                       Download →

@@ -2,13 +2,6 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Add max_groups column to hackathons table
-    await queryInterface.addColumn('hackathons', 'max_groups', {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      comment: 'Maximum number of groups allowed'
-    });
-
     // Create hackathon_groups table
     await queryInterface.createTable('hackathon_groups', {
       id: {
@@ -156,10 +149,8 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    try {
-      await queryInterface.removeColumn('hackathons', 'max_groups');
-    } catch (error) {
-      // Column may not exist
-    }
+    // Drop tables in reverse order
+    await queryInterface.dropTable('hackathon_group_members');
+    await queryInterface.dropTable('hackathon_groups');
   }
 };

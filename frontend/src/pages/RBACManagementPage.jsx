@@ -26,7 +26,8 @@ const RBACManagementPage = () => {
         return;
       }
       
-      const response = await fetch('/api/rbac/permissions', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/rbac/permissions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -36,10 +37,22 @@ const RBACManagementPage = () => {
       if (response.ok) {
         const data = await response.json();
         if (data && data.success && data.data) {
-          setPermissions(data.data);
+          console.log('Fetched permissions from backend:', data.data);
+          // Merge fetched permissions with existing ones, but don't override with empty objects
+          setPermissions(prev => {
+            const merged = { ...prev };
+            Object.entries(data.data).forEach(([studentId, permissions]) => {
+              // Only update if the fetched permissions are not empty
+              if (permissions && Object.keys(permissions).length > 0) {
+                merged[studentId] = permissions;
+              }
+            });
+            return merged;
+          });
         }
       } else {
         // If response is not ok, use default permissions
+        console.log('Failed to fetch permissions, response not ok:', response.status);
         return;
       }
     } catch (error) {
@@ -57,7 +70,8 @@ const RBACManagementPage = () => {
         throw new Error('Authentication token not found');
       }
 
-      const response = await fetch('/api/users?role=student', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/users?role=student`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -79,10 +93,12 @@ const RBACManagementPage = () => {
             realtimeProjects: false
           };
         });
+        console.log('Initial permissions created for students:', initialPermissions);
         setPermissions(initialPermissions);
         
         // Try to fetch existing permissions, but don't fail if it doesn't work
-        fetchStudentPermissions().catch(() => {
+        fetchStudentPermissions().catch((error) => {
+          console.log('Failed to fetch existing permissions, using defaults:', error);
           // Use defaults if fetch fails
         });
       } else {
@@ -112,26 +128,57 @@ const RBACManagementPage = () => {
         return;
       }
       
-      const response = await fetch('/api/rbac/permissions', {
+      // Filter out empty permission objects and only send students with actual permission changes
+      const filteredPermissions = {};
+      Object.entries(permissions).forEach(([studentId, studentPermissions]) => {
+        // Only include students that have actual permission values (not empty objects)
+        if (studentPermissions && 
+            Object.keys(studentPermissions).length > 0 &&
+            (studentPermissions.courses !== undefined || 
+             studentPermissions.hackathons !== undefined || 
+             studentPermissions.realtimeProjects !== undefined)) {
+          filteredPermissions[studentId] = studentPermissions;
+        }
+      });
+      
+      console.log('Saving permissions (filtered):', filteredPermissions);
+      console.log('Original permissions object:', permissions);
+      
+      // Don't send request if no permissions to update
+      if (Object.keys(filteredPermissions).length === 0) {
+        alert('No permission changes to save.');
+        setSaving(false);
+        return;
+      }
+      
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/rbac/permissions`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ permissions })
+        body: JSON.stringify({ permissions: filteredPermissions })
       });
 
+      console.log('Response status:', response.status);
+      const responseData = await response.json();
+      console.log('Response data:', responseData);
+
       if (response.ok) {
-        const data = await response.json();
-        if (data && data.success) {
+        if (responseData && responseData.success) {
+          console.log('✅ Permissions saved successfully!');
           alert('Permissions saved successfully!');
+          // Don't refresh - keep the current state since it's already correct
+          console.log('✅ Permissions state maintained - no refresh needed');
         } else {
           alert('Failed to save permissions. Please try again.');
         }
       } else {
-        alert('Failed to save permissions. Please try again.');
+        alert(`Failed to save permissions: ${responseData.message || 'Unknown error'}`);
       }
     } catch (error) {
+      console.error('Save permissions error:', error);
       alert('Failed to save permissions. Please try again.');
     } finally {
       setSaving(false);
@@ -146,13 +193,16 @@ const RBACManagementPage = () => {
         realtimeProjects: false
       };
       
-      return {
+      const newPermissions = {
         ...prev,
         [studentId]: {
           ...currentStudentPerms,
           [permissionType]: !currentStudentPerms[permissionType]
         }
       };
+      
+      console.log(`Toggled ${permissionType} for student ${studentId}:`, newPermissions[studentId]);
+      return newPermissions;
     });
   };
 

@@ -78,7 +78,8 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch('/api/users?role=student', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/users?role=student`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -126,7 +127,8 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
         throw new Error('Authentication token not found. Please login again.');
       }
 
-      const response = await fetch(`/api/hackathons/${hackathon.id}/groups`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/hackathons/${hackathon.id}/groups`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -613,7 +615,7 @@ const EditHackathonModal = ({ hackathon, preservedFormData, onClose, onSave }) =
                         </div>
                         
                         <textarea
-                          value={group.description}
+                          value={group.description || ''}
                           onChange={(e) => updateGroup(group.id, { description: e.target.value })}
                           placeholder="Group description (optional)"
                           rows={2}

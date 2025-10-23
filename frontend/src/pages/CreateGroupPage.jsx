@@ -71,7 +71,8 @@ const CreateGroupPage = () => {
         return;
       }
 
-      const response = await fetch('/api/users?role=student', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/users?role=student`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -161,7 +162,8 @@ const CreateGroupPage = () => {
       }
 
       // Create the group in the backend
-      const response = await fetch('/api/groups', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/api/groups`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
