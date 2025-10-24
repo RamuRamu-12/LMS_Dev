@@ -110,5 +110,27 @@ export const projectService = {
       console.error('Error seeding projects:', error);
       throw error;
     }
+  },
+
+  // Get project videos
+  getProjectVideos: async (projectId, params = {}) => {
+    try {
+      const response = await api.get(`/projects/${projectId}/videos`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching project videos:', error);
+      throw error;
+    }
+  },
+
+  // Get video by ID
+  getVideoById: async (videoId) => {
+    try {
+      const response = await api.get(`/projects/videos/${videoId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching video:', error);
+      throw error;
+    }
   }
 };

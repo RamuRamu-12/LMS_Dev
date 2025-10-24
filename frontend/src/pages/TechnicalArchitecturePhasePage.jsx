@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from 'react-query';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import PhaseNavigationBar from '../components/projects/PhaseNavigationBar';
 import NextButton from '../components/projects/NextButton';
+import VideoPlayer from '../components/course/VideoPlayer';
 import { useProjectProgress } from '../context/ProjectProgressContext';
+import { projectService } from '../services/projectService';
 
 const TechnicalArchitecturePhasePage = () => {
   const { projectId } = useParams();
@@ -14,6 +17,19 @@ const TechnicalArchitecturePhasePage = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const { isModuleUnlocked, unlockNextPhase } = useProjectProgress();
+
+  // Fetch videos for this project
+  const { data: videosData, isLoading: videosLoading, error: videosError } = useQuery(
+    ['project-videos', projectId],
+    () => projectService.getProjectVideos(projectId, { phase: 'Technical Architecture' }),
+    {
+      enabled: !!projectId,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    }
+  );
+
+  const videos = videosData?.data || [];
 
   useEffect(() => {
     // Mock data for testing - in real app, fetch based on projectId
@@ -142,26 +158,62 @@ const TechnicalArchitecturePhasePage = () => {
             
             {/* Video Section */}
             <div className="mb-8">
-              <div className="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
-                <div className="aspect-video w-full">
-                  <video
-                    className="w-full h-full object-cover"
-                    controls
-                    poster="https://images.unsplash.com/photo-1558655146-d09347e92766?w=800&h=450&fit=crop"
-                    preload="metadata"
-                  >
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                    <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
+              {videosLoading ? (
+                <div className="bg-gray-100 rounded-lg p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading videos...</p>
                 </div>
-                <div className="p-4 bg-gray-800 text-white">
-                  <h4 className="text-lg font-semibold mb-2">Technical Architecture Phase Overview Video</h4>
-                  <p className="text-sm text-gray-300">
-                    Watch this comprehensive overview of the Technical Architecture phase for the {project.title} project.
-                  </p>
+              ) : videosError ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <div className="text-red-500 mr-3">⚠️</div>
+                    <div>
+                      <h4 className="text-red-800 font-medium">Unable to load videos</h4>
+                      <p className="text-red-600 text-sm mt-1">
+                        {videosError.message || 'Failed to fetch project videos'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : videos.length > 0 ? (
+                <div className="space-y-6">
+                  {videos.map((video) => (
+                    <div key={video.id} className="bg-gray-900 rounded-lg overflow-hidden shadow-lg">
+                      <div className="aspect-video w-full">
+                        <VideoPlayer
+                          url={video.video_url}
+                          title={video.title}
+                          className="w-full h-full"
+                          showControls={true}
+                        />
+                      </div>
+                      <div className="p-4 bg-gray-800 text-white">
+                        <h4 className="text-lg font-semibold mb-2">{video.title}</h4>
+                        {video.description && (
+                          <p className="text-sm text-gray-300 mb-2">{video.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-gray-400">
+                          <span>Duration: {video.duration ? `${Math.floor(video.duration / 60)}:${(video.duration % 60).toString().padStart(2, '0')}` : 'Unknown'}</span>
+                          <span>Views: {video.view_count || 0}</span>
+                          <span>Phase: {video.phase || 'Technical Architecture'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <div className="text-yellow-500 mr-3">📹</div>
+                    <div>
+                      <h4 className="text-yellow-800 font-medium">No videos available</h4>
+                      <p className="text-yellow-600 text-sm mt-1">
+                        No Technical Architecture phase videos have been uploaded for this project yet.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="prose prose-lg max-w-none">
