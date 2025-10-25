@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import PDFViewer from './PDFViewer'
+import UniversalPDFViewer from './UniversalPDFViewer'
 import VideoPlayer from './VideoPlayer'
 
 const ChapterContentViewer = ({ chapter }) => {
@@ -36,7 +36,7 @@ const ChapterContentViewer = ({ chapter }) => {
     // Check if chapter has PDF URL
     if (chapter.pdf_url) {
       return (
-        <PDFViewer
+        <UniversalPDFViewer
           pdfUrl={chapter.pdf_url}
           title={chapter.title}
         />

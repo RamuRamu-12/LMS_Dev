@@ -6,6 +6,7 @@ export const URL_TYPES = {
   YOUTUBE: 'youtube',
   VIMEO: 'vimeo',
   GOOGLE_DRIVE: 'google_drive',
+  GOOGLE_COLAB: 'google_colab',
   DROPBOX: 'dropbox',
   ONEDRIVE: 'onedrive',
   EXTERNAL: 'external',
@@ -44,6 +45,11 @@ export const analyzeUrl = (url) => {
     // Google Drive detection
     if (hostname.includes('drive.google.com')) {
       return analyzeGoogleDriveUrl(url, urlObj)
+    }
+
+    // Google Colab detection
+    if (hostname.includes('colab.research.google.com')) {
+      return analyzeGoogleColabUrl(url, urlObj)
     }
 
     // Dropbox detection
@@ -190,6 +196,11 @@ const analyzeGoogleDriveUrl = (url, urlObj) => {
     const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`
     const viewUrl = `https://drive.google.com/file/d/${fileId}/view`
     
+    // Determine if it's likely a PDF based on URL patterns
+    const isLikelyPDF = url.includes('pdf') || url.includes('document') || 
+                       urlObj.searchParams.get('usp')?.includes('pdf') ||
+                       urlObj.searchParams.get('export')?.includes('pdf')
+    
     return {
       type: URL_TYPES.GOOGLE_DRIVE,
       isValid: true,
@@ -200,7 +211,8 @@ const analyzeGoogleDriveUrl = (url, urlObj) => {
       fileId,
       thumbnail: null,
       title: null,
-      description: 'Google Drive content'
+      description: isLikelyPDF ? 'Google Drive PDF Document' : 'Google Drive content',
+      isPDF: isLikelyPDF
     }
   }
 
@@ -208,6 +220,79 @@ const analyzeGoogleDriveUrl = (url, urlObj) => {
     type: URL_TYPES.UNKNOWN,
     isValid: false,
     error: 'Could not extract Google Drive file ID'
+  }
+}
+
+/**
+ * Analyzes Google Colab URLs
+ */
+const analyzeGoogleColabUrl = (url, urlObj) => {
+  // Extract notebook ID from various Google Colab URL formats
+  let notebookId = null
+  
+  // Pattern 1: https://colab.research.google.com/drive/1ABC123...
+  const drivePattern = /\/drive\/([a-zA-Z0-9_-]+)/
+  const driveMatch = urlObj.pathname.match(drivePattern)
+  if (driveMatch) {
+    notebookId = driveMatch[1]
+  }
+  
+  // Pattern 2: https://colab.research.google.com/github/user/repo/blob/main/notebook.ipynb
+  const githubPattern = /\/github\/([^\/]+)\/([^\/]+)\/blob\/([^\/]+)\/(.+\.ipynb)/
+  const githubMatch = urlObj.pathname.match(githubPattern)
+  if (githubMatch) {
+    const [, user, repo, branch, filename] = githubMatch
+    notebookId = `${user}/${repo}/${branch}/${filename}`
+  }
+  
+  // Pattern 3: https://colab.research.google.com/gist/username/gist_id
+  const gistPattern = /\/gist\/([^\/]+)\/([a-zA-Z0-9_-]+)/
+  const gistMatch = urlObj.pathname.match(gistPattern)
+  if (gistMatch) {
+    const [, username, gistId] = gistMatch
+    notebookId = `gist/${username}/${gistId}`
+  }
+  
+  // Pattern 4: Direct notebook sharing links
+  const sharePattern = /\/notebooks\/[^\/]+\/([a-zA-Z0-9_-]+)/
+  const shareMatch = urlObj.pathname.match(sharePattern)
+  if (shareMatch) {
+    notebookId = shareMatch[1]
+  }
+  
+  if (notebookId) {
+    // For Google Colab, we can embed the notebook directly
+    // Ensure the URL is in the correct format for embedding
+    let embedUrl = url
+    
+    // If it's a sharing link, convert to proper format
+    if (url.includes('/notebooks/')) {
+      embedUrl = url.replace('/notebooks/', '/drive/')
+    }
+    
+    // Ensure proper embedding parameters
+    if (!embedUrl.includes('?')) {
+      embedUrl += '?usp=sharing'
+    } else if (!embedUrl.includes('usp=sharing')) {
+      embedUrl += '&usp=sharing'
+    }
+    
+    return {
+      type: URL_TYPES.GOOGLE_COLAB,
+      isValid: true,
+      originalUrl: url,
+      embedUrl,
+      notebookId,
+      thumbnail: null,
+      title: null,
+      description: 'Google Colab Notebook'
+    }
+  }
+  
+  return {
+    type: URL_TYPES.UNKNOWN,
+    isValid: false,
+    error: 'Could not extract Google Colab notebook ID'
   }
 }
 
@@ -253,6 +338,7 @@ export const getUrlTypeDisplayName = (type) => {
     [URL_TYPES.YOUTUBE]: 'YouTube Video',
     [URL_TYPES.VIMEO]: 'Vimeo Video',
     [URL_TYPES.GOOGLE_DRIVE]: 'Google Drive',
+    [URL_TYPES.GOOGLE_COLAB]: 'Google Colab Notebook',
     [URL_TYPES.DROPBOX]: 'Dropbox',
     [URL_TYPES.ONEDRIVE]: 'OneDrive',
     [URL_TYPES.EXTERNAL]: 'External Link',
@@ -270,6 +356,7 @@ export const supportsEmbedding = (type) => {
     URL_TYPES.YOUTUBE,
     URL_TYPES.VIMEO,
     URL_TYPES.GOOGLE_DRIVE,
+    URL_TYPES.GOOGLE_COLAB,
     URL_TYPES.ONEDRIVE
   ].includes(type)
 }

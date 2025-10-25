@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import VideoPlayer from './VideoPlayer'
-import PDFViewer from './PDFViewer'
+import UniversalPDFViewer from './UniversalPDFViewer'
 import { analyzeUrl, getUrlTypeDisplayName, supportsEmbedding } from '../../utils/urlAnalyzer'
 import { FiExternalLink, FiFile, FiYoutube, FiPlay, FiAlertCircle } from 'react-icons/fi'
 
@@ -49,7 +49,7 @@ const ContentViewer = ({
     // Handle PDF content
     if (content.type === 'pdf' && content.file_url) {
       return (
-        <PDFViewer
+        <UniversalPDFViewer
           pdfUrl={content.file_url}
           title={title}
           className={className}

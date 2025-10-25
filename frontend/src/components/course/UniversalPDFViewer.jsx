@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiDownload, FiExternalLink, FiFile, FiAlertCircle, FiLoader, FiRefreshCw } from 'react-icons/fi'
+import { analyzeUrl, getUrlTypeDisplayName, supportsEmbedding } from '../../utils/urlAnalyzer'
 import GoogleDrivePDFViewer from './GoogleDrivePDFViewer'
 import ExternalPDFViewer from './ExternalPDFViewer'
+import VideoPlayer from './VideoPlayer'
 
 const UniversalPDFViewer = ({ 
   pdfUrl, 
@@ -14,6 +16,7 @@ const UniversalPDFViewer = ({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [retryCount, setRetryCount] = useState(0)
+  const [urlAnalysis, setUrlAnalysis] = useState(null)
 
   useEffect(() => {
     if (!pdfUrl) {
@@ -29,9 +32,33 @@ const UniversalPDFViewer = ({
     setIsLoading(true)
     setError(null)
 
+    // First analyze the URL to understand its type
+    const analysis = analyzeUrl(pdfUrl)
+    setUrlAnalysis(analysis)
+
+    if (!analysis.isValid) {
+      setError(analysis.error || 'Invalid URL')
+      setIsLoading(false)
+      return
+    }
+
     // Check if it's a Google Drive URL
-    if (isGoogleDriveUrl(pdfUrl)) {
+    if (analysis.type === 'google_drive') {
       setViewMethod('googledrive')
+      setIsLoading(false)
+      return
+    }
+
+    // Check if it's a Google Colab URL
+    if (analysis.type === 'google_colab') {
+      setViewMethod('colab')
+      setIsLoading(false)
+      return
+    }
+
+    // Check if it's a video URL (YouTube, Vimeo, etc.)
+    if (analysis.type === 'youtube' || analysis.type === 'vimeo') {
+      setViewMethod('video')
       setIsLoading(false)
       return
     }
@@ -105,6 +132,26 @@ const UniversalPDFViewer = ({
           />
         )
       
+      case 'colab':
+        return (
+          <VideoPlayer
+            url={pdfUrl}
+            title={title}
+            className="h-full"
+            showControls={showControls}
+          />
+        )
+      
+      case 'video':
+        return (
+          <VideoPlayer
+            url={pdfUrl}
+            title={title}
+            className="h-full"
+            showControls={showControls}
+          />
+        )
+      
       case 'external':
         return (
           <ExternalPDFViewer
@@ -130,6 +177,8 @@ const UniversalPDFViewer = ({
                    >
                      <option value="iframe">Direct Embed (Trying...)</option>
                      <option value="googledrive">Google Drive Viewer</option>
+                     <option value="colab">Google Colab Notebook</option>
+                     <option value="video">Video Player</option>
                      <option value="external">External Viewer</option>
                    </select>
                  </div>

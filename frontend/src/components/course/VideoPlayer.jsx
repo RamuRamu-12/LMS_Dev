@@ -61,14 +61,28 @@ const VideoPlayer = ({
     if (supportsEmbedding(urlAnalysis.type)) {
       return (
         <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-          <iframe
-            src={urlAnalysis.embedUrl}
-            title={title}
-            className="w-full h-full"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          {urlAnalysis.type === 'google_colab' ? (
+            // Special handling for Google Colab notebooks
+            <iframe
+              src={urlAnalysis.embedUrl}
+              title={title}
+              className="w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+            />
+          ) : (
+            // Standard iframe for other embeddable content
+            <iframe
+              src={urlAnalysis.embedUrl}
+              title={title}
+              className="w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          )}
         </div>
       )
     }
