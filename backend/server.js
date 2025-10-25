@@ -61,18 +61,8 @@ app.use(helmet({
   },
 }));
 
-// Configure CORS to allow all origins with proper headers
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'If-None-Match', 'Cache-Control'],
-  exposedHeaders: ['Content-Range', 'X-Content-Range', 'ETag'],
-  credentials: false,
-  maxAge: 86400 // 24 hours
-}));
+app.use(cors());
 
-// Explicitly handle OPTIONS requests for all routes
-app.options('*', cors());
 
 // Disable caching for API responses to ensure fresh data
 app.use((req, res, next) => {
@@ -85,6 +75,7 @@ app.use((req, res, next) => {
 
 // Disable ETags to prevent 304 responses
 app.disable('etag');
+
 
 // Rate limiting
 const limiter = rateLimit({
