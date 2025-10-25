@@ -61,7 +61,30 @@ app.use(helmet({
   },
 }));
 
-app.use(cors());
+// Configure CORS to allow all origins with proper headers
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'If-None-Match', 'Cache-Control'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range', 'ETag'],
+  credentials: false,
+  maxAge: 86400 // 24 hours
+}));
+
+// Explicitly handle OPTIONS requests for all routes
+app.options('*', cors());
+
+// Disable caching for API responses to ensure fresh data
+app.use((req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
+
+// Disable ETags to prevent 304 responses
+app.disable('etag');
 
 // Rate limiting
 const limiter = rateLimit({
