@@ -37,13 +37,13 @@ const Header = () => {
       className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <img 
                 src="/lms_logo.svg"
               alt="GNANAM AI" 
-              className="h-16 w-auto"
+              className="h-12 sm:h-16 w-auto"
             />
           </Link>
 
@@ -55,18 +55,18 @@ const Header = () => {
             >
               Courses
             </Link>
-            <button
-              onClick={() => handleProtectedClick('/realtime-projects')}
+            <Link
+              to="/realtime-projects"
               className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
             >
               Realtime Projects
-            </button>
-            <button
-              onClick={() => handleProtectedClick(user?.role === 'admin' ? '/admin/hackathons' : '/hackathons')}
+            </Link>
+            <Link
+              to="/hackathons"
               className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
             >
               Hackathons
-            </button>
+            </Link>
             
             {user ? (
               <div className="flex items-center space-x-4">
@@ -145,7 +145,7 @@ const Header = () => {
           <div className="md:hidden">
             <button
               onClick={toggleMenu}
-              className="touch-target p-3 rounded-lg hover:bg-white/20 transition-colors duration-200"
+              className="p-3 rounded-lg hover:bg-white/20 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label="Toggle menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,45 +164,41 @@ const Header = () => {
               exit={{ opacity: 0, height: 0 }}
               className="md:hidden border-t border-white/20"
             >
-              <div className="py-4 space-y-2 mobile-padding">
+              <div className="py-4 space-y-2 px-4">
                 <Link
                   to="/courses"
-                  className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                  className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Courses
                 </Link>
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    handleProtectedClick('/realtime-projects')
-                  }}
-                  className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                <Link
+                  to="/realtime-projects"
+                  className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   Realtime Projects
-                </button>
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    handleProtectedClick(user?.role === 'admin' ? '/admin/hackathons' : '/hackathons')
-                  }}
-                  className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                </Link>
+                <Link
+                  to="/hackathons"
+                  className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   Hackathons
-                </button>
+                </Link>
                 
                 {user ? (
                   <>
                     <Link
                       to={user.role === 'admin' ? '/admin' : '/student'}
-                      className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Dashboard
                     </Link>
                     <Link
                       to="/profile"
-                      className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Profile
@@ -212,7 +208,7 @@ const Header = () => {
                         handleLogout()
                         setIsMenuOpen(false)
                       }}
-                      className="touch-target block w-full text-left px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="block w-full text-left px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
                     >
                       Logout
                     </button>
@@ -221,7 +217,7 @@ const Header = () => {
                   <>
                     <Link
                       to="/login"
-                      className="touch-target block px-4 py-3 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200"
+                      className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Login

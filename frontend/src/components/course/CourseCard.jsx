@@ -15,7 +15,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
   return (
     <motion.div
       whileHover={{ y: -8, scale: 1.02 }}
-      className="bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden group border border-white/20 shadow-2xl hover:shadow-purple-500/20 w-full max-w-sm mx-auto"
+      className="bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden group border border-white/20 shadow-2xl hover:shadow-purple-500/20 w-full"
     >
       <Link to={`/courses/${course.id}`} className="block">
         <div className="relative overflow-hidden">
@@ -23,16 +23,16 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
             <img
               src={logoUrl}
               alt={course.title}
-              className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-40 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-500"
             />
           ) : course.logo && logoLoading ? (
-            <div className="w-full h-48 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+            <div className="w-full h-40 sm:h-48 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
               <div className="animate-pulse text-white text-2xl font-bold">
                 {course.title?.charAt(0)}
               </div>
             </div>
           ) : course.logo && logoError ? (
-            <div className="w-full h-48 bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
+            <div className="w-full h-40 sm:h-48 bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
               <div className="text-white text-2xl font-bold">
                 {course.title?.charAt(0)}
               </div>
@@ -41,7 +41,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
             <img
               src={course.thumbnail || `https://via.placeholder.com/400x225/6366f1/ffffff?text=${course.title?.charAt(0)}`}
               alt={course.title}
-              className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-40 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-500"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
@@ -67,7 +67,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
           </div>
         </div>
         
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-3">
               {course.logo && (
@@ -101,7 +101,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
             </span>
           </div>
           
-          <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-purple-300 transition-colors">
+          <h3 className="text-lg sm:text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-purple-300 transition-colors">
             {course.title}
           </h3>
           

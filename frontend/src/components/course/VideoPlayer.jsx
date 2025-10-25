@@ -60,52 +60,54 @@ const VideoPlayer = ({
   const renderVideoContent = () => {
     if (supportsEmbedding(urlAnalysis.type)) {
       return (
-        <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
-          {urlAnalysis.type === 'google_colab' ? (
-            // Special handling for Google Colab notebooks
-            <iframe
-              src={urlAnalysis.embedUrl}
-              title={title}
-              className="w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
-            />
-          ) : (
-            // Standard iframe for other embeddable content
-            <iframe
-              src={urlAnalysis.embedUrl}
-              title={title}
-              className="w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          )}
+        <div className="relative w-full bg-black rounded-lg overflow-hidden">
+          <div className="aspect-video w-full">
+            {urlAnalysis.type === 'google_colab' ? (
+              // Special handling for Google Colab notebooks
+              <iframe
+                src={urlAnalysis.embedUrl}
+                title={title}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+              />
+            ) : (
+              // Standard iframe for other embeddable content
+              <iframe
+                src={urlAnalysis.embedUrl}
+                title={title}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </div>
         </div>
       )
     }
 
     // For non-embeddable content, show a preview card
     return (
-      <div className="bg-white border border-gray-200 rounded-lg p-6 text-center">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 text-center">
         <div className="mb-4">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <FiPlay className="w-8 h-8 text-indigo-600" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <FiPlay className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">{title}</h3>
           <p className="text-sm text-gray-600 mb-4">
             {getUrlTypeDisplayName(urlAnalysis.type)} content
           </p>
         </div>
         
-        <div className="space-y-2">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
           <a
             href={urlAnalysis.originalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200"
+            className="inline-flex items-center justify-center px-4 py-3 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 min-h-[44px]"
           >
             <FiExternalLink className="w-4 h-4 mr-2" />
             Open in New Tab
@@ -114,7 +116,7 @@ const VideoPlayer = ({
           {urlAnalysis.type === 'dropbox' && (
             <button
               onClick={() => window.open(urlAnalysis.originalUrl, '_blank')}
-              className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200 ml-2"
+              className="inline-flex items-center justify-center px-4 py-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200 min-h-[44px]"
             >
               <FiDownload className="w-4 h-4 mr-2" />
               Download

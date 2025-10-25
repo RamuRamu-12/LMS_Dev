@@ -6,6 +6,7 @@ import Header from '../components/common/Header'
 import Footer from '../components/common/Footer'
 import CourseFilters from '../components/course/CourseFilters'
 import CourseList from '../components/course/CourseList'
+import Pagination from '../components/common/Pagination'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 
 const CourseListPage = () => {
@@ -14,13 +15,16 @@ const CourseListPage = () => {
     category: '',
     difficulty: ''
   })
+  const [currentPage, setCurrentPage] = useState(1)
+  const COURSES_PER_PAGE = 9
 
   const { data: coursesData, isLoading, error } = useQuery(
-    ['courses', filters],
+    ['courses', filters, currentPage],
     () => {
       // Only add parameters if they have values
       const params = {
-        limit: 20
+        page: currentPage,
+        limit: COURSES_PER_PAGE
       }
       
       if (filters.search && filters.search.trim()) {
@@ -52,9 +56,17 @@ const CourseListPage = () => {
 
   const courses = coursesData?.data?.courses || []
   const categories = categoriesData?.data?.categories || []
+  const pagination = coursesData?.data?.pagination || {}
 
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters)
+    setCurrentPage(1) // Reset to first page when filters change
+  }
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
 
@@ -100,6 +112,18 @@ const CourseListPage = () => {
               showInstructor={true}
               showRating={true}
             />
+
+            {/* Pagination */}
+            {!isLoading && !error && courses.length > 0 && (
+              <Pagination
+                currentPage={pagination.currentPage || currentPage}
+                totalPages={pagination.totalPages || 1}
+                onPageChange={handlePageChange}
+                totalItems={pagination.totalItems || 0}
+                itemsPerPage={pagination.itemsPerPage || COURSES_PER_PAGE}
+                className="mt-8"
+              />
+            )}
           </div>
         </main>
 

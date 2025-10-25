@@ -7,7 +7,7 @@ import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
 import { activityService } from '../services/activityService'
 import { hackathonService } from '../services/hackathonService'
-import { chatService } from '../services/chatService'
+// import { chatService } from '../services/chatService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import AllCoursesModal from '../components/course/AllCoursesModal'
@@ -16,8 +16,8 @@ import StudentCourseCard from '../components/course/StudentCourseCard'
 import EnrolledCourseCard from '../components/course/EnrolledCourseCard'
 import StudentHackathonCard from '../components/hackathon/StudentHackathonCard'
 import StudentHackathonDetailsModal from '../components/hackathon/StudentHackathonDetailsModal'
-import ChatRoomsList from '../components/chat/ChatRoomsList'
-import ChatRoom from '../components/chat/ChatRoom'
+// import ChatRoomsList from '../components/chat/ChatRoomsList'
+// import ChatRoom from '../components/chat/ChatRoom'
 import toast from 'react-hot-toast'
 
 const StudentDashboard = () => {
@@ -77,18 +77,18 @@ const StudentDashboard = () => {
     }
   )
 
-  const { data: chatRoomsData, isLoading: chatRoomsLoading, error: chatRoomsError } = useQuery(
-    'student-chat-rooms',
-    () => chatService.getMyChatRooms(),
-    {
-      refetchOnWindowFocus: false,
-      staleTime: 2 * 60 * 1000, // 2 minutes for chat rooms
-      retry: 1,
-      onError: (error) => {
-        console.error('Chat rooms API error:', error)
-      }
-    }
-  )
+  // const { data: chatRoomsData, isLoading: chatRoomsLoading, error: chatRoomsError } = useQuery(
+  //   'student-chat-rooms',
+  //   () => chatService.getMyChatRooms(),
+  //   {
+  //     refetchOnWindowFocus: false,
+  //     staleTime: 2 * 60 * 1000, // 2 minutes for chat rooms
+  //     retry: 1,
+  //     onError: (error) => {
+  //       console.error('Chat rooms API error:', error)
+  //     }
+  //   }
+  // )
 
   // Enrollment mutation
   const enrollMutation = useMutation(
@@ -115,14 +115,14 @@ const StudentDashboard = () => {
   const [isEnrolledCoursesModalOpen, setIsEnrolledCoursesModalOpen] = useState(false)
   const [selectedHackathon, setSelectedHackathon] = useState(null)
   const [isHackathonDetailsModalOpen, setIsHackathonDetailsModalOpen] = useState(false)
-  const [selectedChatRoom, setSelectedChatRoom] = useState(null)
-  const [isChatModalOpen, setIsChatModalOpen] = useState(false)
+  // const [selectedChatRoom, setSelectedChatRoom] = useState(null)
+  // const [isChatModalOpen, setIsChatModalOpen] = useState(false)
 
-  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading || hackathonsLoading || chatRoomsLoading
+  const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading || hackathonsLoading
   const courses = coursesData?.data?.courses || []
   const enrollments = enrollmentsData?.data?.enrollments || []
   const activities = activitiesData?.data?.activities || []
-  const chatRooms = chatRoomsData?.data?.chatRooms || []
+  // const chatRooms = chatRoomsData?.data?.chatRooms || []
   const hackathons = hackathonsData?.data?.hackathons || []
 
   // Helper function to get activity styling
@@ -238,15 +238,15 @@ const StudentDashboard = () => {
     }
   }
 
-  const handleSelectChatRoom = (hackathon, group) => {
-    setSelectedChatRoom({ hackathon, group })
-    setIsChatModalOpen(true)
-  }
+  // const handleSelectChatRoom = (hackathon, group) => {
+  //   setSelectedChatRoom({ hackathon, group })
+  //   setIsChatModalOpen(true)
+  // }
 
-  const handleCloseChat = () => {
-    setSelectedChatRoom(null)
-    setIsChatModalOpen(false)
-  }
+  // const handleCloseChat = () => {
+  //   setSelectedChatRoom(null)
+  //   setIsChatModalOpen(false)
+  // }
 
   const handleEnroll = async (courseId) => {
     try {
@@ -300,7 +300,7 @@ const StudentDashboard = () => {
   }
 
   const completedCourses = (enrollments || []).filter(e => e.status === 'completed').length
-  const inProgressCourses = (enrollments || []).filter(e => e.status === 'in-progress').length
+  const inProgressCourses = (enrollments || []).filter(e => e.status === 'enrolled' && e.progress > 0 && e.progress < 100).length
   const totalProgress = (enrollments || []).reduce((sum, e) => sum + (e.progress || 0), 0) / Math.max((enrollments || []).length, 1)
 
   return (
@@ -329,15 +329,15 @@ const StudentDashboard = () => {
                       transition={{ delay: 0.2 }}
                     >
                       <h1 className="text-2xl lg:text-3xl font-bold text-white mb-3">
-                        Welcome back, <span className="text-yellow-300">{user?.name || 'Student'}!</span>
+                        Welcome, <span className="text-yellow-300">{user?.name || 'Student'}!</span>
                       </h1>
                       <p className="text-lg text-indigo-100 mb-4 max-w-2xl">
                         Continue your learning journey and explore new courses.
                       </p>
-                      <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex flex-col gap-3">
                   <button 
                     onClick={() => navigate('/courses')}
-                          className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                          className="inline-flex items-center justify-center px-4 sm:px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 min-h-[44px]"
                   >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -346,7 +346,7 @@ const StudentDashboard = () => {
                   </button>
                         <button 
                           onClick={() => navigate('/profile')}
-                          className="inline-flex items-center px-6 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/30"
+                          className="inline-flex items-center justify-center px-4 sm:px-6 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/30 min-h-[44px]"
                         >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -355,7 +355,7 @@ const StudentDashboard = () => {
                         </button>
                         <button 
                           onClick={() => navigate('/certificates')}
-                          className="inline-flex items-center px-6 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/30"
+                          className="inline-flex items-center justify-center px-4 sm:px-6 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-300 backdrop-blur-sm border border-white/30 min-h-[44px]"
                         >
                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -391,7 +391,7 @@ const StudentDashboard = () => {
             </div>
 
             {/* Enhanced Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -691,8 +691,8 @@ const StudentDashboard = () => {
               </motion.div>
             </div>
 
-            {/* Enhanced Recent Activity */}
-            <motion.div
+            {/* Enhanced Recent Activity - COMMENTED OUT */}
+            {/* <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
@@ -767,11 +767,11 @@ const StudentDashboard = () => {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </motion.div> */}
           </motion.div>
 
-          {/* Hackathons Section */}
-          <motion.div
+          {/* Hackathons Section - COMMENTED OUT */}
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
@@ -813,10 +813,10 @@ const StudentDashboard = () => {
                 )}
               </div>
             </div>
-          </motion.div>
+          </motion.div> */}
 
-          {/* Group Chats Section */}
-          <motion.div
+          {/* Group Chats Section - COMMENTED OUT */}
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
@@ -838,7 +838,7 @@ const StudentDashboard = () => {
               onSelectRoom={handleSelectChatRoom}
               loading={chatRoomsLoading}
             />
-          </motion.div>
+          </motion.div> */}
         </div>
       </main>
       
@@ -863,14 +863,14 @@ const StudentDashboard = () => {
         }}
       />
 
-      {/* Chat Room Modal */}
-      {isChatModalOpen && selectedChatRoom && (
+      {/* Chat Room Modal - COMMENTED OUT */}
+      {/* {isChatModalOpen && selectedChatRoom && (
         <ChatRoom
           hackathon={selectedChatRoom.hackathon}
           group={selectedChatRoom.group}
           onClose={handleCloseChat}
         />
-      )}
+      )} */}
     </div>
   )
 }

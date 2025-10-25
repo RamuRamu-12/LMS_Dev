@@ -1,4 +1,4 @@
-const { Hackathon, HackathonParticipant, HackathonSubmission, HackathonGroup, HackathonGroupMember, User, sequelize } = require('../models');
+const { Hackathon, HackathonParticipant, HackathonSubmission, HackathonGroup, HackathonGroupMember, HackathonJoinRequest, User, sequelize } = require('../models');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
 
@@ -1814,6 +1814,198 @@ const setSubmissionWinner = async (req, res, next) => {
   }
 };
 
+/**
+ * Submit hackathon join request (Public)
+ */
+const submitJoinRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { teamName, teamMembers, message } = req.body;
+
+    // Validate required fields
+    if (!teamName || !teamMembers || !Array.isArray(teamMembers) || teamMembers.length === 0) {
+      return next(new AppError('Team name and at least one team member are required', 400));
+    }
+
+    // Validate team members
+    const validMembers = teamMembers.filter(member => 
+      member.name && member.email && member.name.trim() && member.email.trim()
+    );
+
+    if (validMembers.length === 0) {
+      return next(new AppError('At least one valid team member is required', 400));
+    }
+
+    // Check if hackathon exists and is published
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    if (!hackathon.is_published) {
+      return next(new AppError('Hackathon is not available for joining', 403));
+    }
+
+    // Check if hackathon is still accepting participants
+    const now = new Date();
+    if (now > hackathon.end_date) {
+      return next(new AppError('Hackathon registration has ended', 400));
+    }
+
+    // Create join request
+    const joinRequest = await HackathonJoinRequest.create({
+      hackathon_id: id,
+      team_name: teamName.trim(),
+      team_members: validMembers.map(member => ({
+        name: member.name.trim(),
+        email: member.email.trim()
+      })),
+      message: message ? message.trim() : null,
+      status: 'pending'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Join request submitted successfully',
+      data: joinRequest
+    });
+  } catch (error) {
+    console.error('Error in submitJoinRequest:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    if (error.name === 'SequelizeValidationError') {
+      return next(new AppError(error.errors[0].message, 400));
+    }
+    if (error.name === 'SequelizeDatabaseError') {
+      return next(new AppError(`Database error: ${error.message}`, 500));
+    }
+    next(new AppError('Failed to submit join request', 500));
+  }
+};
+
+/**
+ * Get hackathon join requests (Admin only)
+ */
+const getHackathonJoinRequests = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    const joinRequests = await HackathonJoinRequest.findByHackathon(id);
+
+    res.json({
+      success: true,
+      data: joinRequests
+    });
+  } catch (error) {
+    next(new AppError('Failed to fetch join requests', 500));
+  }
+};
+
+/**
+ * Get all pending join requests (Admin only)
+ */
+const getAllPendingJoinRequests = async (req, res, next) => {
+  try {
+    const joinRequests = await HackathonJoinRequest.findPending();
+
+    res.json({
+      success: true,
+      data: joinRequests
+    });
+  } catch (error) {
+    next(new AppError('Failed to fetch pending join requests', 500));
+  }
+};
+
+/**
+ * Approve hackathon join request (Admin only)
+ */
+const approveJoinRequest = async (req, res, next) => {
+  try {
+    const { id, requestId } = req.params;
+    const { reviewNotes } = req.body;
+
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    const joinRequest = await HackathonJoinRequest.findOne({
+      where: {
+        id: requestId,
+        hackathon_id: id
+      }
+    });
+
+    if (!joinRequest) {
+      return next(new AppError('Join request not found', 404));
+    }
+
+    if (joinRequest.status !== 'pending') {
+      return next(new AppError('Join request has already been processed', 400));
+    }
+
+    // Approve the request
+    await joinRequest.approve(req.user.id, reviewNotes);
+
+    res.json({
+      success: true,
+      message: 'Join request approved successfully',
+      data: joinRequest
+    });
+  } catch (error) {
+    next(new AppError('Failed to approve join request', 500));
+  }
+};
+
+/**
+ * Reject hackathon join request (Admin only)
+ */
+const rejectJoinRequest = async (req, res, next) => {
+  try {
+    const { id, requestId } = req.params;
+    const { reviewNotes } = req.body;
+
+    const hackathon = await Hackathon.findByPk(id);
+    if (!hackathon) {
+      return next(new AppError('Hackathon not found', 404));
+    }
+
+    const joinRequest = await HackathonJoinRequest.findOne({
+      where: {
+        id: requestId,
+        hackathon_id: id
+      }
+    });
+
+    if (!joinRequest) {
+      return next(new AppError('Join request not found', 404));
+    }
+
+    if (joinRequest.status !== 'pending') {
+      return next(new AppError('Join request has already been processed', 400));
+    }
+
+    // Reject the request
+    await joinRequest.reject(req.user.id, reviewNotes);
+
+    res.json({
+      success: true,
+      message: 'Join request rejected',
+      data: joinRequest
+    });
+  } catch (error) {
+    next(new AppError('Failed to reject join request', 500));
+  }
+};
+
 module.exports = {
   getAllHackathons,
   getMyHackathons,
@@ -1837,5 +2029,10 @@ module.exports = {
   getMySubmission,
   getHackathonSubmissions,
   reviewSubmission,
-  setSubmissionWinner
+  setSubmissionWinner,
+  submitJoinRequest,
+  getHackathonJoinRequests,
+  getAllPendingJoinRequests,
+  approveJoinRequest,
+  rejectJoinRequest
 };

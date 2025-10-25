@@ -11,6 +11,7 @@ const GoogleDrivePDFViewer = ({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [viewerUrl, setViewerUrl] = useState(null)
+  const [useFallback, setUseFallback] = useState(false)
 
   useEffect(() => {
     if (!pdfUrl) {
@@ -23,10 +24,24 @@ const GoogleDrivePDFViewer = ({
     const embeddableUrl = convertToEmbeddableUrl(pdfUrl)
     setViewerUrl(embeddableUrl)
     setIsLoading(false)
+    
+    // Set up fallback timer
+    const fallbackTimer = setTimeout(() => {
+      if (!useFallback) {
+        console.log('Switching to Google Docs viewer fallback')
+        setUseFallback(true)
+        const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(pdfUrl)}&embedded=true`
+        setViewerUrl(fallbackUrl)
+      }
+    }, 5000) // Try fallback after 5 seconds
+    
+    return () => clearTimeout(fallbackTimer)
   }, [pdfUrl])
 
   const convertToEmbeddableUrl = (url) => {
     try {
+      console.log('Original URL:', url)
+      
       // Handle different Google Drive URL formats
       let fileId = null
       
@@ -34,25 +49,31 @@ const GoogleDrivePDFViewer = ({
       const match1 = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
       if (match1) {
         fileId = match1[1]
+        console.log('Extracted fileId from format 1:', fileId)
       }
       
       // Format 2: https://drive.google.com/open?id=FILE_ID
       const match2 = url.match(/[?&]id=([a-zA-Z0-9-_]+)/)
       if (match2) {
         fileId = match2[1]
+        console.log('Extracted fileId from format 2:', fileId)
       }
       
       // Format 3: https://docs.google.com/document/d/FILE_ID/edit
       const match3 = url.match(/\/document\/d\/([a-zA-Z0-9-_]+)/)
       if (match3) {
         fileId = match3[1]
+        console.log('Extracted fileId from format 3:', fileId)
       }
 
       if (fileId) {
-        // Convert to Google Drive direct access URL for PDFs
-        return `https://drive.google.com/uc?export=view&id=${fileId}`
+        // Convert to Google Drive preview URL for embedding (works with public sharing)
+        const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`
+        console.log('Generated embed URL:', embedUrl)
+        return embedUrl
       }
 
+      console.log('No fileId found, using Google Docs viewer')
       // For other URLs, try to use Google Docs viewer
       return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
     } catch (error) {
@@ -173,7 +194,31 @@ const GoogleDrivePDFViewer = ({
           className="w-full h-full border-0"
           frameBorder="0"
           allowFullScreen
+          onLoad={() => {
+            console.log('Iframe loaded successfully')
+          }}
+          onError={(e) => {
+            console.error('Iframe load error:', e)
+          }}
         />
+        
+        {/* Fallback message and controls */}
+        <div className="absolute bottom-4 right-4 bg-blue-50 border border-blue-200 rounded-lg p-3 max-w-xs">
+          <p className="text-xs text-blue-800 mb-2">
+            <strong>Note:</strong> If you see "You need access", make sure the Google Drive file is set to "Anyone with the link can view"
+          </p>
+          <button
+            onClick={() => {
+              console.log('Manual fallback triggered')
+              setUseFallback(true)
+              const fallbackUrl = `https://docs.google.com/gview?url=${encodeURIComponent(pdfUrl)}&embedded=true`
+              setViewerUrl(fallbackUrl)
+            }}
+            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+          >
+            Try Alternative Viewer
+          </button>
+        </div>
       </div>
 
       {/* PDF Footer */}

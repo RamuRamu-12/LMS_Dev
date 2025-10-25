@@ -24,7 +24,12 @@ const {
   getMySubmission,
   getHackathonSubmissions,
   reviewSubmission,
-  setSubmissionWinner
+  setSubmissionWinner,
+  submitJoinRequest,
+  getHackathonJoinRequests,
+  getAllPendingJoinRequests,
+  approveJoinRequest,
+  rejectJoinRequest
 } = require('../controllers/hackathonController');
 
 // Public routes (for frontend to fetch hackathons and multimedia)
@@ -32,6 +37,9 @@ const {
 router.get('/', getAllHackathons);
 router.get('/:id', getHackathonById);
 router.get('/:id/multimedia', getHackathonMultimedia);
+
+// Public join request route (no authentication required)
+router.post('/:id/join-request', submitJoinRequest);
 
 // Student routes (require authentication but not admin role)
 router.get('/my', authenticate, getMyHackathons);
@@ -71,5 +79,11 @@ router.delete('/:id/groups/:groupId', requireAdmin, deleteHackathonGroup);
 router.get('/:id/submissions', requireAdmin, getHackathonSubmissions);
 router.put('/:id/submissions/:submissionId/review', requireAdmin, reviewSubmission);
 router.put('/:id/submissions/:submissionId/winner', requireAdmin, setSubmissionWinner);
+
+// Hackathon join requests management (admin only)
+router.get('/join-requests/pending', requireAdmin, getAllPendingJoinRequests);
+router.get('/:id/join-requests', requireAdmin, getHackathonJoinRequests);
+router.put('/:id/join-requests/:requestId/approve', requireAdmin, approveJoinRequest);
+router.put('/:id/join-requests/:requestId/reject', requireAdmin, rejectJoinRequest);
 
 module.exports = router;

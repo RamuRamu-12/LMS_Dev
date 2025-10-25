@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward, FiFileText } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward, FiFileText, FiUserPlus } from 'react-icons/fi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EditHackathonModal from '../components/EditHackathonModal';
 import HackathonSubmissionsManagement from '../components/admin/HackathonSubmissionsManagement';
+import HackathonJoinRequestsManagement from '../components/admin/HackathonJoinRequestsManagement';
 import Header from '../components/common/Header';
 import { api } from '../services/api';
 
@@ -18,6 +19,8 @@ const AdminHackathonsPage = () => {
   const [preservedFormData, setPreservedFormData] = useState(null);
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [selectedHackathonForSubmissions, setSelectedHackathonForSubmissions] = useState(null);
+  const [showJoinRequests, setShowJoinRequests] = useState(false);
+  const [selectedHackathonForJoinRequests, setSelectedHackathonForJoinRequests] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -183,6 +186,11 @@ const AdminHackathonsPage = () => {
   const handleViewSubmissions = (hackathon) => {
     setSelectedHackathonForSubmissions(hackathon);
     setShowSubmissions(true);
+  };
+
+  const handleViewJoinRequests = (hackathon) => {
+    setSelectedHackathonForJoinRequests(hackathon);
+    setShowJoinRequests(true);
   };
 
   const handleTogglePublish = async (hackathon) => {
@@ -400,37 +408,52 @@ const AdminHackathonsPage = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditHackathon(hackathon)}
-                      className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center space-x-1"
-                    >
-                      <FiEdit className="w-4 h-4" />
-                      <span className="text-xs">Edit</span>
-                    </button>
-                    <button
-                      onClick={() => handleViewSubmissions(hackathon)}
-                      className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center space-x-1"
-                    >
-                      <FiFileText className="w-4 h-4" />
-                      <span className="text-xs">Submissions</span>
-                    </button>
-                    <button
-                      onClick={() => handleTogglePublish(hackathon)}
-                      className={`flex-1 py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-1 text-xs ${
-                        hackathon.is_published
-                          ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
-                      }`}
-                    >
-                      {hackathon.is_published ? 'Unpublish' : 'Publish'}
-                    </button>
-                    <button
-                      onClick={() => handleDeleteHackathon(hackathon.id)}
-                      className="bg-red-100 text-red-700 py-2 px-3 rounded-lg hover:bg-red-200 transition-colors duration-200 flex items-center justify-center"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                    </button>
+                  <div className="space-y-2">
+                    {/* First Row - Main Actions */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditHackathon(hackathon)}
+                        className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center justify-center space-x-1"
+                      >
+                        <FiEdit className="w-4 h-4" />
+                        <span className="text-xs">Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleViewSubmissions(hackathon)}
+                        className="flex-1 bg-blue-100 text-blue-700 py-2 px-3 rounded-lg hover:bg-blue-200 transition-colors duration-200 flex items-center justify-center space-x-1"
+                      >
+                        <FiFileText className="w-4 h-4" />
+                        <span className="text-xs">Submissions</span>
+                      </button>
+                      <button
+                        onClick={() => handleViewJoinRequests(hackathon)}
+                        className="flex-1 bg-purple-100 text-purple-700 py-2 px-3 rounded-lg hover:bg-purple-200 transition-colors duration-200 flex items-center justify-center space-x-1"
+                      >
+                        <FiUserPlus className="w-4 h-4" />
+                        <span className="text-xs">Join Requests</span>
+                      </button>
+                    </div>
+                    
+                    {/* Second Row - Publish/Delete Actions */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleTogglePublish(hackathon)}
+                        className={`flex-1 py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-1 text-xs ${
+                          hackathon.is_published
+                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        }`}
+                      >
+                        {hackathon.is_published ? 'Unpublish' : 'Publish'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteHackathon(hackathon.id)}
+                        className="flex-1 bg-red-100 text-red-700 py-2 px-3 rounded-lg hover:bg-red-200 transition-colors duration-200 flex items-center justify-center space-x-1"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                        <span className="text-xs">Delete</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -482,6 +505,40 @@ const AdminHackathonsPage = () => {
             </div>
             <div className="p-6">
               <HackathonSubmissionsManagement hackathonId={selectedHackathonForSubmissions.id} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Join Requests Management Modal */}
+      {showJoinRequests && selectedHackathonForJoinRequests && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Join Requests - {selectedHackathonForJoinRequests.name}
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Manage team join requests for this hackathon
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowJoinRequests(false);
+                    setSelectedHackathonForJoinRequests(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <HackathonJoinRequestsManagement hackathonId={selectedHackathonForJoinRequests.id} />
             </div>
           </div>
         </div>

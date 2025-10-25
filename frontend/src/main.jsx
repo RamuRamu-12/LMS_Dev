@@ -8,7 +8,7 @@ import { Toaster } from 'react-hot-toast'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
-import { SocketProvider } from './contexts/SocketContext.jsx'
+// import { SocketProvider } from './contexts/SocketContext.jsx'
 import './index.css'
 
 // Create a client
@@ -29,9 +29,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <BrowserRouter>
           <ThemeProvider>
             <AuthProvider>
-              <SocketProvider>
+              {/* <SocketProvider> */}
                 <App />
-              </SocketProvider>
+              {/* </SocketProvider> */}
               <Toaster
                 position="top-right"
                 toastOptions={{

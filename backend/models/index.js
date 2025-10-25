@@ -52,6 +52,7 @@ const HackathonParticipant = require('./HackathonParticipant')(sequelize, Sequel
 const HackathonSubmission = require('./HackathonSubmission')(sequelize, Sequelize.DataTypes);
 const HackathonGroup = require('./HackathonGroup')(sequelize, Sequelize.DataTypes);
 const HackathonGroupMember = require('./HackathonGroupMember')(sequelize, Sequelize.DataTypes);
+const HackathonJoinRequest = require('./HackathonJoinRequest')(sequelize, Sequelize.DataTypes);
 const Group = require('./Group')(sequelize, Sequelize.DataTypes);
 const GroupMember = require('./GroupMember')(sequelize, Sequelize.DataTypes);
 const ChatMessage = require('./ChatMessage')(sequelize, Sequelize.DataTypes);
@@ -653,6 +654,32 @@ const defineAssociations = () => {
     onDelete: 'CASCADE'
   });
 
+  // HackathonJoinRequest associations
+  HackathonJoinRequest.belongsTo(Hackathon, {
+    foreignKey: 'hackathon_id',
+    as: 'hackathon',
+    onDelete: 'CASCADE'
+  });
+
+  HackathonJoinRequest.belongsTo(User, {
+    foreignKey: 'reviewed_by',
+    as: 'reviewer',
+    onDelete: 'SET NULL'
+  });
+
+  // Reverse associations
+  Hackathon.hasMany(HackathonJoinRequest, {
+    foreignKey: 'hackathon_id',
+    as: 'joinRequests',
+    onDelete: 'CASCADE'
+  });
+
+  User.hasMany(HackathonJoinRequest, {
+    foreignKey: 'reviewed_by',
+    as: 'reviewedJoinRequests',
+    onDelete: 'SET NULL'
+  });
+
 };
 
 // Define associations
@@ -686,6 +713,7 @@ module.exports = {
   HackathonSubmission,
   HackathonGroup,
   HackathonGroupMember,
+  HackathonJoinRequest,
   Group,
   GroupMember,
   ChatMessage,

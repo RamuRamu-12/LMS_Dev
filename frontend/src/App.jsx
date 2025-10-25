@@ -30,14 +30,16 @@ import ProjectManagementDetailPage from './pages/ProjectManagementDetailPage'
 import AdminHackathonsPage from './pages/AdminHackathonsPage'
 import CreateHackathonPage from './pages/CreateHackathonPage'
 import CreateGroupPage from './pages/CreateGroupPage'
-import AdminChatPage from './pages/AdminChatPage'
+// import AdminChatPage from './pages/AdminChatPage'
+import RealtimeProjectsLandingPage from './pages/RealtimeProjectsLandingPage'
+import HackathonLandingPage from './pages/HackathonLandingPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 // Components
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import LoadingSpinner from './components/common/LoadingSpinner'
 import ErrorBoundary from './components/common/ErrorBoundary'
-import ChatNotification from './components/chat/ChatNotification'
+// import ChatNotification from './components/chat/ChatNotification'
 
 // Hooks
 import { useAuth } from './context/AuthContext'
@@ -72,7 +74,7 @@ function App() {
             <meta name="description" content="Experience the future of education with GNANAM AI - your intelligent learning companion" />
           </Helmet>
           
-          <ChatNotification />
+          {/* <ChatNotification /> */}
           
           <AnimatePresence mode="wait">
             <Routes>
@@ -114,6 +116,8 @@ function App() {
             
             {/* Course Routes */}
             <Route path="/courses" element={<CourseListPage />} />
+            <Route path="/realtime-projects" element={<RealtimeProjectsLandingPage />} />
+            <Route path="/hackathons" element={<HackathonLandingPage />} />
             <Route path="/courses/:id" element={<CourseDetailPage />} />
             
             {/* Realtime Projects Route */}
@@ -279,14 +283,15 @@ function App() {
               }
             />
             
-            <Route
+            {/* Chat Management Route - COMMENTED OUT */}
+            {/* <Route
               path="/admin/chat"
               element={
                 <ProtectedRoute requiredRole="admin">
                   <AdminChatPage />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             
             <Route
               path="/admin/project-management/:projectId"

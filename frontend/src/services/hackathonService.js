@@ -1,6 +1,17 @@
 import { api } from './api'
 
 export const hackathonService = {
+  // Get all published hackathons (public access)
+  getAllHackathons: async (params = {}) => {
+    try {
+      const response = await api.get('/hackathons', { params })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching hackathons:', error)
+      throw error
+    }
+  },
+
   // Get hackathons that the student is eligible for
   getMyHackathons: async () => {
     try {
@@ -92,6 +103,58 @@ export const hackathonService = {
       return response.data
     } catch (error) {
       console.error('Error setting submission winner:', error)
+      throw error
+    }
+  },
+
+  // Join request methods
+  submitJoinRequest: async (hackathonId, joinRequestData) => {
+    try {
+      const response = await api.post(`/hackathons/${hackathonId}/join-request`, joinRequestData)
+      return response.data
+    } catch (error) {
+      console.error('Error submitting join request:', error)
+      throw error
+    }
+  },
+
+  // Admin methods for join requests
+  getHackathonJoinRequests: async (hackathonId) => {
+    try {
+      const response = await api.get(`/hackathons/${hackathonId}/join-requests`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching hackathon join requests:', error)
+      throw error
+    }
+  },
+
+  getAllPendingJoinRequests: async () => {
+    try {
+      const response = await api.get('/hackathons/join-requests/pending')
+      return response.data
+    } catch (error) {
+      console.error('Error fetching pending join requests:', error)
+      throw error
+    }
+  },
+
+  approveJoinRequest: async (hackathonId, requestId, reviewNotes) => {
+    try {
+      const response = await api.put(`/hackathons/${hackathonId}/join-requests/${requestId}/approve`, { reviewNotes })
+      return response.data
+    } catch (error) {
+      console.error('Error approving join request:', error)
+      throw error
+    }
+  },
+
+  rejectJoinRequest: async (hackathonId, requestId, reviewNotes) => {
+    try {
+      const response = await api.put(`/hackathons/${hackathonId}/join-requests/${requestId}/reject`, { reviewNotes })
+      return response.data
+    } catch (error) {
+      console.error('Error rejecting join request:', error)
       throw error
     }
   }

@@ -771,6 +771,11 @@ const getCourseContent = async (req, res, next) => {
       throw new AppError('Course not found', 404);
     }
 
+    // Check if user is enrolled (for students)
+    if (req.user.role === 'student' && !req.enrollment) {
+      throw new AppError('You must enroll in this course to access its content', 403);
+    }
+
     // Debug logging
     console.log('=== COURSE CONTENT DEBUG ===');
     console.log('Course ID:', id);

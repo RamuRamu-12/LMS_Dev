@@ -82,7 +82,7 @@ const CourseFilters = ({ onFilterChange, filters = {}, categories = [] }) => {
               value={localFilters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
               placeholder="Search by title, instructor, or keywords..."
-              className="w-full px-4 py-3 pl-12 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+              className="w-full px-4 py-4 pl-12 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm min-h-[44px] text-base"
             />
             <svg
               className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -105,7 +105,7 @@ const CourseFilters = ({ onFilterChange, filters = {}, categories = [] }) => {
             <select
               value={localFilters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+              className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm min-h-[44px] text-base"
             >
               {categoryOptions.map((category) => (
                 <option key={category} value={category === 'All Categories' ? '' : category} className="bg-gray-800 text-white">
@@ -123,7 +123,7 @@ const CourseFilters = ({ onFilterChange, filters = {}, categories = [] }) => {
             <select
               value={localFilters.difficulty}
               onChange={(e) => handleFilterChange('difficulty', e.target.value)}
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm"
+              className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent backdrop-blur-sm min-h-[44px] text-base"
             >
               {difficulties.map((difficulty) => (
                 <option key={difficulty} value={difficulty === 'All Levels' ? '' : difficulty.toLowerCase()} className="bg-gray-800 text-white">
@@ -162,7 +162,7 @@ const CourseFilters = ({ onFilterChange, filters = {}, categories = [] }) => {
             </div>
             <button
               onClick={clearFilters}
-              className="text-sm text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200"
+              className="text-sm text-purple-400 hover:text-purple-300 font-medium transition-colors duration-200 min-h-[44px] px-3 py-2 rounded-lg hover:bg-purple-500/10"
             >
               Clear all filters
             </button>
