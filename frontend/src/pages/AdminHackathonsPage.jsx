@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward, FiFileText, FiUserPlus } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiEye, FiTrash2, FiUsers, FiCalendar, FiAward, FiFileText } from 'react-icons/fi';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EditHackathonModal from '../components/EditHackathonModal';
 import HackathonSubmissionsManagement from '../components/admin/HackathonSubmissionsManagement';
@@ -429,7 +429,7 @@ const AdminHackathonsPage = () => {
                         onClick={() => handleViewJoinRequests(hackathon)}
                         className="flex-1 bg-purple-100 text-purple-700 py-2 px-3 rounded-lg hover:bg-purple-200 transition-colors duration-200 flex items-center justify-center space-x-1"
                       >
-                        <FiUserPlus className="w-4 h-4" />
+                        <FiUsers className="w-4 h-4" />
                         <span className="text-xs">Join Requests</span>
                       </button>
                     </div>
