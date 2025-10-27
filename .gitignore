@@ -226,3 +226,8 @@ logs/
 uploads/
 temp/
 tmp/
+
+# OAuth Credentials
+client_secret*.json
+*-credentials.json
+credentials.json
