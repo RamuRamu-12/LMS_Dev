@@ -786,97 +786,15 @@ const getCourseContent = async (req, res, next) => {
     }
     console.log('============================');
 
-    // Separate regular chapters from assignment chapters
-    // Exclude chapters that have a test_id (these are test chapters, not regular content)
-    const regularChapters = course.chapters ? course.chapters.filter(chapter => 
-      !chapter.test_id && // Exclude chapters with test_id
-      !chapter.title.toLowerCase().includes('assignment') && 
-      !chapter.title.toLowerCase().includes('test') && 
-      !chapter.title.toLowerCase().includes('exam') &&
-      !chapter.title.toLowerCase().includes('final')
-    ) : [];
-    
-    const assignmentChapters = course.chapters ? course.chapters.filter(chapter => 
-      !chapter.test_id && // Exclude chapters with test_id
-      (chapter.title.toLowerCase().includes('assignment') || 
-      chapter.title.toLowerCase().includes('test') || 
-      chapter.title.toLowerCase().includes('exam') ||
-      chapter.title.toLowerCase().includes('final'))
-    ) : [];
-
-    // Debug chapter filtering
-    console.log('=== CHAPTER FILTERING DEBUG ===');
-    console.log('All chapters:', course.chapters ? course.chapters.map(ch => ch.title) : []);
-    console.log('Regular chapters:', regularChapters.map(ch => ch.title));
-    console.log('Assignment chapters:', assignmentChapters.map(ch => ch.title));
-    console.log('================================');
-
-    // Check if all regular chapters are completed (for enrolled students)
-    let allRegularChaptersCompleted = false;
-    if (req.enrollment) {
-      const chapterProgresses = await ChapterProgress.findAll({
-        where: {
-          enrollment_id: req.enrollment.id
-        }
-      });
-      
-      const progressMap = {};
-      chapterProgresses.forEach(progress => {
-        progressMap[progress.chapter_id] = progress;
-      });
-      
-      allRegularChaptersCompleted = regularChapters.every(chapter => {
-        const progress = progressMap[chapter.id];
-        return progress ? progress.is_completed : false;
-      });
-      
-      // Debug logging
-      console.log('=== ASSIGNMENT HIDING DEBUG ===');
-      console.log('Enrollment ID:', req.enrollment.id);
-      console.log('Regular chapters:', regularChapters.length);
-      console.log('Assignment chapters:', assignmentChapters.length);
-      console.log('Chapter progresses:', chapterProgresses.length);
-      console.log('All regular chapters completed:', allRegularChaptersCompleted);
-      console.log('Progress map:', progressMap);
-      console.log('================================');
-    } else {
-      // For non-enrolled users, always hide assignment chapters
-      console.log('=== NON-ENROLLED USER ===');
-      console.log('Hiding assignment chapters for non-enrolled user');
-      console.log('========================');
-    }
-
     // Combine chapters and tests into a single content array
     const allContent = [];
     
-    // Add regular chapters
-    regularChapters.forEach(chapter => {
-      allContent.push({
-        ...chapter.getPublicInfo(),
-        type: 'chapter'
-      });
-    });
-    
-    // Only add assignment chapters if all regular chapters are completed
-    if (allRegularChaptersCompleted) {
-      assignmentChapters.forEach(chapter => {
+    // Add all published chapters
+    if (course.chapters) {
+      course.chapters.forEach(chapter => {
         allContent.push({
           ...chapter.getPublicInfo(),
           type: 'chapter'
-        });
-      });
-    }
-    
-    // Add tests as the last items (only if all regular chapters are completed)
-    if (allRegularChaptersCompleted && course.tests) {
-      course.tests.forEach(test => {
-        allContent.push({
-          id: test.id,
-          title: test.title,
-          description: test.description,
-          type: 'test',
-          passing_score: test.passing_score,
-          chapter_order: 9999 + test.id // Place tests at the end
         });
       });
     }
@@ -886,7 +804,6 @@ const getCourseContent = async (req, res, next) => {
     
     console.log('Final content array length:', allContent.length);
     console.log('Content types:', allContent.map(item => ({ type: item.type, title: item.title })));
-    console.log('Assignment chapters hidden:', !allRegularChaptersCompleted);
     console.log('================================');
 
     res.json({
