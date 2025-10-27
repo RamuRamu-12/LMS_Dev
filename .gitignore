@@ -228,6 +228,4 @@ temp/
 tmp/
 
 # OAuth Credentials
-client_secret*.json
-*-credentials.json
-credentials.json
+client_secret_prod.json
