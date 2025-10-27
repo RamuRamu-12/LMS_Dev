@@ -59,16 +59,18 @@ module.exports = (sequelize, DataTypes) => {
       as: 'creator'
     });
     Group.belongsToMany(models.User, {
-      through: 'group_members',
+      through: models.GroupMember,
       foreignKey: 'group_id',
       otherKey: 'student_id',
       as: 'members'
     });
-    Group.belongsToMany(models.Hackathon, {
-      through: 'hackathon_groups',
+    Group.hasMany(models.HackathonGroup, {
       foreignKey: 'group_id',
-      otherKey: 'hackathon_id',
-      as: 'hackathons'
+      as: 'hackathonGroups'
+    });
+    Group.hasMany(models.GroupMember, {
+      foreignKey: 'group_id',
+      as: 'groupMembers'
     });
   };
 

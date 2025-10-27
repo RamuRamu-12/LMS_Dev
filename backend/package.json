@@ -11,6 +11,8 @@
     "db:setup:dev": "node setup-database-dev.js",
     "db:setup:prod": "node setup-database-prod.js",
     "db:migrate": "node run-migrations-safe.js",
+    "db:migrate:complete": "node run-migrations-complete.js",
+    "db:migrate:fix": "node mark-migrations-up.js",
     "db:migrate:status": "npx sequelize-cli db:migrate:status",
     "db:migrate:undo": "npx sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "npx sequelize-cli db:migrate:undo:all",

@@ -260,7 +260,7 @@ const DeploymentPhasePage = () => {
   ];
 
   const handleBackToProjects = () => {
-    navigate('/realtime-projects');
+    navigate('/student/realtime-projects');
   };
 
   if (loading) {

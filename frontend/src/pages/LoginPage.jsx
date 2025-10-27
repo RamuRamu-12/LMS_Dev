@@ -12,8 +12,8 @@ const LoginPage = () => {
   const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    username: 'admin',
-    password: 'admin123'
+    username: '',
+    password: ''
   })
   const [loginType, setLoginType] = useState('traditional') // 'traditional' or 'google'
 

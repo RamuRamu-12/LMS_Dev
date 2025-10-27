@@ -120,9 +120,9 @@ function App() {
             <Route path="/hackathons" element={<HackathonLandingPage />} />
             <Route path="/courses/:id" element={<CourseDetailPage />} />
             
-            {/* Realtime Projects Route */}
+            {/* Realtime Projects Route - Student access */}
             <Route
-              path="/realtime-projects"
+              path="/student/realtime-projects"
               element={
                 <ProtectedRoute>
                   <RealtimeProjectsPage />
@@ -130,9 +130,19 @@ function App() {
               }
             />
             
-            {/* Hackathons Route */}
+            {/* Individual Project Overview */}
             <Route
-              path="/hackathons"
+              path="/student/realtime-projects/:projectId"
+              element={
+                <ProtectedRoute>
+                  <RealtimeProjectsPage />
+                </ProtectedRoute>
+              }
+            />
+            
+            {/* Student Hackathons Route */}
+            <Route
+              path="/student/hackathons"
               element={
                 <ProtectedRoute>
                   <HackathonPage />
@@ -142,7 +152,7 @@ function App() {
             
             {/* BRD Phase Route */}
             <Route
-              path="/realtime-projects/:projectId/brd"
+              path="/student/realtime-projects/:projectId/brd"
               element={
                 <ProtectedRoute>
                   <BRDPhasePage />
@@ -152,7 +162,7 @@ function App() {
             
             {/* UI/UX Phase Route */}
             <Route
-              path="/realtime-projects/:projectId/uiux"
+              path="/student/realtime-projects/:projectId/uiux"
               element={
                 <ProtectedRoute>
                   <UIUXPhasePage />
@@ -162,7 +172,7 @@ function App() {
             
             {/* Architectural Design Phase Route */}
             <Route
-              path="/realtime-projects/:projectId/architectural"
+              path="/student/realtime-projects/:projectId/architectural"
               element={
                 <ProtectedRoute>
                   <ArchitecturalDesignPhasePage />
@@ -172,7 +182,7 @@ function App() {
             
             {/* Code Development Phase Route */}
             <Route
-              path="/realtime-projects/:projectId/code-development"
+              path="/student/realtime-projects/:projectId/code-development"
               element={
                 <ProtectedRoute>
                   <CodeDevelopmentPhasePage />
@@ -182,7 +192,7 @@ function App() {
             
             {/* Testing Phase Route */}
             <Route
-              path="/realtime-projects/:projectId/testing"
+              path="/student/realtime-projects/:projectId/testing"
               element={
                 <ProtectedRoute>
                   <TestingPhasePage />
@@ -192,7 +202,7 @@ function App() {
             
             {/* Deployment Phase Route */}
             <Route
-              path="/realtime-projects/:projectId/deployment"
+              path="/student/realtime-projects/:projectId/deployment"
               element={
                 <ProtectedRoute>
                   <DeploymentPhasePage />

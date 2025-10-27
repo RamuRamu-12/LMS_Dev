@@ -576,27 +576,6 @@ const ProfilePage = () => {
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Security Settings</h3>
                     <div className="space-y-4">
-                      {/* Two-Factor Authentication */}
-                      <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-blue-100 rounded-lg mr-4">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-900">Two-Factor Authentication</h4>
-                            <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => alert('Two-factor authentication setup will be implemented soon!')}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Enable
-                        </button>
-                      </div>
-
                       {/* Change Password */}
                       <div className="flex items-center justify-between py-4 border-b border-gray-100">
                         <div className="flex items-center">
@@ -697,27 +676,6 @@ const ProfilePage = () => {
                   <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Management</h3>
                     <div className="space-y-4">
-                      {/* Download Data */}
-                      <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                        <div className="flex items-center">
-                          <div className="p-2 bg-teal-100 rounded-lg mr-4">
-                            <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium text-gray-900">Download My Data</h4>
-                            <p className="text-sm text-gray-500">Export all your account data and progress</p>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => alert('Data export functionality will be implemented soon!')}
-                          className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
-                        >
-                          Download
-                        </button>
-                      </div>
-
                       {/* Contact Support */}
                       <div className="flex items-center justify-between py-4">
                         <div className="flex items-center">

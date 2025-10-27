@@ -473,13 +473,18 @@ const defineAssociations = () => {
     as: 'hackathon'
   });
 
+  // HackathonGroup.belongsTo(Group, {
+  //   foreignKey: 'group_id',
+  //   as: 'standaloneGroup'
+  // });
+
   HackathonGroup.belongsTo(User, {
     foreignKey: 'created_by',
     as: 'creator'
   });
 
   HackathonGroup.belongsToMany(User, {
-    through: 'hackathon_group_members',
+    through: HackathonGroupMember,
     foreignKey: 'group_id',
     otherKey: 'student_id',
     as: 'members'
@@ -508,7 +513,7 @@ const defineAssociations = () => {
 
   // User associations for groups
   User.belongsToMany(HackathonGroup, {
-    through: 'hackathon_group_members',
+    through: HackathonGroupMember,
     foreignKey: 'student_id',
     otherKey: 'group_id',
     as: 'hackathonGroups'
@@ -528,10 +533,21 @@ const defineAssociations = () => {
   });
 
   Group.belongsToMany(User, {
-    through: 'group_members',
+    through: GroupMember,
     foreignKey: 'group_id',
     otherKey: 'student_id',
     as: 'members'
+  });
+
+  // Group.hasMany(HackathonGroup, {
+  //   foreignKey: 'group_id',
+  //   as: 'hackathonGroups'
+  // });
+
+  Group.hasMany(GroupMember, {
+    foreignKey: 'group_id',
+    as: 'groupMembers',
+    onDelete: 'CASCADE'
   });
 
 

@@ -167,7 +167,10 @@ const getMyHackathons = async (req, res, next) => {
                 id: studentId
               },
               attributes: ['id', 'name', 'email'],
-              required: false
+              required: false,
+              through: {
+                attributes: ['student_id', 'group_id', 'joined_at', 'is_leader', 'status']
+              }
             }
           ],
           required: false
@@ -219,7 +222,10 @@ const getHackathonById = async (req, res, next) => {
             {
               model: User,
               as: 'members',
-              attributes: ['id', 'name', 'email', 'avatar']
+              attributes: ['id', 'name', 'email', 'avatar'],
+              through: {
+                attributes: ['student_id', 'group_id', 'joined_at', 'is_leader', 'status']
+              }
             }
           ]
         }
@@ -625,7 +631,10 @@ const updateHackathon = async (req, res, next) => {
             {
               model: User,
               as: 'members',
-              attributes: ['id', 'name', 'email', 'avatar']
+              attributes: ['id', 'name', 'email', 'avatar'],
+              through: {
+                attributes: ['student_id', 'group_id', 'joined_at', 'is_leader', 'status']
+              }
             }
           ]
         }
@@ -981,6 +990,9 @@ const getHackathonGroups = async (req, res, next) => {
     
     const groups = await HackathonGroup.findAll({
       where: { hackathon_id: id },
+      attributes: {
+        exclude: ['group_id'] // Exclude group_id since column doesn't exist yet
+      },
       order: [['created_at', 'ASC']]
     });
 
@@ -991,23 +1003,49 @@ const getHackathonGroups = async (req, res, next) => {
     for (let group of groups) {
       console.log(`Fetching members for group ${group.id} (${group.name})`);
       
-      // Use raw SQL to avoid column issues - no id column exists
-      const memberResults = await sequelize.query(`
-        SELECT 
-          hgm.group_id,
-          hgm.student_id,
-          hgm.created_at,
-          hgm.updated_at,
-          u.id as student_id,
-          u.name as student_name,
-          u.email as student_email
-        FROM hackathon_group_members hgm
-        LEFT JOIN users u ON hgm.student_id = u.id
-        WHERE hgm.group_id = :group_id
-      `, {
-        replacements: { group_id: group.id },
-        type: sequelize.QueryTypes.SELECT
-      });
+      // Use raw SQL to fetch members - simple fallback query
+      let memberResults;
+      try {
+        // Try with all columns first
+        memberResults = await sequelize.query(`
+          SELECT 
+            hgm.group_id,
+            hgm.student_id,
+            COALESCE(hgm.joined_at, hgm.created_at) as joined_at,
+            COALESCE(hgm.is_leader, false) as is_leader,
+            COALESCE(hgm.status, 'active') as status,
+            hgm.added_by,
+            hgm.created_at,
+            hgm.updated_at,
+            u.id as user_id,
+            u.name as student_name,
+            u.email as student_email
+          FROM hackathon_group_members hgm
+          LEFT JOIN users u ON hgm.student_id = u.id
+          WHERE hgm.group_id = :group_id
+          ORDER BY hgm.created_at ASC
+        `, {
+          replacements: { group_id: group.id },
+          type: sequelize.QueryTypes.SELECT
+        });
+      } catch (error) {
+        // Fallback to simplest possible query if columns don't exist
+        console.log('Using fallback query for group members');
+        memberResults = await sequelize.query(`
+          SELECT 
+            hgm.group_id,
+            hgm.student_id,
+            hgm.created_at,
+            u.name as student_name,
+            u.email as student_email
+          FROM hackathon_group_members hgm
+          LEFT JOIN users u ON hgm.student_id = u.id
+          WHERE hgm.group_id = :group_id
+        `, {
+          replacements: { group_id: group.id },
+          type: sequelize.QueryTypes.SELECT
+        });
+      }
       
       console.log(`Found ${memberResults.length} members for group ${group.id}`);
       
@@ -1023,18 +1061,19 @@ const getHackathonGroups = async (req, res, next) => {
       
       // Transform the raw SQL results to match expected format
       const transformedMembers = memberResults.map((member, index) => ({
-        id: `${group.id}_${member.student_id}_${index}`, // Generate unique ID since no id column exists
+        id: `gm_${member.group_id}_${member.student_id}_${index}`, // Generate unique ID
         group_id: member.group_id,
         student_id: member.student_id,
-        is_leader: index === 0, // First member is leader by default
-        status: 'active', // Default status
-        added_by: 1, // Default admin user
+        is_leader: member.is_leader !== undefined ? member.is_leader : (index === 0),
+        status: member.status || 'active',
+        added_by: member.added_by || member.group_id,
+        joined_at: member.joined_at || member.created_at,
         created_at: member.created_at,
-        updated_at: member.updated_at,
+        updated_at: member.updated_at || member.created_at,
         student: {
-          id: member.student_id,
-          name: member.student_name,
-          email: member.student_email
+          id: member.user_id || member.student_id,
+          name: member.student_name || 'Unknown',
+          email: member.student_email || ''
         }
       }));
       
@@ -1087,7 +1126,8 @@ const createHackathonGroup = async (req, res, next) => {
 
     // Check if group name already exists for this hackathon
     const existingGroup = await HackathonGroup.findOne({
-      where: { hackathon_id: id, name }
+      where: { hackathon_id: id, name },
+      attributes: { exclude: ['group_id'] }
     });
     if (existingGroup) {
       return next(new AppError('Group name already exists for this hackathon', 400));
@@ -1146,6 +1186,9 @@ const createHackathonGroup = async (req, res, next) => {
 
     // Fetch created group with associations
     const createdGroup = await HackathonGroup.findByPk(group.id, {
+      attributes: {
+        exclude: ['group_id'] // Exclude group_id since column doesn't exist yet
+      },
       include: [
         {
           model: User,
@@ -1157,7 +1200,7 @@ const createHackathonGroup = async (req, res, next) => {
           as: 'members',
           attributes: ['id', 'name', 'email'],
           through: {
-            attributes: []
+            attributes: ['student_id', 'group_id', 'joined_at', 'is_leader', 'status']
           }
         }
       ]
@@ -1193,7 +1236,9 @@ const addGroupMembers = async (req, res, next) => {
       return next(new AppError('Hackathon not found', 404));
     }
 
-    const group = await HackathonGroup.findByPk(groupId);
+    const group = await HackathonGroup.findByPk(groupId, {
+      attributes: { exclude: ['group_id'] }
+    });
     if (!group || group.hackathon_id !== parseInt(id)) {
       return next(new AppError('Group not found', 404));
     }
@@ -1285,7 +1330,9 @@ const removeGroupMembers = async (req, res, next) => {
       return next(new AppError('Hackathon not found', 404));
     }
 
-    const group = await HackathonGroup.findByPk(groupId);
+    const group = await HackathonGroup.findByPk(groupId, {
+      attributes: { exclude: ['group_id'] }
+    });
     if (!group || group.hackathon_id !== parseInt(id)) {
       return next(new AppError('Group not found', 404));
     }
@@ -1332,7 +1379,9 @@ const deleteHackathonGroup = async (req, res, next) => {
       return next(new AppError('Hackathon not found', 404));
     }
 
-    const group = await HackathonGroup.findByPk(groupId);
+    const group = await HackathonGroup.findByPk(groupId, {
+      attributes: { exclude: ['group_id'] }
+    });
     if (!group || group.hackathon_id !== parseInt(id)) {
       return next(new AppError('Group not found', 404));
     }
@@ -1447,10 +1496,14 @@ const createOrUpdateSubmission = async (req, res, next) => {
         // Let's check what groups exist for this hackathon
         const hackathonGroups = await HackathonGroup.findAll({
           where: { hackathon_id: id },
+          attributes: { exclude: ['group_id'] },
           include: [{
             model: User,
             as: 'members',
-            attributes: ['id', 'name', 'email']
+            attributes: ['id', 'name', 'email'],
+            through: {
+              attributes: ['student_id', 'group_id', 'joined_at', 'is_leader', 'status']
+            }
           }]
         });
         

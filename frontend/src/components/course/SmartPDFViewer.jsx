@@ -91,9 +91,34 @@ const SmartPDFViewer = ({
   const tryGoogleDriveMethod = () => {
     // Convert URL to Google Drive format
     const googleDriveUrl = convertToGoogleDriveUrl(pdfUrl)
-    if (googleDriveUrl) {
-      setSuccess(true)
-      setIsLoading(false)
+    if (googleDriveUrl && googleDriveUrl.includes('drive.google.com')) {
+      // Test if Google Drive URL is accessible
+      const testIframe = document.createElement('iframe')
+      testIframe.style.display = 'none'
+      testIframe.src = googleDriveUrl
+      
+      testIframe.onload = () => {
+        setSuccess(true)
+        setIsLoading(false)
+        document.body.removeChild(testIframe)
+      }
+      
+      testIframe.onerror = () => {
+        document.body.removeChild(testIframe)
+        setAttemptCount(prev => prev + 1)
+        setTimeout(tryNextMethod, 500)
+      }
+      
+      document.body.appendChild(testIframe)
+      
+      // Timeout after 3 seconds
+      setTimeout(() => {
+        if (document.body.contains(testIframe)) {
+          document.body.removeChild(testIframe)
+          setAttemptCount(prev => prev + 1)
+          setTimeout(tryNextMethod, 500)
+        }
+      }, 3000)
     } else {
       setAttemptCount(prev => prev + 1)
       setTimeout(tryNextMethod, 500)
@@ -233,12 +258,39 @@ const SmartPDFViewer = ({
     if (currentMethod === 'googledrive' && success) {
       const googleDriveUrl = convertToGoogleDriveUrl(pdfUrl)
       return (
-        <iframe
-          src={googleDriveUrl}
-          title={title}
-          className="w-full h-full border-0"
-          frameBorder="0"
-        />
+        <div className="w-full h-full">
+          <iframe
+            src={googleDriveUrl}
+            title={title}
+            className="w-full h-full border-0"
+            frameBorder="0"
+            allow="fullscreen"
+            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            onLoad={(e) => {
+              // Check if loaded content shows permission error
+              const iframe = e.target
+              try {
+                // If we can access the iframe content, check for permission errors
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document
+                if (iframeDoc) {
+                  const bodyText = iframeDoc.body?.innerText || ''
+                  if (bodyText.includes('You need access') || bodyText.includes('permission')) {
+                    setError('This file requires permission to view. Please download or open in new tab.')
+                    setSuccess(false)
+                    setCurrentMethod('external')
+                  }
+                }
+              } catch (err) {
+                // Cross-origin error is expected for Google Drive
+              }
+            }}
+          />
+          <div className="absolute top-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-b border-l border-gray-200 rounded-bl-lg">
+            <p className="text-xs text-gray-600 max-w-xs">
+              If you see "You need access", click "Open" or "Download" to view the PDF
+            </p>
+          </div>
+        </div>
       )
     }
 
@@ -331,7 +383,7 @@ const SmartPDFViewer = ({
       </div>
 
       {/* Content */}
-      <div className="relative w-full h-full">
+      <div className="relative w-full" style={{ height: 'calc(100vh - 200px)' }}>
         {renderContent()}
       </div>
 

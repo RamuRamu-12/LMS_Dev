@@ -47,6 +47,18 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: true,
       comment: 'Whether the group is active and accepting members'
     },
+    // group_id: {
+    //   type: DataTypes.INTEGER,
+    //   allowNull: true,
+    //   references: {
+    //     model: 'groups',
+    //     key: 'id'
+    //   },
+    //   onUpdate: 'CASCADE',
+    //   onDelete: 'SET NULL',
+    //   comment: 'Link to standalone group table',
+    //   unique: false
+    // },
     created_by: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -76,7 +88,9 @@ module.exports = (sequelize, DataTypes) => {
         fields: ['hackathon_id', 'name'],
         name: 'unique_hackathon_group_name'
       }
-    ]
+    ],
+    // Skip validation to allow missing columns in database
+    validate: true
   });
 
   // Define associations
@@ -87,6 +101,11 @@ module.exports = (sequelize, DataTypes) => {
       as: 'hackathon'
     });
 
+    // HackathonGroup belongs to Group (link to standalone group)
+    // HackathonGroup.belongsTo(models.Group, {
+    //   foreignKey: 'group_id',
+    //   as: 'standaloneGroup'
+    // });
 
     // HackathonGroup belongs to User (creator)
     HackathonGroup.belongsTo(models.User, {

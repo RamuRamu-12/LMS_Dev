@@ -8,10 +8,16 @@ const { Op } = require('sequelize');
  */
 const getUsers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, role } = req.query;
     const offset = (page - 1) * limit;
 
+    const whereClause = {};
+    if (role) {
+      whereClause.role = role;
+    }
+
     const { count, rows: users } = await User.findAndCountAll({
+      where: whereClause,
       attributes: { exclude: ['google_id'] },
       order: [['created_at', 'DESC']],
       limit: parseInt(limit),

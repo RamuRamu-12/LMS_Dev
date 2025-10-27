@@ -1,10 +1,27 @@
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { usePermissions } from '../hooks/usePermissions'
 import Header from '../components/common/Header'
 import Footer from '../components/common/Footer'
 
 const RealtimeProjectsLandingPage = () => {
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
+  const { hasAccess, isAdmin } = usePermissions()
+  
+  // Redirect ALL authenticated users to student page (let it handle access control)
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/student/realtime-projects', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
+
+  // Don't show landing page to authenticated users
+  if (isAuthenticated) {
+    return null
+  }
 
   const projects = [
     {
@@ -76,21 +93,11 @@ const RealtimeProjectsLandingPage = () => {
   ]
 
   const handleProjectClick = (projectId) => {
-    navigate('/login', { 
-      state: { 
-        redirectTo: `/student/realtime-projects/${projectId}`,
-        message: 'Please login to access the realtime project'
-      }
-    })
+    navigate(`/student/realtime-projects/${projectId}`)
   }
 
   const handleGetStarted = () => {
-    navigate('/login', { 
-      state: { 
-        redirectTo: '/student/realtime-projects',
-        message: 'Please login to start your realtime project journey'
-      }
-    })
+    navigate('/student/realtime-projects')
   }
 
   return (

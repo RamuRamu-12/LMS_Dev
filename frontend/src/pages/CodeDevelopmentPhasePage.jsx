@@ -218,7 +218,7 @@ const CodeDevelopmentPhasePage = () => {
   ];
 
   const handleBackToProjects = () => {
-    navigate('/realtime-projects');
+    navigate('/student/realtime-projects');
   };
 
   if (loading) {
@@ -1669,7 +1669,7 @@ const CodeDevelopmentPhasePage = () => {
                   <button 
                     onClick={() => {
                       unlockNextPhase(projectId, 'code-development');
-                      navigate(`/realtime-projects/${projectId}/testing`);
+                      navigate(`/student/realtime-projects/${projectId}/testing`);
                     }}
                   className="px-8 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
                   >

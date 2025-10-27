@@ -164,7 +164,7 @@ const UIUXPhasePage = () => {
   ];
 
   const handleBackToProjects = () => {
-    navigate('/realtime-projects');
+    navigate('/student/realtime-projects');
   };
 
   if (loading) {
@@ -1195,7 +1195,7 @@ const UIUXPhasePage = () => {
                   <button 
                     onClick={() => {
                       unlockNextPhase(projectId, 'uiux');
-                      navigate(`/realtime-projects/${projectId}/architectural`);
+                      navigate(`/student/realtime-projects/${projectId}/architectural`);
                     }}
                     className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >

@@ -71,7 +71,7 @@ const RBACManagementPage = () => {
       }
 
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/users?role=student`, {
+      const response = await fetch(`${apiUrl}/api/users?role=student&limit=1000`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -249,10 +249,12 @@ const RBACManagementPage = () => {
   };
 
   const getFilteredStudents = () => {
-    return students.filter(student => 
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return students.filter(student => {
+      const name = (student.name || '').toLowerCase();
+      const email = (student.email || '').toLowerCase();
+      const search = searchTerm.toLowerCase();
+      return name.includes(search) || email.includes(search);
+    });
   };
 
   const getPermissionStats = () => {
@@ -504,13 +506,13 @@ const RBACManagementPage = () => {
                         />
                         <div className="flex items-center space-x-3">
                           <img
-                            src={student.avatar || `https://ui-avatars.com/api/?name=${student.name}&background=6366f1&color=fff`}
-                            alt={student.name}
+                            src={student.avatar || `https://ui-avatars.com/api/?name=${student.name || student.email || 'User'}&background=6366f1&color=fff`}
+                            alt={student.name || 'User'}
                             className="w-10 h-10 rounded-full"
                           />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                            <div className="text-sm text-gray-500">{student.email}</div>
+                            <div className="text-sm font-medium text-gray-900">{student.name || 'User'}</div>
+                            <div className="text-sm text-gray-500">{student.email || 'No email'}</div>
                           </div>
                         </div>
                       </div>

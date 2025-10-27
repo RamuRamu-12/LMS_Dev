@@ -119,7 +119,7 @@ const TechnicalArchitecturePhasePage = () => {
   ];
 
   const handleBackToProjects = () => {
-    navigate('/realtime-projects');
+    navigate('/student/realtime-projects');
   };
 
   if (loading) {
@@ -1255,7 +1255,7 @@ const TechnicalArchitecturePhasePage = () => {
                   <button 
                     onClick={() => {
                       unlockNextPhase(projectId, 'tech_arch');
-                      navigate(`/realtime-projects/${projectId}/development`);
+                      navigate(`/student/realtime-projects/${projectId}/code-development`);
                     }}
                     className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >

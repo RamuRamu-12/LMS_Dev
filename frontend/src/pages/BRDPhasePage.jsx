@@ -132,7 +132,7 @@ const BRDPhasePage = () => {
   ];
 
   const handleBackToProjects = () => {
-    navigate('/realtime-projects');
+    navigate('/student/realtime-projects');
   };
 
   if (loading) {
@@ -1479,7 +1479,7 @@ const BRDPhasePage = () => {
                   <button 
                     onClick={() => {
                       unlockNextPhase(projectId, 'brd');
-                      navigate(`/realtime-projects/${projectId}/uiux`);
+                      navigate(`/student/realtime-projects/${projectId}/uiux`);
                     }}
                     className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                   >

@@ -2,7 +2,8 @@ const { DataTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Create groups table
+    // Create groups table (with error handling)
+    try {
     await queryInterface.createTable('groups', {
       id: {
         type: DataTypes.INTEGER,
@@ -46,8 +47,17 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
+    console.log('✅ Created groups table');
+    } catch (error) {
+      if (error.message.includes('already exists')) {
+        console.log('⚠️  Groups table already exists, skipping creation');
+      } else {
+        throw error;
+      }
+    }
 
-    // Create group_members table
+    // Create group_members table (with error handling)
+    try {
     await queryInterface.createTable('group_members', {
       id: {
         type: DataTypes.INTEGER,
@@ -108,25 +118,51 @@ module.exports = {
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
     });
+    console.log('✅ Created group_members table');
+    } catch (error) {
+      if (error.message.includes('already exists')) {
+        console.log('⚠️  Group_members table already exists, skipping creation');
+      } else {
+        throw error;
+      }
+    }
 
-    // Add unique constraint for group_id and student_id
+    // Add unique constraint for group_id and student_id (with error handling)
+    try {
     await queryInterface.addConstraint('group_members', {
       fields: ['group_id', 'student_id'],
       type: 'unique',
       name: 'unique_group_student'
     });
+    console.log('✅ Added unique constraint to group_members');
+    } catch (error) {
+      if (error.message.includes('already exists') || error.message.includes('duplicate')) {
+        console.log('⚠️  Unique constraint on group_members already exists, skipping');
+      } else {
+        throw error;
+      }
+    }
 
-    // Add group_id column to hackathon_groups table to link to standalone groups
-    await queryInterface.addColumn('hackathon_groups', 'group_id', {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'groups',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL'
-    });
+    // Add group_id column to hackathon_groups table to link to standalone groups (with error handling)
+    try {
+      await queryInterface.addColumn('hackathon_groups', 'group_id', {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: 'groups',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
+      });
+      console.log('✅ Added group_id column to hackathon_groups table');
+    } catch (error) {
+      if (error.message.includes('duplicate column') || error.message.includes('already exists')) {
+        console.log('⚠️  Column group_id already exists in hackathon_groups table, skipping');
+      } else {
+        throw error;
+      }
+    }
   },
 
   down: async (queryInterface, Sequelize) => {

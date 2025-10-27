@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
@@ -11,6 +11,7 @@ import { projectService } from '../services/projectService';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const RealtimeProjectsPageSimple = () => {
+  const { projectId } = useParams();
   const [selectedProject, setSelectedProject] = useState(null);
   const navigate = useNavigate();
   const { initializeProject } = useProjectProgress();
@@ -28,12 +29,21 @@ const RealtimeProjectsPageSimple = () => {
 
   const projects = projectsData?.data?.projects || projectsData?.data || [];
 
-  // Set first project as selected when projects are loaded
+  // Set selected project based on URL params or first project
   useEffect(() => {
-    if (projects.length > 0 && !selectedProject) {
-      setSelectedProject(projects[0]);
+    if (projects.length > 0) {
+      if (projectId) {
+        // Find project by ID from URL
+        const project = projects.find(p => p.id === parseInt(projectId));
+        if (project) {
+          setSelectedProject(project);
+        }
+      } else if (!selectedProject) {
+        // Set first project if no projectId in URL
+        setSelectedProject(projects[0]);
+      }
     }
-  }, [projects, selectedProject]);
+  }, [projects, projectId]);
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
@@ -42,7 +52,7 @@ const RealtimeProjectsPageSimple = () => {
   const handleBeginJourney = () => {
     if (selectedProject) {
       initializeProject(selectedProject.id);
-      navigate(`/realtime-projects/${selectedProject.id}/brd`);
+      navigate(`/student/realtime-projects/${selectedProject.id}/brd`);
     }
   };
 
