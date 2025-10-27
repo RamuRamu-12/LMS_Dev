@@ -226,6 +226,3 @@ logs/
 uploads/
 temp/
 tmp/
-
-# OAuth Credentials
-client_secret_prod.json
