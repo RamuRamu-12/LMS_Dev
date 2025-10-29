@@ -34,16 +34,17 @@ const Header = () => {
     <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200"
+      className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-200 overflow-visible"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
+        <div className="flex justify-between items-center h-16 sm:h-20 py-2">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2 overflow-visible">
             <img 
-                src="/lms_logo.svg"
+              src="/lms_logo.svg"
               alt="GNANAM AI" 
-              className="h-12 sm:h-16 w-auto"
+              className="h-10 sm:h-14 w-auto object-contain"
+              style={{ maxHeight: '100%' }}
             />
           </Link>
 

@@ -12,7 +12,7 @@ const LoginPage = () => {
   const location = useLocation()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   })
   const [loginType, setLoginType] = useState('traditional') // 'traditional' or 'google'
@@ -77,7 +77,7 @@ const LoginPage = () => {
     
     try {
       // Use the real backend API for authentication
-      const response = await authService.login(formData.username, formData.password)
+      const response = await authService.login(formData.email, formData.password)
       
       if (response.success) {
         // Store tokens and login
@@ -186,7 +186,7 @@ const LoginPage = () => {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Username & Password
+              Email & Password
             </button>
             <button
               type="button"
@@ -216,16 +216,16 @@ const LoginPage = () => {
             >
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="username" className={`block text-sm font-medium mb-2 ${
+                  <label htmlFor="email" className={`block text-sm font-medium mb-2 ${
                     userType === 'admin' ? 'text-gray-300' : 'text-gray-700'
                   }`}>
-                    Username or Email
+                    Email
                   </label>
                   <input
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={formData.username}
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
                     onChange={handleInputChange}
                     required
                     className={`w-full px-4 py-3 rounded-lg transition-colors duration-200 ${
@@ -233,7 +233,7 @@ const LoginPage = () => {
                         ? 'bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-gray-400 focus:border-gray-400'
                         : 'border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500'
                     }`}
-                    placeholder="Enter username (admin) or email (student@test.com)"
+                    placeholder="Enter your email address"
                   />
                 </div>
                 

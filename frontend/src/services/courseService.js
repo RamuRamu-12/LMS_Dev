@@ -232,5 +232,15 @@ export const courseService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to rate course')
     }
+  },
+
+  // Get course enrollments (admin only)
+  getCourseEnrollments: async (courseId) => {
+    try {
+      const response = await api.get(`/courses/${courseId}/enrollments`)
+      return response.data
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to get course enrollments')
+    }
   }
 }

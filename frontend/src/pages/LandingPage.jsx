@@ -12,17 +12,17 @@ const LandingPage = () => {
   const mainFeatures = [
     {
       icon: <FiBookOpen className="w-12 h-12" />,
-      title: 'AI-Enhanced Courses',
+      title: 'AI-Enabled Courses',
       description: 'Master new skills with our intelligent course system that adapts to your learning pace and style.',
       color: 'from-blue-500 to-cyan-500',
-      stats: '50+ Courses'
+      stats: '10+ Courses'
     },
     {
       icon: <FiCode className="w-12 h-12" />,
       title: 'Realtime Projects',
       description: 'Build real-world applications through hands-on projects with live coding sessions and instant feedback.',
       color: 'from-purple-500 to-pink-500',
-      stats: '15+ Projects'
+      stats: '5+ Projects'
     },
     {
       icon: <FiUsers className="w-12 h-12" />,
@@ -74,10 +74,10 @@ const LandingPage = () => {
   ]
 
   const stats = [
-    { number: '1.2K+', label: 'Active Learners', icon: <FiUsers className="w-6 h-6" /> },
-    { number: '50+', label: 'AI-Enhanced Courses', icon: <FiBookOpen className="w-6 h-6" /> },
+    { number: '20+', label: 'Verified Certifications', icon: <FiUsers className="w-6 h-6" /> },
+    { number: '10+', label: 'AI-Enabled Courses', icon: <FiBookOpen className="w-6 h-6" /> },
     { number: '85%', label: 'Success Rate', icon: <FiTrendingUp className="w-6 h-6" /> },
-    { number: '24/7', label: 'AI Support', icon: <FiShield className="w-6 h-6" /> }
+    { number: '24/7', label: 'Customer Support', icon: <FiShield className="w-6 h-6" /> }
   ]
 
   const handleLoginClick = () => {
@@ -183,7 +183,7 @@ const LandingPage = () => {
               transition={{ duration: 0.8 }}
               className="mb-6"
             >
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight drop-shadow-2xl relative animate-bounce">
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight drop-shadow-2xl relative">
                 <span className="relative bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                 GNANAM AI
                   <div className="absolute -inset-4 bg-gradient-to-r from-blue-600/30 via-purple-600/30 to-pink-600/30 blur-3xl rounded-full animate-pulse"></div>
@@ -200,7 +200,7 @@ const LandingPage = () => {
                 </span>
               </p>
               <p className="text-lg sm:text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed font-medium">
-                Join the revolution in education! Experience AI-powered personalized learning, 
+                Join the revolution in education! Experience AI enabled personalized learning, 
                 build real-world projects, compete in hackathons, and earn industry-recognized certifications.
               </p>
             </motion.div>
@@ -262,7 +262,7 @@ const LandingPage = () => {
                   <FiBookOpen className="w-8 h-8 group-hover:animate-pulse" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors relative z-10">Courses</h3>
-                <p className="text-gray-600 text-sm font-medium relative z-10">50+ AI-Enhanced Courses</p>
+                <p className="text-gray-600 text-sm font-medium relative z-10">10+ AI enabled courses</p>
                 <div className="mt-3 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-shimmer"></div>
                 <div className="absolute top-3 right-3 w-2 h-2 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
               </motion.div>
@@ -277,7 +277,7 @@ const LandingPage = () => {
                   <FiCode className="w-8 h-8 group-hover:animate-pulse" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-purple-600 transition-colors relative z-10">Realtime Projects</h3>
-                <p className="text-gray-600 text-sm font-medium relative z-10">15+ Hands-on Projects</p>
+                <p className="text-gray-600 text-sm font-medium relative z-10">5+ Hands-on Projects</p>
                 <div className="mt-3 w-full h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-shimmer"></div>
                 <div className="absolute top-3 right-3 w-2 h-2 bg-purple-500 rounded-full opacity-0 group-hover:opacity-100 animate-ping"></div>
               </motion.div>
@@ -384,7 +384,7 @@ const LandingPage = () => {
               <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent animate-pulse"> Succeed</span>
             </h2>
             <p className="text-lg text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
-              Our comprehensive platform combines cutting-edge AI technology with real-world experience 
+              Our comprehensive platform combines cutting-edge AI technologies with real-world experience 
               to create the ultimate learning environment.
             </p>
           </motion.div>
@@ -526,11 +526,11 @@ const LandingPage = () => {
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold mb-2">24/7</div>
-                <div className="opacity-90 text-sm">AI Support</div>
+                <div className="opacity-90 text-sm">Customer Support</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold mb-2">30-Day</div>
-                <div className="opacity-90 text-sm">Money Back</div>
+                <div className="text-2xl font-bold mb-2">100%</div>
+                <div className="opacity-90 text-sm">Upskill</div>
               </div>
             </div>
           </motion.div>

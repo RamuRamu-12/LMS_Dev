@@ -1,4 +1,4 @@
-const { Course, User, Enrollment, CourseChapter, CourseTest, ChapterProgress, ActivityLog, sequelize } = require('../models');
+const { Course, User, Enrollment, CourseChapter, CourseTest, ChapterProgress, ActivityLog, FileUpload, TestQuestion, TestQuestionOption, TestAttempt, TestAnswer, Certificate, sequelize } = require('../models');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
@@ -471,29 +471,151 @@ const updateCourse = async (req, res, next) => {
  * Delete course
  */
 const deleteCourse = async (req, res, next) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { id } = req.params;
-    const course = await Course.findByPk(id);
+    const course = await Course.findByPk(id, { transaction });
 
     if (!course) {
+      await transaction.rollback();
       throw new AppError('Course not found', 404);
     }
 
     // Check if user is admin or the course instructor
     if (req.user.role !== 'admin' && course.instructor_id !== req.user.id) {
+      await transaction.rollback();
       throw new AppError('Access denied. You can only delete your own courses.', 403);
     }
 
+    const courseTitle = course.title;
 
-    await course.destroy();
+    // Get all related course tests first
+    const courseTests = await CourseTest.findAll({
+      where: { course_id: id },
+      transaction
+    });
 
-    logger.info(`Course "${course.title}" deleted by ${req.user.email}`);
+    const testIds = courseTests.map(test => test.id);
+
+    // Delete test-related records first (most nested)
+    if (testIds.length > 0) {
+      // Get all test questions for these tests
+      const testQuestions = await TestQuestion.findAll({
+        where: { test_id: { [Op.in]: testIds } },
+        transaction
+      });
+
+      const questionIds = testQuestions.map(q => q.id);
+
+      if (questionIds.length > 0) {
+        // Delete test question options
+        await TestQuestionOption.destroy({
+          where: { question_id: { [Op.in]: questionIds } },
+          transaction
+        });
+
+        // Get all test attempts for these tests
+        const testAttempts = await TestAttempt.findAll({
+          where: { test_id: { [Op.in]: testIds } },
+          transaction
+        });
+
+        const attemptIds = testAttempts.map(attempt => attempt.id);
+
+        if (attemptIds.length > 0) {
+          // Delete test answers
+          await TestAnswer.destroy({
+            where: { attempt_id: { [Op.in]: attemptIds } },
+            transaction
+          });
+        }
+
+        // Delete test attempts
+        await TestAttempt.destroy({
+          where: { test_id: { [Op.in]: testIds } },
+          transaction
+        });
+
+        // Delete test questions
+        await TestQuestion.destroy({
+          where: { test_id: { [Op.in]: testIds } },
+          transaction
+        });
+      }
+    }
+
+    // Delete course tests
+    await CourseTest.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Get all chapters for this course
+    const chapters = await CourseChapter.findAll({
+      where: { course_id: id },
+      transaction
+    });
+
+    const chapterIds = chapters.map(ch => ch.id);
+
+    // Get all enrollments for this course
+    const enrollments = await Enrollment.findAll({
+      where: { course_id: id },
+      transaction
+    });
+
+    const enrollmentIds = enrollments.map(e => e.id);
+
+    // Delete chapter progress for all enrollments in this course
+    // (must be done before deleting enrollments to avoid foreign key constraint)
+    if (enrollmentIds.length > 0) {
+      await ChapterProgress.destroy({
+        where: {
+          enrollment_id: { [Op.in]: enrollmentIds }
+        },
+        transaction
+      });
+    }
+
+    // Delete chapters
+    await CourseChapter.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Delete enrollments
+    await Enrollment.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Delete file uploads
+    await FileUpload.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Delete all certificates for this course (both direct references and test_attempt references)
+    await Certificate.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Finally delete the course
+    await course.destroy({ transaction });
+
+    // Commit transaction
+    await transaction.commit();
+
+    logger.info(`Course "${courseTitle}" deleted by ${req.user.email}`);
 
     res.json({
       success: true,
       message: 'Course deleted successfully'
     });
   } catch (error) {
+    await transaction.rollback();
     logger.error('Delete course error:', error);
     next(error);
   }
@@ -1016,6 +1138,72 @@ const rateCourse = async (req, res, next) => {
   }
 };
 
+/**
+ * Get enrolled users for a course (Admin only)
+ */
+const getCourseEnrollments = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findByPk(id);
+
+    if (!course) {
+      throw new AppError('Course not found', 404);
+    }
+
+    // Get all enrollments for this course with user details
+    const enrollments = await Enrollment.findAll({
+      where: { course_id: id },
+      include: [
+        {
+          model: User,
+          as: 'student',
+          attributes: ['id', 'name', 'email', 'avatar', 'role', 'is_active', 'created_at']
+        }
+      ],
+      order: [['enrolled_at', 'DESC']]
+    });
+
+    // Format the response
+    const enrolledUsers = enrollments.map(enrollment => ({
+      enrollmentId: enrollment.id,
+      student: enrollment.student ? {
+        id: enrollment.student.id,
+        name: enrollment.student.name,
+        email: enrollment.student.email,
+        avatar: enrollment.student.avatar,
+        role: enrollment.student.role,
+        isActive: enrollment.student.is_active,
+        createdAt: enrollment.student.created_at
+      } : null,
+      enrolledAt: enrollment.enrolled_at,
+      progress: enrollment.progress,
+      status: enrollment.status,
+      completedAt: enrollment.completed_at,
+      lastAccessedAt: enrollment.last_accessed_at,
+      timeSpent: enrollment.time_spent || 0
+    }));
+
+    logger.info(`Admin ${req.user.email} viewed enrollments for course "${course.title}"`);
+
+    res.json({
+      success: true,
+      message: 'Enrolled users retrieved successfully',
+      data: {
+        course: {
+          id: course.id,
+          title: course.title
+        },
+        totalEnrollments: enrolledUsers.length,
+        enrollments: enrolledUsers
+      }
+    });
+  } catch (error) {
+    logger.error('Get course enrollments error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   getCourses,
   searchCourses,
@@ -1036,5 +1224,6 @@ module.exports = {
   enrollInCourse,
   unenrollFromCourse,
   updateProgress,
-  rateCourse
+  rateCourse,
+  getCourseEnrollments
 };

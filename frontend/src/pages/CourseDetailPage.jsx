@@ -159,9 +159,50 @@ const CourseDetailPage = () => {
     )
   }
 
-  // Handle API errors
+  // Handle API errors - Check authentication first
   if (error) {
     console.error('Course loading error:', error)
+    
+    // If user is not authenticated, always show login required page
+    // (course content requires authentication, so any error when not authenticated = login needed)
+    if (!isAuthenticated) {
+      // Show login required page instead of error
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+          <Header />
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center max-w-2xl mx-auto px-4">
+              <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Login Required</h1>
+              <p className="text-lg text-gray-600 mb-8">
+                You need to be logged in to access course content. Please sign in or create an account to continue.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  to="/login"
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-300"
+                >
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      )
+    }
+    
+    // For other errors, show error page
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <Header />
@@ -169,9 +210,7 @@ const CourseDetailPage = () => {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Course</h1>
             <p className="text-gray-600 mb-6">
-              {error.message?.includes('401') 
-                ? 'Authentication required. Please log in to view this course.'
-                : error.message?.includes('404')
+              {error.message?.includes('404')
                 ? 'Course not found.'
                 : 'Unable to load course content. Please try again later.'
               }

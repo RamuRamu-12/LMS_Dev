@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { userService } from '../../services/userService'
+import { courseService } from '../../services/courseService'
 import { useAuth } from '../../context/AuthContext'
 
 const UserAnalytics = () => {
   const { user, isAuthenticated } = useAuth()
+  const [selectedCourseId, setSelectedCourseId] = useState(null)
   
   const { data: usersData, isLoading, error } = useQuery(
     'admin-users-analytics',
@@ -13,6 +16,26 @@ const UserAnalytics = () => {
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000,
       enabled: isAuthenticated && user?.role === 'admin'
+    }
+  )
+
+  const { data: coursesData } = useQuery(
+    'admin-courses-analytics',
+    () => courseService.getCourses({ limit: 100 }),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+      enabled: isAuthenticated && user?.role === 'admin'
+    }
+  )
+
+  const { data: enrollmentsData, isLoading: enrollmentsLoading } = useQuery(
+    ['course-enrollments', selectedCourseId],
+    () => courseService.getCourseEnrollments(selectedCourseId),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 30 * 1000,
+      enabled: isAuthenticated && user?.role === 'admin' && selectedCourseId !== null
     }
   )
 
@@ -266,6 +289,155 @@ const UserAnalytics = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Course Enrollments Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6 }}
+        className="card p-6"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Enrollments</h3>
+        <div className="mb-4">
+          <label htmlFor="course-select" className="block text-sm font-medium text-gray-700 mb-2">
+            Select a course to view enrolled users
+          </label>
+          <select
+            id="course-select"
+            value={selectedCourseId || ''}
+            onChange={(e) => setSelectedCourseId(e.target.value ? parseInt(e.target.value) : null)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="">-- Select a course --</option>
+            {coursesData?.data?.courses?.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title} ({course.enrollment_count || 0} enrollments)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedCourseId && (
+          <div className="mt-6">
+            {enrollmentsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-500">Loading enrolled users...</p>
+              </div>
+            ) : enrollmentsData?.data?.enrollments && enrollmentsData.data.enrollments.length > 0 ? (
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold">{enrollmentsData.data.totalEnrollments}</span> users enrolled in{' '}
+                    <span className="font-semibold text-indigo-600">{enrollmentsData.data.course.title}</span>
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Progress
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Enrolled Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Last Accessed
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {enrollmentsData.data.enrollments.map((enrollment) => (
+                        <tr key={enrollment.enrollmentId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={enrollment.student?.avatar || `https://ui-avatars.com/api/?name=${enrollment.student?.name}&background=6366f1&color=fff`}
+                                alt={enrollment.student?.name}
+                                className="w-10 h-10 rounded-full mr-3"
+                              />
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {enrollment.student?.name || 'Unknown'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {enrollment.student?.isActive ? (
+                                    <span className="text-green-600">Active</span>
+                                  ) : (
+                                    <span className="text-gray-400">Inactive</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{enrollment.student?.email || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              enrollment.status === 'completed' 
+                                ? 'bg-green-100 text-green-800'
+                                : enrollment.status === 'in-progress'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {enrollment.status || 'enrolled'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                <div
+                                  className="bg-indigo-600 h-2 rounded-full"
+                                  style={{ width: `${enrollment.progress || 0}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-sm text-gray-900">{enrollment.progress || 0}%</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.enrolledAt 
+                              ? new Date(enrollment.enrolledAt).toLocaleDateString() 
+                              : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {enrollment.lastAccessedAt 
+                              ? new Date(enrollment.lastAccessedAt).toLocaleDateString() 
+                              : 'Never'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No enrollments found for this course.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!selectedCourseId && (
+          <div className="text-center py-8 text-gray-500">
+            <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <p className="text-sm">Select a course from the dropdown above to view enrolled users</p>
+          </div>
+        )}
+      </motion.div>
     </div>
   )
 }

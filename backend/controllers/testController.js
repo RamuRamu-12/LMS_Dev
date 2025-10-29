@@ -398,14 +398,98 @@ const createQuestion = async (req, res, next) => {
 const updateQuestion = async (req, res, next) => {
   try {
     const { questionId } = req.params;
-    const updateData = req.body;
+    const { options, ...questionUpdateData } = req.body;
+
+    console.log('=== UPDATE QUESTION DEBUG ===');
+    console.log('Question ID:', questionId);
+    console.log('Question data:', JSON.stringify(questionUpdateData, null, 2));
+    console.log('Options received:', options);
+    console.log('Options length:', options ? options.length : 'undefined');
+    if (options) {
+      options.forEach((opt, index) => {
+        console.log(`  Option ${index + 1}:`, opt);
+      });
+    }
+    console.log('============================');
 
     const question = await TestQuestion.findByPk(questionId);
     if (!question) {
       throw new AppError('Question not found', 404);
     }
 
-    await question.update(updateData);
+    // Update question fields
+    await question.update(questionUpdateData);
+
+    // Handle options if provided
+    if (options && Array.isArray(options)) {
+      // Filter out empty options
+      const validOptions = options.filter(opt => opt.option_text && opt.option_text.trim() !== '');
+      
+      // Validate that we have at least 2 valid options
+      if (validOptions.length < 2) {
+        throw new AppError('Question must have at least 2 valid options', 400);
+      }
+
+      // Check if at least one option is marked as correct
+      const hasCorrectAnswer = validOptions.some(opt => opt.is_correct);
+      if (!hasCorrectAnswer) {
+        throw new AppError('At least one option must be marked as correct', 400);
+      }
+
+      // Get existing options
+      const existingOptions = await TestQuestionOption.findAll({
+        where: { question_id: questionId }
+      });
+
+      console.log(`Existing options count: ${existingOptions.length}`);
+      console.log(`Valid new options count: ${validOptions.length}`);
+
+      // Track which existing options are being updated
+      const updatedOptionIds = validOptions
+        .filter(opt => opt.id)
+        .map(opt => opt.id);
+
+      // Delete options that are not in the new options list
+      const optionsToDelete = existingOptions.filter(opt => !updatedOptionIds.includes(opt.id));
+      for (const optToDelete of optionsToDelete) {
+        console.log(`Deleting option ${optToDelete.id}: "${optToDelete.option_text}"`);
+        await optToDelete.destroy();
+      }
+
+      // Update or create options
+      for (const newOption of validOptions) {
+        if (newOption.id) {
+          // Update existing option
+          const existingOption = existingOptions.find(opt => opt.id === newOption.id);
+          if (existingOption) {
+            console.log(`Updating option ${existingOption.id}: "${existingOption.option_text}" -> "${newOption.option_text}"`);
+            await existingOption.update({
+              option_text: newOption.option_text.trim(),
+              is_correct: newOption.is_correct || false
+            });
+          }
+        } else {
+          // Create new option
+          console.log(`Creating new option: "${newOption.option_text}"`);
+          await TestQuestionOption.create({
+            question_id: questionId,
+            option_text: newOption.option_text.trim(),
+            is_correct: newOption.is_correct || false
+          });
+        }
+      }
+    }
+
+    // Fetch the updated question with options for response
+    const updatedQuestion = await TestQuestion.findByPk(questionId, {
+      include: [
+        {
+          model: TestQuestionOption,
+          as: 'options',
+          attributes: ['id', 'option_text', 'is_correct']
+        }
+      ]
+    });
 
     logger.info(`Question ${questionId} updated by ${req.user.email}`);
 
@@ -413,7 +497,7 @@ const updateQuestion = async (req, res, next) => {
       success: true,
       message: 'Question updated successfully',
       data: {
-        question: question.getPublicInfo()
+        question: updatedQuestion.toJSON()
       }
     });
   } catch (error) {

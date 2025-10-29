@@ -52,6 +52,14 @@ router.options('/:id/logo', (req, res) => {
   res.status(200).end();
 });
 
+// Get course enrollments (admin only) - must come before /:id route
+router.get('/:id/enrollments', 
+  authenticate,
+  requireAdmin,
+  validate(commonSchemas.id, 'params'),
+  courseController.getCourseEnrollments
+);
+
 router.get('/:id', 
   optionalAuth,
   validate(commonSchemas.id, 'params'),

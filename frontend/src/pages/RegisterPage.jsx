@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { authService } from '../services/authService'
+import GoogleAuth from '../components/auth/GoogleAuth'
 import toast from 'react-hot-toast'
 
 const RegisterPage = () => {
@@ -10,6 +11,7 @@ const RegisterPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [loading, setLoading] = useState(false)
+  const [registrationType, setRegistrationType] = useState('traditional') // 'traditional' or 'google'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -115,6 +117,15 @@ const RegisterPage = () => {
     }
   }
 
+  const handleGoogleSuccess = (user) => {
+    toast.success(`Welcome ${user.name}! Your account has been created.`)
+    navigate(from, { replace: true })
+  }
+
+  const handleGoogleError = (error) => {
+    toast.error(`Registration failed: ${error}`)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -159,7 +170,60 @@ const RegisterPage = () => {
             </p>
           </div>
 
-          {/* Registration Form */}
+          {/* Registration Type Toggle */}
+          <div className="flex rounded-lg p-1 mb-6 bg-gray-100">
+            <button
+              type="button"
+              onClick={() => setRegistrationType('traditional')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 ${
+                registrationType === 'traditional'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Create Account
+            </button>
+            <button
+              type="button"
+              onClick={() => setRegistrationType('google')}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors duration-200 ${
+                registrationType === 'google'
+                  ? 'bg-white text-indigo-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Register with Google
+            </button>
+          </div>
+
+          {/* Google Auth */}
+          {registrationType === 'google' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-6"
+            >
+              <GoogleAuth
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+              />
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">
+                    Quick registration powered by Google
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Traditional Registration Form */}
+          {registrationType === 'traditional' && (
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -281,6 +345,7 @@ const RegisterPage = () => {
               </p>
             </div>
           </motion.form>
+          )}
 
 
           {/* Footer */}

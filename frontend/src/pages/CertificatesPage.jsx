@@ -41,13 +41,19 @@ const CertificatesPage = () => {
       const response = await certificateService.downloadCertificate(certificate.id)
       const certificateData = response.data.certificate
       
-      // Create a beautiful certificate display
-      const certificateWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes')
-      certificateWindow.document.write(`
+      // Create certificate HTML content with logo
+      const certificateHTML = `
+        <!DOCTYPE html>
         <html>
           <head>
             <title>Certificate - ${certificateData.metadata?.courseName || 'Course Completion'}</title>
+            <meta charset="UTF-8">
             <style>
+              @media print {
+                body { margin: 0; padding: 0; background: white; }
+                .no-print { display: none; }
+                .certificate { box-shadow: none; border: 2px solid #e2e8f0; }
+              }
               body { 
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
                 margin: 0; 
@@ -65,6 +71,7 @@ const CertificatesPage = () => {
                 margin: 0 auto;
                 position: relative;
                 overflow: hidden;
+                min-height: 600px;
               }
               .certificate::before {
                 content: '';
@@ -75,12 +82,43 @@ const CertificatesPage = () => {
                 height: 200%;
                 background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
                 pointer-events: none;
+                z-index: 0;
+              }
+              .watermark {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                width: 1000px;
+                height: 1000px;
+                opacity: 0.05;
+                z-index: 0;
+                pointer-events: none;
+              }
+              .watermark img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+              }
+              .logo-container {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                width: 200px;
+                height: 100px;
+                z-index: 2;
+              }
+              .logo-container img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
               }
               .header { 
                 color: #4a5568; 
                 margin-bottom: 40px; 
                 position: relative;
                 z-index: 1;
+                margin-top: 20px;
               }
               .title { 
                 font-size: 42px; 
@@ -101,12 +139,16 @@ const CertificatesPage = () => {
                 color: #2d3748; 
                 margin-bottom: 20px;
                 text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+                position: relative;
+                z-index: 1;
               }
               .course-title { 
                 font-size: 28px; 
                 color: #4a5568; 
                 margin-bottom: 30px;
                 font-weight: 500;
+                position: relative;
+                z-index: 1;
               }
               .details { 
                 display: flex; 
@@ -116,18 +158,24 @@ const CertificatesPage = () => {
                 color: #718096;
                 border-top: 2px solid #e2e8f0;
                 padding-top: 30px;
+                position: relative;
+                z-index: 1;
               }
               .certificate-id { 
                 font-size: 14px; 
                 color: #a0aec0; 
                 margin-top: 30px;
                 font-family: 'Courier New', monospace;
+                position: relative;
+                z-index: 1;
               }
               .verification-code {
                 font-size: 12px;
                 color: #a0aec0;
                 margin-top: 10px;
                 font-family: 'Courier New', monospace;
+                position: relative;
+                z-index: 1;
               }
               .score {
                 background: linear-gradient(135deg, #48bb78, #38a169);
@@ -138,11 +186,38 @@ const CertificatesPage = () => {
                 margin: 20px 0;
                 font-weight: bold;
                 font-size: 18px;
+                position: relative;
+                z-index: 1;
+              }
+              .print-button {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                background: #6366f1;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+              }
+              .print-button:hover {
+                background: #4f46e5;
               }
             </style>
           </head>
           <body>
+            <button class="print-button no-print" onclick="window.print()">Download as PDF</button>
             <div class="certificate">
+              <div class="watermark">
+                <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
+              </div>
+              <div class="logo-container">
+                <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
+              </div>
               <div class="header">
                 <h1>CERTIFICATE OF COMPLETION</h1>
                 <p class="subtitle">This is to certify that</p>
@@ -162,12 +237,40 @@ const CertificatesPage = () => {
               <div class="certificate-id">Certificate ID: ${certificateData.certificate_number}</div>
               <div class="verification-code">Verification Code: ${certificateData.verification_code}</div>
             </div>
+            <script>
+              // Auto-trigger print dialog for download
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 500);
+              };
+            </script>
           </body>
         </html>
-      `)
+      `
+      
+      // Open in new window and write HTML directly, then trigger print for PDF download
+      const certificateWindow = window.open('', '_blank')
+      certificateWindow.document.write(certificateHTML)
       certificateWindow.document.close()
       
-      toast.success('Certificate opened in new window!')
+      // After window loads, trigger print dialog (which allows Save as PDF)
+      certificateWindow.addEventListener('load', function() {
+        setTimeout(function() {
+          certificateWindow.print()
+        }, 500)
+      }, true)
+      
+      // Fallback: trigger print after a delay if load event doesn't fire
+      setTimeout(function() {
+        try {
+          certificateWindow.print()
+        } catch (e) {
+          console.log('Print dialog will appear when certificate loads')
+        }
+      }, 1000)
+      
+      toast.success('Certificate opened! Use "Save as PDF" in the print dialog to download.')
     } catch (error) {
       console.error('Error downloading certificate:', error)
       toast.error('Failed to download certificate. Please try again.')

@@ -231,6 +231,7 @@ const TestManagement = ({ courseId, courseTitle }) => {
       question_type: question.question_type,
       points: question.points,
       options: question.options ? question.options.map(opt => ({
+        id: opt.id, // Include the option ID for tracking existing options
         option_text: opt.option_text,
         is_correct: opt.is_correct
       })) : [

@@ -29,18 +29,28 @@ const ProfilePage = () => {
     })
   }, [user])
 
-  // Fetch user statistics
+  // Fetch user statistics - use stats API for accurate data
+  const { data: statsData, isLoading: statsLoading } = useQuery(
+    'student-stats',
+    () => enrollmentService.getMyStats(),
+    {
+      refetchOnWindowFocus: true,
+      staleTime: 30 * 1000, // 30 seconds - shorter stale time for stats
+      cacheTime: 2 * 60 * 1000 // Keep in cache for 2 minutes
+    }
+  )
+
   const { data: enrollmentsData, isLoading: enrollmentsLoading } = useQuery(
-    'user-enrollments',
+    'student-enrollments',
     () => enrollmentService.getMyEnrollments(),
     {
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000
+      refetchOnWindowFocus: true,
+      staleTime: 30 * 1000 // 30 seconds - shorter stale time
     }
   )
 
   const { data: coursesData, isLoading: coursesLoading } = useQuery(
-    'user-courses',
+    'student-courses',
     () => courseService.getCourses({ limit: 100 }),
     {
       refetchOnWindowFocus: false,
@@ -61,15 +71,16 @@ const ProfilePage = () => {
   const courses = coursesData?.data?.courses || []
   const achievements = achievementsData?.data?.achievements || []
 
-  // Calculate statistics
+  // Use stats from API, fallback to calculated stats if API is not available
+  const apiStats = statsData?.data?.stats || {}
   const stats = {
-    totalEnrolled: enrollments.length,
-    completedCourses: enrollments.filter(e => e.status === 'completed').length,
-    inProgressCourses: enrollments.filter(e => e.status === 'in-progress').length,
-    totalHours: enrollments.reduce((sum, e) => sum + (e.course?.estimatedDuration || 0), 0),
-    averageProgress: enrollments.length > 0 
+    totalEnrolled: apiStats.totalCourses || enrollments.length,
+    completedCourses: apiStats.completedCourses || enrollments.filter(e => e.status === 'completed').length,
+    inProgressCourses: apiStats.inProgressCourses || enrollments.filter(e => e.status === 'in-progress').length,
+    totalHours: Math.round((apiStats.totalTimeSpent || 0) / 60), // Convert minutes to hours
+    averageProgress: apiStats.averageProgress || (enrollments.length > 0 
       ? Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)
-      : 0
+      : 0)
   }
 
   const handleInputChange = (e) => {
@@ -108,26 +119,140 @@ const ProfilePage = () => {
       const response = await achievementService.downloadCertificate(achievementId)
       const certificate = response.data.certificate
       
-      // Create a simple certificate display
-      const certificateWindow = window.open('', '_blank', 'width=800,height=600')
-      certificateWindow.document.write(`
+      // Create certificate HTML content with logo
+      const certificateHTML = `
+        <!DOCTYPE html>
         <html>
           <head>
             <title>Certificate - ${certificate.title}</title>
+            <meta charset="UTF-8">
             <style>
-              body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-              .certificate { background: white; padding: 60px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); text-align: center; }
-              .header { color: #4a5568; margin-bottom: 40px; }
-              .title { font-size: 36px; font-weight: bold; color: #2d3748; margin-bottom: 20px; }
-              .subtitle { font-size: 18px; color: #718096; margin-bottom: 40px; }
-              .student-name { font-size: 28px; font-weight: bold; color: #2d3748; margin-bottom: 20px; }
-              .course-title { font-size: 24px; color: #4a5568; margin-bottom: 30px; }
-              .details { display: flex; justify-content: space-between; margin-top: 40px; font-size: 14px; color: #718096; }
-              .certificate-id { font-size: 12px; color: #a0aec0; margin-top: 20px; }
+              @media print {
+                body { margin: 0; padding: 0; }
+                .no-print { display: none; }
+              }
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                margin: 0; 
+                padding: 40px; 
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+              }
+              .certificate { 
+                background: white; 
+                padding: 60px; 
+                border-radius: 20px; 
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+                text-align: center; 
+                position: relative;
+                min-height: 600px;
+                overflow: hidden;
+              }
+              .watermark {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                width: 1000px;
+                height: 1000px;
+                opacity: 0.05;
+                z-index: 0;
+                pointer-events: none;
+              }
+              .watermark img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+              }
+              .logo-container {
+                position: absolute;
+                top: 30px;
+                left: 30px;
+                width: 200px;
+                height: 100px;
+                z-index: 2;
+              }
+              .logo-container img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+              }
+              .header { 
+                color: #4a5568; 
+                margin-bottom: 40px; 
+                margin-top: 20px;
+                position: relative;
+                z-index: 1;
+              }
+              .title { 
+                font-size: 36px; 
+                font-weight: bold; 
+                color: #2d3748; 
+                margin-bottom: 20px; 
+              }
+              .subtitle { 
+                font-size: 18px; 
+                color: #718096; 
+                margin-bottom: 40px; 
+              }
+              .student-name { 
+                font-size: 28px; 
+                font-weight: bold; 
+                color: #2d3748; 
+                margin-bottom: 20px;
+                position: relative;
+                z-index: 1;
+              }
+              .course-title { 
+                font-size: 24px; 
+                color: #4a5568; 
+                margin-bottom: 30px;
+                position: relative;
+                z-index: 1;
+              }
+              .details { 
+                display: flex; 
+                justify-content: space-between; 
+                margin-top: 40px; 
+                font-size: 14px; 
+                color: #718096;
+                position: relative;
+                z-index: 1;
+              }
+              .certificate-id { 
+                font-size: 12px; 
+                color: #a0aec0; 
+                margin-top: 20px;
+                position: relative;
+                z-index: 1;
+              }
+              .print-button {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                background: #6366f1;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+              }
+              .print-button:hover {
+                background: #4f46e5;
+              }
             </style>
           </head>
           <body>
+            <button class="print-button no-print" onclick="window.print()">Download as PDF</button>
             <div class="certificate">
+              <div class="watermark">
+                <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
+              </div>
+              <div class="logo-container">
+                <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
+              </div>
               <div class="header">
                 <h1>CERTIFICATE OF COMPLETION</h1>
                 <p class="subtitle">This is to certify that</p>
@@ -141,12 +266,40 @@ const ProfilePage = () => {
               </div>
               <div class="certificate-id">Certificate ID: ${certificate.certificateId}</div>
             </div>
+            <script>
+              // Auto-trigger print dialog for download
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 500);
+              };
+            </script>
           </body>
         </html>
-      `)
+      `
+      
+      // Open in new window and write HTML directly, then trigger print for PDF download
+      const certificateWindow = window.open('', '_blank')
+      certificateWindow.document.write(certificateHTML)
       certificateWindow.document.close()
       
-      toast.success('Certificate opened in new window!')
+      // After window loads, trigger print dialog (which allows Save as PDF)
+      certificateWindow.addEventListener('load', function() {
+        setTimeout(function() {
+          certificateWindow.print()
+        }, 500)
+      }, true)
+      
+      // Fallback: trigger print after a delay if load event doesn't fire
+      setTimeout(function() {
+        try {
+          certificateWindow.print()
+        } catch (e) {
+          console.log('Print dialog will appear when certificate loads')
+        }
+      }, 1000)
+      
+      toast.success('Certificate opened! Use "Save as PDF" in the print dialog to download.')
     } catch (error) {
       console.error('Error downloading certificate:', error)
       toast.error('Failed to download certificate. Please try again.')
@@ -280,9 +433,6 @@ const ProfilePage = () => {
                       alt={user.name}
                             className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-indigo-100"
                           />
-                          <button className="absolute bottom-2 right-2 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center hover:bg-indigo-700 transition-colors">
-                            📷
-                          </button>
                         </motion.div>
                         <h3 className="text-xl font-semibold text-gray-900 mb-1">{user.name}</h3>
                         <p className="text-gray-500 mb-3">{user.email}</p>
