@@ -60,6 +60,14 @@ router.get('/:id/enrollments',
   courseController.getCourseEnrollments
 );
 
+// Get course certificates (admin only) - must come before /:id route
+router.get('/:id/certificates', 
+  authenticate,
+  requireAdmin,
+  validate(commonSchemas.id, 'params'),
+  courseController.getCourseCertificates
+);
+
 router.get('/:id', 
   optionalAuth,
   validate(commonSchemas.id, 'params'),

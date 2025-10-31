@@ -285,6 +285,7 @@ Ensure all environment variables are properly configured in production.
 ## 📈 Monitoring
 
 ### Application Monitoring
+- **PostHog Analytics**: User behavior tracking, event analytics, and session recordings (see [PostHog Setup Guide](frontend/POSTHOG_SETUP.md))
 - Error tracking with Sentry
 - Performance monitoring
 - Uptime monitoring

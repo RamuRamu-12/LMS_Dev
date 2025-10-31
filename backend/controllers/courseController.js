@@ -302,10 +302,17 @@ const getCourseById = async (req, res, next) => {
       throw new AppError('Course not found', 404);
     }
 
+    // Check if course is published - only admins can view unpublished courses
+    if (!course.is_published && (!req.user || req.user.role !== 'admin')) {
+      throw new AppError('Course not found', 404);
+    }
+
     // Debug: Log course and chapters data
     console.log('=== BACKEND DEBUG - getCourseById ===');
     console.log('Course ID:', id);
     console.log('Course title:', course.title);
+    console.log('Course is_published:', course.is_published);
+    console.log('User role:', req.user?.role || 'not authenticated');
     console.log('Course chapters:', course.chapters);
     console.log('Chapters length:', course.chapters ? course.chapters.length : 0);
     if (course.chapters && course.chapters.length > 0) {
@@ -314,14 +321,20 @@ const getCourseById = async (req, res, next) => {
 
     // Check if user is enrolled (if authenticated)
     let enrollment = null;
+    const isAuthenticated = !!req.user;
+    
     if (req.user) {
       enrollment = await Enrollment.findOne({
         where: {
           student_id: req.user.id,
-          course_id: id
+          course_id: id,
+          status: 'enrolled'
         }
       });
     }
+
+    // Determine access level: 'preview' (no auth), 'authenticated' (auth but not enrolled), 'enrolled' (auth + enrolled)
+    const hasFullAccess = isAuthenticated && enrollment && enrollment.status === 'enrolled';
 
     // Combine chapters and tests into a single content array
     const allContent = [];
@@ -329,24 +342,58 @@ const getCourseById = async (req, res, next) => {
     // Add chapters
     if (course.chapters) {
       course.chapters.forEach(chapter => {
-        allContent.push({
-          ...chapter.getPublicInfo(),
-          type: 'chapter'
-        });
+        const chapterInfo = chapter.getPublicInfo();
+        
+        // For preview mode, exclude content URLs but keep metadata
+        if (!hasFullAccess) {
+          // Return preview data only (metadata without content URLs)
+          allContent.push({
+            id: chapterInfo.id,
+            title: chapterInfo.title,
+            description: chapterInfo.description,
+            chapter_order: chapterInfo.chapter_order,
+            duration_minutes: chapterInfo.duration_minutes,
+            is_published: chapterInfo.is_published,
+            test_id: chapterInfo.test_id,
+            // Indicate content exists but URLs are not provided
+            has_video: !!chapterInfo.video_url,
+            has_pdf: !!chapterInfo.pdf_url,
+            type: 'chapter'
+          });
+        } else {
+          // Full access - include all data including URLs
+          allContent.push({
+            ...chapterInfo,
+            type: 'chapter'
+          });
+        }
       });
     }
     
-    // Add tests as the last items
+    // Add tests as the last items (only show test metadata in preview, not test content)
     if (course.tests) {
       course.tests.forEach(test => {
-        allContent.push({
-          id: test.id,
-          title: test.title,
-          description: test.description,
-          type: 'test',
-          passing_score: test.passing_score,
-          chapter_order: 9999 + test.id // Place tests at the end
-        });
+        if (!hasFullAccess) {
+          // Preview mode - show test exists but no access
+          allContent.push({
+            id: test.id,
+            title: test.title,
+            description: test.description,
+            type: 'test',
+            has_test: true,
+            chapter_order: 9999 + test.id // Place tests at the end
+          });
+        } else {
+          // Full access
+          allContent.push({
+            id: test.id,
+            title: test.title,
+            description: test.description,
+            type: 'test',
+            passing_score: test.passing_score,
+            chapter_order: 9999 + test.id // Place tests at the end
+          });
+        }
       });
     }
     
@@ -366,7 +413,8 @@ const getCourseById = async (req, res, next) => {
           status: enrollment.status,
           progress: enrollment.progress,
           enrolled_at: enrollment.enrolled_at
-        } : null
+        } : null,
+        accessLevel: hasFullAccess ? 'enrolled' : (isAuthenticated ? 'authenticated' : 'preview')
       }
     };
 
@@ -1204,6 +1252,89 @@ const getCourseEnrollments = async (req, res, next) => {
   }
 };
 
+/**
+ * Get all certificate holders for a course
+ */
+const getCourseCertificates = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findByPk(id);
+
+    if (!course) {
+      throw new AppError('Course not found', 404);
+    }
+
+    // Get all certificates for this course with user and enrollment details
+    const certificates = await Certificate.findAll({
+      where: { 
+        course_id: id,
+        is_valid: true // Only show valid certificates
+      },
+      include: [
+        {
+          model: User,
+          as: 'student',
+          attributes: ['id', 'name', 'email', 'avatar', 'role', 'is_active', 'created_at']
+        }
+      ],
+      order: [['issued_date', 'DESC']]
+    });
+
+    // Get enrollment data for each certificate holder
+    const certificateHolders = await Promise.all(
+      certificates.map(async (certificate) => {
+        // Find the enrollment for this student and course
+        const enrollment = await Enrollment.findOne({
+          where: {
+            student_id: certificate.student_id,
+            course_id: id
+          }
+        });
+
+        return {
+          certificateId: certificate.id,
+          certificateNumber: certificate.certificate_number,
+          issuedDate: certificate.issued_date,
+          certificateUrl: certificate.certificate_url,
+          verificationCode: certificate.verification_code,
+          isValid: certificate.is_valid,
+          student: certificate.student ? {
+            id: certificate.student.id,
+            name: certificate.student.name,
+            email: certificate.student.email,
+            avatar: certificate.student.avatar,
+            role: certificate.student.role,
+            isActive: certificate.student.is_active,
+            createdAt: certificate.student.created_at
+          } : null,
+          enrolledAt: enrollment?.enrolled_at || null,
+          completedAt: enrollment?.completed_at || null,
+          enrollmentStatus: enrollment?.status || null
+        };
+      })
+    );
+
+    logger.info(`Admin ${req.user.email} viewed certificates for course "${course.title}"`);
+
+    res.json({
+      success: true,
+      message: 'Certificate holders retrieved successfully',
+      data: {
+        course: {
+          id: course.id,
+          title: course.title
+        },
+        totalCertificates: certificateHolders.length,
+        certificates: certificateHolders
+      }
+    });
+  } catch (error) {
+    logger.error('Get course certificates error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   getCourses,
   searchCourses,
@@ -1225,5 +1356,6 @@ module.exports = {
   unenrollFromCourse,
   updateProgress,
   rateCourse,
-  getCourseEnrollments
+  getCourseEnrollments,
+  getCourseCertificates
 };

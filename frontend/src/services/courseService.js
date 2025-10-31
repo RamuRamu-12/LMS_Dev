@@ -242,5 +242,15 @@ export const courseService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to get course enrollments')
     }
+  },
+
+  // Get course certificates (admin only)
+  getCourseCertificates: async (courseId) => {
+    try {
+      const response = await api.get(`/courses/${courseId}/certificates`)
+      return response.data
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to get course certificates')
+    }
   }
 }

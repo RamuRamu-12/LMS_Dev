@@ -51,6 +51,12 @@ const Header = () => {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
+              to="/"
+              className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+            >
+              Home
+            </Link>
+            <Link
               to="/courses"
               className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
             >
@@ -166,6 +172,13 @@ const Header = () => {
               className="md:hidden border-t border-white/20"
             >
               <div className="py-4 space-y-2 px-4">
+                <Link
+                  to="/"
+                  className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Home
+                </Link>
                 <Link
                   to="/courses"
                   className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"

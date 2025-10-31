@@ -8,6 +8,7 @@ import { Toaster } from 'react-hot-toast'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { PostHogProvider } from './context/PostHogContext.jsx'
 // import { SocketProvider } from './contexts/SocketContext.jsx'
 import './index.css'
 
@@ -26,41 +27,43 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ThemeProvider>
-            <AuthProvider>
-              {/* <SocketProvider> */}
-                <App />
-              {/* </SocketProvider> */}
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    borderRadius: '12px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                    color: '#1a1a2e',
-                  },
-                  success: {
-                    iconTheme: {
-                      primary: '#10b981',
-                      secondary: '#ffffff',
+        <PostHogProvider>
+          <BrowserRouter>
+            <ThemeProvider>
+              <AuthProvider>
+                {/* <SocketProvider> */}
+                  <App />
+                {/* </SocketProvider> */}
+                <Toaster
+                  position="top-right"
+                  toastOptions={{
+                    duration: 4000,
+                    style: {
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                      color: '#1a1a2e',
                     },
-                  },
-                  error: {
-                    iconTheme: {
-                      primary: '#ef4444',
-                      secondary: '#ffffff',
+                    success: {
+                      iconTheme: {
+                        primary: '#10b981',
+                        secondary: '#ffffff',
+                      },
                     },
-                  },
-                }}
-              />
-            </AuthProvider>
-          </ThemeProvider>
-        </BrowserRouter>
+                    error: {
+                      iconTheme: {
+                        primary: '#ef4444',
+                        secondary: '#ffffff',
+                      },
+                    },
+                  }}
+                />
+              </AuthProvider>
+            </ThemeProvider>
+          </BrowserRouter>
+        </PostHogProvider>
       </QueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>,

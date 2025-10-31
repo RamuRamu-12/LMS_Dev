@@ -1,6 +1,7 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
 import { authService } from '../services/authService'
 import toast from 'react-hot-toast'
+import posthog from 'posthog-js'
 
 const AuthContext = createContext()
 
@@ -82,6 +83,17 @@ export function AuthProvider({ children }) {
           type: 'AUTH_SUCCESS', 
           payload: { user: response.data.user } 
         })
+        
+        // Track user identification with PostHog
+        if (posthog.__loaded && import.meta.env.PROD) {
+          posthog.identify(response.data.user.id, {
+            email: response.data.user.email,
+            name: response.data.user.name,
+            role: response.data.user.role,
+            avatar: response.data.user.avatar,
+            createdAt: response.data.user.createdAt,
+          })
+        }
       } else {
         // Token might be expired, try to refresh
         await refreshToken()
@@ -96,7 +108,7 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const login = async (token, refreshToken, isNewUser = false) => {
+  const login = async (token, refreshToken, isNewUser = false, loginMethod = 'traditional') => {
     try {
       dispatch({ type: 'AUTH_START' })
       
@@ -111,6 +123,30 @@ export function AuthProvider({ children }) {
           type: 'AUTH_SUCCESS', 
           payload: { user: response.data.user } 
         })
+        
+        // Track user identification with PostHog
+        if (posthog.__loaded && import.meta.env.PROD) {
+          posthog.identify(response.data.user.id, {
+            email: response.data.user.email,
+            name: response.data.user.name,
+            role: response.data.user.role,
+            avatar: response.data.user.avatar,
+            createdAt: response.data.user.createdAt,
+          })
+          
+          // Track event
+          if (isNewUser) {
+            posthog.capture('user_signed_up', {
+              method: loginMethod,
+              role: response.data.user.role,
+            })
+          } else {
+            posthog.capture('user_logged_in', {
+              method: loginMethod,
+              role: response.data.user.role,
+            })
+          }
+        }
         
         if (isNewUser) {
           toast.success('Welcome to LMS Platform!')
@@ -135,6 +171,11 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      // Track logout event before clearing user
+      if (posthog.__loaded && import.meta.env.PROD) {
+        posthog.capture('user_logged_out')
+      }
+      
       await authService.logout()
     } catch (error) {
       console.error('Logout error:', error)
@@ -143,6 +184,12 @@ export function AuthProvider({ children }) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       dispatch({ type: 'AUTH_LOGOUT' })
+      
+      // Reset PostHog identity
+      if (posthog.__loaded && import.meta.env.PROD) {
+        posthog.reset()
+      }
+      
       toast.success('Logged out successfully')
     }
   }

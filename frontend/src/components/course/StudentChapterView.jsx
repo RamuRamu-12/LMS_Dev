@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useMutation, useQueryClient } from 'react-query'
+import { Link } from 'react-router-dom'
 import VideoPlayer from './VideoPlayer'
 import SmartPDFViewer from './SmartPDFViewer'
 import ChapterNavigation from './ChapterNavigation'
@@ -9,18 +10,32 @@ import { enrollmentService } from '../../services/enrollmentService'
 import { FiFile, FiPlay, FiEye, FiClipboard } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 
-const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterChange, showNavigation = true }) => {
+const StudentChapterView = ({ 
+  chapter, 
+  enrollmentId, 
+  chapters = [], 
+  onChapterChange, 
+  showNavigation = true,
+  isPreviewMode = false,
+  isAuthenticatedNotEnrolled = false,
+  courseId = null
+}) => {
   const [viewMode, setViewMode] = useState('video') // 'video', 'pdf', or 'test'
   const [showFeedback, setShowFeedback] = useState(false)
   const [feedback, setFeedback] = useState({ rating: 0, review: '' })
   const [isTestModalOpen, setIsTestModalOpen] = useState(false)
   const queryClient = useQueryClient()
+  
+  // Check if user has full access
+  const hasFullAccess = !isPreviewMode && !isAuthenticatedNotEnrolled && !!enrollmentId
 
   // Debug enrollmentId
   console.log('=== StudentChapterView DEBUG ===')
   console.log('enrollmentId received:', enrollmentId)
   console.log('chapter received:', chapter)
   console.log('chapters array:', chapters)
+  console.log('isPreviewMode:', isPreviewMode)
+  console.log('hasFullAccess:', hasFullAccess)
   console.log('================================')
 
 
@@ -109,9 +124,10 @@ const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterCha
   // Auto-set view mode based on available content
   useEffect(() => {
     if (chapter) {
-      const hasVideo = !!chapter.video_url
-      const hasPDF = !!chapter.pdf_url
-      const hasTest = !!chapter.test_id || !!chapter.test
+      // In preview mode, use has_video/has_pdf flags; otherwise use actual URLs
+      const hasVideo = isPreviewMode ? !!chapter.has_video : !!chapter.video_url
+      const hasPDF = isPreviewMode ? !!chapter.has_pdf : !!chapter.pdf_url
+      const hasTest = !!chapter.test_id || !!chapter.test || !!chapter.has_test
       
       if (hasTest) {
         setViewMode('test')
@@ -124,7 +140,7 @@ const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterCha
         setViewMode('pdf')
       }
     }
-  }, [chapter])
+  }, [chapter, isPreviewMode])
 
   if (!chapter) {
     return (
@@ -138,9 +154,10 @@ const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterCha
     )
   }
 
-  const hasVideo = !!chapter.video_url
-  const hasPDF = !!chapter.pdf_url
-  const hasTest = !!chapter.test_id || !!chapter.test
+  // In preview mode, check flags instead of URLs
+  const hasVideo = isPreviewMode ? !!chapter.has_video : !!chapter.video_url
+  const hasPDF = isPreviewMode ? !!chapter.has_pdf : !!chapter.pdf_url
+  const hasTest = !!chapter.test_id || !!chapter.test || !!chapter.has_test
 
   const handleTakeTest = () => {
     if (!enrollmentId) {
@@ -410,7 +427,7 @@ const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterCha
                 </div>
               )}
 
-              {enrollmentId ? (
+              {hasFullAccess && enrollmentId ? (
                 <button
                   onClick={handleTakeTest}
                   className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
@@ -419,10 +436,35 @@ const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterCha
                   Take Test
                 </button>
               ) : (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-800">
-                    You must be enrolled in this course to take the test.
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-yellow-800 mb-4">
+                    {isPreviewMode 
+                      ? 'Login and enroll in this course to take the test.'
+                      : 'You must be enrolled in this course to take the test.'
+                    }
                   </p>
+                  {isPreviewMode ? (
+                    <Link
+                      to={`/login?redirect=/courses/${courseId}`}
+                      className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+                    >
+                      Login to Access
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        try {
+                          await enrollmentService.enrollInCourse(courseId)
+                          window.location.reload()
+                        } catch (err) {
+                          toast.error('Failed to enroll. Please try again.')
+                        }
+                      }}
+                      className="inline-flex items-center px-6 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300"
+                    >
+                      Enroll Now
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -435,19 +477,109 @@ const StudentChapterView = ({ chapter, enrollmentId, chapters = [], onChapterCha
             </motion.div>
           </div>
         ) : viewMode === 'video' && hasVideo ? (
-          <VideoPlayer
-            url={chapter.video_url}
-            title={chapter.title}
-            className="h-full w-full"
-            showControls={true}
-            autoplay={false}
-          />
+          hasFullAccess && chapter.video_url ? (
+            <VideoPlayer
+              url={chapter.video_url}
+              title={chapter.title}
+              className="h-full w-full"
+              showControls={true}
+              autoplay={false}
+            />
+          ) : (
+            // Preview mode - show locked video player
+            <div className="relative h-full bg-black flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-90"></div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative z-10 text-center p-8 max-w-2xl"
+              >
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <FiPlay className="w-12 h-12 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-4">Video Content</h3>
+                <p className="text-gray-300 mb-6">
+                  {isPreviewMode 
+                    ? 'Login and enroll to access this video content.'
+                    : 'Enroll in this course to access video content.'
+                  }
+                </p>
+                {isPreviewMode ? (
+                  <Link
+                    to={`/login?redirect=/courses/${courseId}`}
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg"
+                  >
+                    Login to Access
+                  </Link>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await enrollmentService.enrollInCourse(courseId)
+                        window.location.reload()
+                      } catch (err) {
+                        toast.error('Failed to enroll. Please try again.')
+                      }
+                    }}
+                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg"
+                  >
+                    Enroll Now
+                  </button>
+                )}
+              </motion.div>
+            </div>
+          )
          ) : viewMode === 'pdf' && hasPDF ? (
-           <SmartPDFViewer
-             pdfUrl={chapter.pdf_url}
-             title={chapter.title}
-             className="h-full"
-           />
+           hasFullAccess && chapter.pdf_url ? (
+             <SmartPDFViewer
+               pdfUrl={chapter.pdf_url}
+               title={chapter.title}
+               className="h-full"
+             />
+           ) : (
+             // Preview mode - show locked PDF viewer
+             <div className="relative h-full bg-gray-100 flex items-center justify-center">
+               <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 opacity-90"></div>
+               <motion.div
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 className="relative z-10 text-center p-8 max-w-2xl"
+               >
+                 <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                   <FiEye className="w-12 h-12 text-white" />
+                 </div>
+                 <h3 className="text-2xl font-bold text-gray-900 mb-4">PDF Content</h3>
+                 <p className="text-gray-600 mb-6">
+                   {isPreviewMode 
+                     ? 'Login and enroll to view and download this PDF material.'
+                     : 'Enroll in this course to view and download PDF materials.'
+                   }
+                 </p>
+                 {isPreviewMode ? (
+                   <Link
+                     to={`/login?redirect=/courses/${courseId}`}
+                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg"
+                   >
+                     Login to Access
+                   </Link>
+                 ) : (
+                   <button
+                     onClick={async () => {
+                       try {
+                         await enrollmentService.enrollInCourse(courseId)
+                         window.location.reload()
+                       } catch (err) {
+                         toast.error('Failed to enroll. Please try again.')
+                       }
+                     }}
+                     className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300 shadow-lg"
+                   >
+                     Enroll Now
+                   </button>
+                 )}
+               </motion.div>
+             </div>
+           )
          ) : (
           <div className="flex items-center justify-center h-full bg-gradient-to-br from-gray-50 to-gray-100">
             <motion.div

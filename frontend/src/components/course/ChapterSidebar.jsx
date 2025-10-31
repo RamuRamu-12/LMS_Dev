@@ -12,10 +12,15 @@ const ChapterSidebar = ({ chapters = [], selectedChapterId, onChapterSelect, cou
   )
 
   const getChapterContentType = (chapter) => {
-    if (chapter.test_id || chapter.test) return 'test'
-    if (chapter.video_url && chapter.pdf_url) return 'both'
-    if (chapter.video_url) return 'video'
-    if (chapter.pdf_url) return 'pdf'
+    // Check for preview mode flags or actual URLs
+    const hasVideo = chapter.video_url || chapter.has_video
+    const hasPDF = chapter.pdf_url || chapter.has_pdf
+    const hasTest = chapter.test_id || chapter.test || chapter.has_test
+    
+    if (hasTest) return 'test'
+    if (hasVideo && hasPDF) return 'both'
+    if (hasVideo) return 'video'
+    if (hasPDF) return 'pdf'
     return 'none'
   }
 

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion, AnimatePresence } from 'framer-motion'
+import { usePostHogTracker } from './hooks/usePostHogTracker'
 
 // Pages
 import LandingPage from './pages/LandingPage'
@@ -47,6 +48,9 @@ import { ProjectProgressProvider } from './context/ProjectProgressContext'
 
 function App() {
   console.log('App component is rendering')
+  
+  // Initialize PostHog tracker for page view tracking
+  usePostHogTracker()
   
   try {
     const { user, loading } = useAuth()

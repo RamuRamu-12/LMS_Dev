@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 const UserAnalytics = () => {
   const { user, isAuthenticated } = useAuth()
   const [selectedCourseId, setSelectedCourseId] = useState(null)
+  const [selectedCourseIdForCertificates, setSelectedCourseIdForCertificates] = useState(null)
   
   const { data: usersData, isLoading, error } = useQuery(
     'admin-users-analytics',
@@ -36,6 +37,16 @@ const UserAnalytics = () => {
       refetchOnWindowFocus: false,
       staleTime: 30 * 1000,
       enabled: isAuthenticated && user?.role === 'admin' && selectedCourseId !== null
+    }
+  )
+
+  const { data: certificatesData, isLoading: certificatesLoading } = useQuery(
+    ['course-certificates', selectedCourseIdForCertificates],
+    () => courseService.getCourseCertificates(selectedCourseIdForCertificates),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 30 * 1000,
+      enabled: isAuthenticated && user?.role === 'admin' && selectedCourseIdForCertificates !== null
     }
   )
 
@@ -435,6 +446,153 @@ const UserAnalytics = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
             <p className="text-sm">Select a course from the dropdown above to view enrolled users</p>
+          </div>
+        )}
+      </motion.div>
+
+      {/* Course Certificates Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+        className="card p-6"
+      >
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Certificates</h3>
+        <div className="mb-4">
+          <label htmlFor="course-select-certificates" className="block text-sm font-medium text-gray-700 mb-2">
+            Select a course to view certificate holders
+          </label>
+          <select
+            id="course-select-certificates"
+            value={selectedCourseIdForCertificates || ''}
+            onChange={(e) => setSelectedCourseIdForCertificates(e.target.value ? parseInt(e.target.value) : null)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="">-- Select a course --</option>
+            {coursesData?.data?.courses?.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedCourseIdForCertificates && (
+          <div className="mt-6">
+            {certificatesLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-500">Loading certificate holders...</p>
+              </div>
+            ) : certificatesData?.data?.certificates && certificatesData.data.certificates.length > 0 ? (
+              <div>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold">{certificatesData.data.totalCertificates}</span> certificate{certificatesData.data.totalCertificates !== 1 ? 's' : ''} issued for{' '}
+                    <span className="font-semibold text-indigo-600">{certificatesData.data.course.title}</span>
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Student
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Email
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Enrolled Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Completed Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Certificate Issued
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Certificate Number
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {certificatesData.data.certificates.map((certificate) => (
+                        <tr key={certificate.certificateId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <img
+                                src={certificate.student?.avatar || `https://ui-avatars.com/api/?name=${certificate.student?.name}&background=6366f1&color=fff`}
+                                alt={certificate.student?.name}
+                                className="w-10 h-10 rounded-full mr-3"
+                              />
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {certificate.student?.name || 'Unknown'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {certificate.student?.isActive ? (
+                                    <span className="text-green-600">Active</span>
+                                  ) : (
+                                    <span className="text-gray-400">Inactive</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{certificate.student?.email || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {certificate.enrolledAt 
+                              ? new Date(certificate.enrolledAt).toLocaleDateString() 
+                              : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {certificate.completedAt 
+                              ? new Date(certificate.completedAt).toLocaleDateString() 
+                              : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                              </svg>
+                              <span className="text-sm text-gray-900">
+                                {certificate.issuedDate 
+                                  ? new Date(certificate.issuedDate).toLocaleDateString() 
+                                  : 'N/A'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900 font-mono">
+                              {certificate.certificateNumber || 'N/A'}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+                <p className="text-gray-500">No certificates issued for this course yet.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!selectedCourseIdForCertificates && (
+          <div className="text-center py-8 text-gray-500">
+            <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+            <p className="text-sm">Select a course from the dropdown above to view certificate holders</p>
           </div>
         )}
       </motion.div>

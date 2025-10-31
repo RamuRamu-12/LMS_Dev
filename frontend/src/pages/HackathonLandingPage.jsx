@@ -97,17 +97,7 @@ const HackathonLandingPage = () => {
   };
 
   const handleJoinRequest = (hackathon) => {
-    if (!isAuthenticated) {
-      // Redirect to login with return path
-      navigate('/login', {
-        state: {
-          redirectTo: `/hackathons`,
-          message: 'Please login to join hackathons'
-        }
-      });
-      return;
-    }
-    
+    // Allow both authenticated and unauthenticated users to submit join requests
     setSelectedHackathon(hackathon);
     setShowJoinForm(true);
     setSubmitted(false);
@@ -505,7 +495,7 @@ const HackathonLandingPage = () => {
                       onClick={() => handleJoinRequest(hackathon)}
                       className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-lg flex items-center justify-center space-x-2"
                     >
-                      <span>{isAuthenticated ? 'Join Hackathon' : 'Login to Join'}</span>
+                      <span>{isAuthenticated ? 'Join Hackathon' : 'Request to Join'}</span>
                       <FiArrowRight className="w-5 h-5" />
                     </motion.button>
                   </div>

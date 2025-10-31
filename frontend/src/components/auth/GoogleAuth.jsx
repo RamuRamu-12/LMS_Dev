@@ -51,7 +51,8 @@ const GoogleAuth = ({ onSuccess, onError }) => {
         const result = await login(
           data.data.tokens.accessToken, 
           data.data.tokens.refreshToken, 
-          data.data.isNewUser
+          data.data.isNewUser,
+          'google'
         )
         
         if (result.success) {
