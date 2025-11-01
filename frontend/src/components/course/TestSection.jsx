@@ -5,7 +5,7 @@ import { testService } from '../../services/testService'
 import TestTakingModal from './TestTakingModal'
 import toast from 'react-hot-toast'
 
-const TestSection = ({ courseId, enrollment, progress }) => {
+const TestSection = ({ courseId, enrollment, progress, progressionData }) => {
   const [selectedTest, setSelectedTest] = useState(null)
   const [isTestModalOpen, setIsTestModalOpen] = useState(false)
 
@@ -16,14 +16,24 @@ const TestSection = ({ courseId, enrollment, progress }) => {
     {
       enabled: !!courseId && !!enrollment,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000
+      staleTime: 0 // Always fetch fresh data to get updated test status
     }
   )
 
   const tests = testsData?.data?.tests || []
   
   // Check if student has completed all chapters
-  const hasCompletedAllChapters = progress >= 100
+  // Use progression data if available (more reliable), otherwise fall back to progress percentage
+  let hasCompletedAllChapters = false
+  if (progressionData?.chapters && progressionData?.stats) {
+    // Check if all regular chapters (non-assignment) are completed
+    const regularChapters = progressionData.chapters.filter(ch => !ch.is_assignment)
+    const completedRegularChapters = regularChapters.filter(ch => ch.is_completed)
+    hasCompletedAllChapters = regularChapters.length > 0 && completedRegularChapters.length === regularChapters.length
+  } else {
+    // Fallback to progress percentage
+    hasCompletedAllChapters = progress >= 100
+  }
 
   const handleTakeTest = (test) => {
     if (!hasCompletedAllChapters) {

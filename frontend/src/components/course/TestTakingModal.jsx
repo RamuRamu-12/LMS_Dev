@@ -67,15 +67,29 @@ const TestTakingModal = ({
   const submitTestMutation = useMutation(
     (attemptData) => testService.submitTest(attemptData.attemptId, attemptData.answers),
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         setTestCompleted(true)
         setTestResults(data.data)
         toast.success('Test submitted successfully!')
         
-        // Refresh enrollment and activity data
+        // Refresh all relevant data including test progress
         queryClient.invalidateQueries('student-enrollments')
         queryClient.invalidateQueries('student-activities')
         queryClient.invalidateQueries('user-achievements')
+        // Invalidate course data to get updated enrollment progress
+        queryClient.invalidateQueries(['course'])
+        // Invalidate chapter progression to update test accessibility
+        queryClient.invalidateQueries(['chapterProgression'])
+        // Invalidate test-related queries
+        queryClient.invalidateQueries(['course-tests'])
+        queryClient.invalidateQueries(['test-attempts'])
+        // Force refetch to immediately update UI including achievements
+        await Promise.all([
+          queryClient.refetchQueries('student-enrollments'),
+          queryClient.refetchQueries(['course']),
+          queryClient.refetchQueries(['chapterProgression']),
+          queryClient.refetchQueries('user-achievements') // Refetch achievements immediately
+        ])
       },
       onError: (error) => {
         toast.error(error.message || 'Failed to submit test')

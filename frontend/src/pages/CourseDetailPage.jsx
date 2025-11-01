@@ -31,22 +31,34 @@ const CourseDetailPage = () => {
     {
       enabled: !!id,
       refetchOnWindowFocus: false,
-      retry: 2
+      retry: 2,
+      // Refetch when user changes to ensure enrollment status is current
+      staleTime: 0 // Always consider data stale to get fresh enrollment status
     }
   )
   
-  // Get access level from response
-  const accessLevel = courseData?.data?.accessLevel || (isAuthenticated ? 'authenticated' : 'preview')
-  const isPreviewMode = accessLevel === 'preview'
-  const isAuthenticatedNotEnrolled = accessLevel === 'authenticated'
-  const isEnrolled = accessLevel === 'enrolled'
+  // Check if enrollment exists in the response FIRST (before determining access level)
+  const enrollmentFromCourseData = courseData?.data?.enrollment
+  
+  // Get access level from response - if we have enrollment, user is enrolled regardless of accessLevel
+  // This fixes the issue where enrollment exists but accessLevel might not be set correctly
+  const accessLevel = enrollmentFromCourseData 
+    ? 'enrolled' 
+    : (courseData?.data?.accessLevel || (isAuthenticated ? 'authenticated' : 'preview'))
+  
+  // isPreviewMode = user is NOT authenticated (show Login button)
+  const isPreviewMode = !isAuthenticated
   
   // Try to get full content if enrolled (this includes enrollment data and full chapter details)
+  // Enable if user is authenticated AND (accessLevel is 'enrolled' OR we have enrollment data)
+  // Always fetch if we have enrollment data, regardless of accessLevel
+  const shouldFetchFullContent = isAuthenticated && (accessLevel === 'enrolled' || !!enrollmentFromCourseData)
+  
   const { data: fullContentData } = useQuery(
     ['courseContent', id],
     () => courseService.getCourseContent(id),
     {
-      enabled: !!id && isEnrolled && isAuthenticated,
+      enabled: !!id && shouldFetchFullContent,
       refetchOnWindowFocus: false,
       retry: false
     }
@@ -55,16 +67,30 @@ const CourseDetailPage = () => {
   // Use full content data if available, otherwise use preview data
   const activeCourseData = fullContentData || courseData
   
-  console.log('Course data:', activeCourseData)
-  console.log('Access level:', accessLevel)
+  // Check enrollment from multiple sources - this is the definitive check
+  const enrollmentFromFullContent = fullContentData?.data?.enrollment
+  const enrollment = enrollmentFromFullContent || enrollmentFromCourseData
+  const hasEnrollment = !!enrollment
+  
+  // isEnrolled = user IS enrolled (show enrollment status)
+  // Primary check: if enrollment object exists, user is enrolled
+  // Secondary check: accessLevel === 'enrolled'
+  const isEnrolled = hasEnrollment || accessLevel === 'enrolled'
+  
+  // isAuthenticatedNotEnrolled = user IS authenticated but NOT enrolled (show Enroll Now button)
+  // Only show Enroll Now if authenticated AND definitely not enrolled
+  const isAuthenticatedNotEnrolled = isAuthenticated && !hasEnrollment && accessLevel !== 'enrolled'
+  
   
   // Get chapter progression for students (only if enrolled)
   const { data: progressionData } = useQuery(
-    ['chapterProgression', activeCourseData?.data?.enrollment?.id],
-    () => enrollmentService.getChapterProgression(activeCourseData.data.enrollment.id),
+    ['chapterProgression', enrollment?.id],
+    () => enrollmentService.getChapterProgression(enrollment.id),
     {
-      enabled: !!activeCourseData?.data?.enrollment?.id && isEnrolled && user?.role === 'student',
-      refetchOnWindowFocus: false
+      enabled: !!enrollment?.id && isEnrolled && user?.role === 'student',
+      refetchOnWindowFocus: false,
+      // Refetch when enrollment ID changes or when chapter is completed
+      staleTime: 0 // Always fetch fresh data to ensure completion status is current
     }
   )
 
@@ -89,7 +115,8 @@ const CourseDetailPage = () => {
   }
 
   const course = activeCourseData?.data?.course
-  const enrollment = activeCourseData?.data?.enrollment // For enrolled students
+  // enrollment is already defined above from enrollmentFromFullContent || enrollmentFromCourseData
+  // Use that enrollment object which is the definitive source
   const chapters = course?.chapters || []
   
   // Debug enrollment data
@@ -141,6 +168,9 @@ const CourseDetailPage = () => {
   useEffect(() => {
     if (progressionData?.data) {
       setChapterProgression(progressionData.data)
+    } else {
+      // Reset progression if data is cleared
+      setChapterProgression(null)
     }
   }, [progressionData])
 
@@ -346,9 +376,15 @@ const CourseDetailPage = () => {
                               </svg>
                             </div>
                             <div>
-                              <h3 className="text-sm font-bold text-green-800">You're enrolled in this course!</h3>
+                              <h3 className="text-sm font-bold text-green-800">
+                                {enrollment.status === 'completed' 
+                                  ? 'Course Completed! 🎉' 
+                                  : 'You\'re enrolled in this course!'}
+                              </h3>
                               <p className="text-xs text-green-600">
-                                Enrolled on {new Date(enrollment.enrolled_at).toLocaleDateString()}
+                                {enrollment.status === 'completed' && enrollment.completed_at
+                                  ? `Completed on ${new Date(enrollment.completed_at).toLocaleDateString()}`
+                                  : `Enrolled on ${new Date(enrollment.enrolled_at).toLocaleDateString()}`}
                               </p>
                             </div>
                           </div>
@@ -406,6 +442,8 @@ const CourseDetailPage = () => {
                               }`}>
                                 {isPreviewMode 
                                   ? 'You\'re viewing a preview. Login to enroll and access full content.'
+                                  : isAuthenticatedNotEnrolled
+                                  ? 'You\'re logged in. Enroll now to access course content and track progress.'
                                   : 'You need to enroll to access course content and track progress.'
                                 }
                               </p>
@@ -413,32 +451,41 @@ const CourseDetailPage = () => {
                           </div>
                           <div className="flex gap-2">
                             {isPreviewMode ? (
+                              // Not authenticated - show Login button
                               <Link
                                 to={`/login?redirect=/courses/${id}`}
                                 className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
                               >
                                 Login
                               </Link>
-                            ) : (
+                            ) : isAuthenticatedNotEnrolled ? (
+                              // Authenticated but not enrolled - show Enroll Now button
                               <button
                                 onClick={async () => {
-                                  if (!isAuthenticated) {
-                                    window.location.href = `/login?redirect=/courses/${id}`
-                                    return
-                                  }
                                   try {
                                     await enrollmentService.enrollInCourse(id)
-                                    // Refetch course data
-                                    window.location.reload()
+                                    // Invalidate and refetch ALL related queries
+                                    await Promise.all([
+                                      queryClient.invalidateQueries(['course', id]),
+                                      queryClient.invalidateQueries(['courseContent', id]),
+                                      queryClient.invalidateQueries('student-enrollments'),
+                                      queryClient.invalidateQueries('student-courses')
+                                    ])
+                                    // Refetch course data immediately to get updated enrollment status
+                                    await queryClient.refetchQueries(['course', id])
+                                    // Show success message
+                                    alert('Successfully enrolled in course!')
                                   } catch (err) {
                                     console.error('Enrollment failed:', err)
+                                    const errorMessage = err.message || 'Failed to enroll in course. Please try again.'
+                                    alert(errorMessage)
                                   }
                                 }}
                                 className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-sm font-semibold rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300"
                               >
                                 Enroll Now
                               </button>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       </motion.div>
@@ -540,6 +587,7 @@ const CourseDetailPage = () => {
                             courseId={course.id}
                             enrollment={isEnrolled ? enrollment : null}
                             progress={enrollment?.progress || 0}
+                            progressionData={progressionData?.data || chapterProgression}
                           />
                         </div>
                       ) : (
@@ -681,6 +729,7 @@ const CourseDetailPage = () => {
                 courseId={course.id}
                 enrollment={enrollment}
                 progress={enrollment.progress || 0}
+                progressionData={progressionData?.data || chapterProgression}
               />
             )}
           </motion.div>

@@ -416,6 +416,60 @@ const getAuthStatus = async (req, res, next) => {
   }
 };
 
+/**
+ * Change user password
+ */
+const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      throw new AppError('Current password and new password are required', 400);
+    }
+    
+    // Validate new password strength
+    if (newPassword.length < 6) {
+      throw new AppError('New password must be at least 6 characters long', 400);
+    }
+    
+    // Check if new password is same as current password
+    if (currentPassword === newPassword) {
+      throw new AppError('New password must be different from current password', 400);
+    }
+    
+    // Get user with password
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+    
+    // Check if user has a password set (not Google-only account)
+    if (!user.password) {
+      throw new AppError('Password not set for this account. Please use Google login or contact admin.', 400);
+    }
+    
+    // Verify current password
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      throw new AppError('Current password is incorrect', 401);
+    }
+    
+    // Update password (will be hashed by the model hook)
+    await user.update({ password: newPassword });
+    
+    logger.info(`User ${user.email} changed password`);
+    
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    logger.error('Change password error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -425,5 +479,6 @@ module.exports = {
   logout,
   getCurrentUser,
   updateProfile,
-  getAuthStatus
+  getAuthStatus,
+  changePassword
 };

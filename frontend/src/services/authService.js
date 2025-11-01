@@ -65,6 +65,19 @@ export const authService = {
     }
   },
 
+  // Change password
+  changePassword: async (currentPassword, newPassword) => {
+    try {
+      const response = await api.put('/auth/change-password', {
+        currentPassword,
+        newPassword
+      })
+      return response.data
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to change password')
+    }
+  },
+
   // Get auth status
   getAuthStatus: async () => {
     try {

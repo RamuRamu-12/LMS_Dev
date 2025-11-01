@@ -48,6 +48,12 @@ router.put('/profile',
   authController.updateProfile
 );
 
+// Change password
+router.put('/change-password', 
+  authenticate,
+  authController.changePassword
+);
+
 // Check authentication status
 router.get('/status', optionalAuth, authController.getAuthStatus);
 

@@ -1,4 +1,4 @@
-const { Course, User, Enrollment, CourseChapter, CourseTest, ChapterProgress, ActivityLog, FileUpload, TestQuestion, TestQuestionOption, TestAttempt, TestAnswer, Certificate, sequelize } = require('../models');
+const { Course, User, Enrollment, CourseChapter, CourseTest, ChapterProgress, ActivityLog, FileUpload, TestQuestion, TestQuestionOption, TestAttempt, TestAnswer, Certificate, Achievement, sequelize } = require('../models');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 const { Op } = require('sequelize');
@@ -320,6 +320,7 @@ const getCourseById = async (req, res, next) => {
     }
 
     // Check if user is enrolled (if authenticated)
+    // Check for any enrollment status except 'dropped' (enrolled, in-progress, completed)
     let enrollment = null;
     const isAuthenticated = !!req.user;
     
@@ -328,13 +329,16 @@ const getCourseById = async (req, res, next) => {
         where: {
           student_id: req.user.id,
           course_id: id,
-          status: 'enrolled'
+          status: {
+            [Op.ne]: 'dropped' // Not dropped (enrolled, in-progress, completed are all valid)
+          }
         }
       });
     }
 
     // Determine access level: 'preview' (no auth), 'authenticated' (auth but not enrolled), 'enrolled' (auth + enrolled)
-    const hasFullAccess = isAuthenticated && enrollment && enrollment.status === 'enrolled';
+    // User has full access if they have any enrollment (not dropped)
+    const hasFullAccess = isAuthenticated && enrollment && enrollment.status !== 'dropped';
 
     // Combine chapters and tests into a single content array
     const allContent = [];
@@ -412,7 +416,8 @@ const getCourseById = async (req, res, next) => {
           id: enrollment.id,
           status: enrollment.status,
           progress: enrollment.progress,
-          enrolled_at: enrollment.enrolled_at
+          enrolled_at: enrollment.enrolled_at,
+          completed_at: enrollment.completed_at
         } : null,
         accessLevel: hasFullAccess ? 'enrolled' : (isAuthenticated ? 'authenticated' : 'preview')
       }
@@ -519,11 +524,23 @@ const updateCourse = async (req, res, next) => {
  * Delete course
  */
 const deleteCourse = async (req, res, next) => {
-  const transaction = await sequelize.transaction();
+  let transaction;
   
   try {
     const { id } = req.params;
-    const course = await Course.findByPk(id, { transaction });
+    
+    // Validate course ID
+    if (!id || isNaN(parseInt(id))) {
+      throw new AppError('Invalid course ID', 400);
+    }
+
+    // Start transaction
+    transaction = await sequelize.transaction();
+    
+    // Find course within transaction
+    const course = await Course.findByPk(id, { 
+      transaction
+    });
 
     if (!course) {
       await transaction.rollback();
@@ -650,6 +667,34 @@ const deleteCourse = async (req, res, next) => {
       transaction
     });
 
+    // Delete all activity logs for this course
+    await ActivityLog.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Delete all achievements for this course
+    await Achievement.destroy({
+      where: { course_id: id },
+      transaction
+    });
+
+    // Delete activity logs that reference chapters from this course
+    if (chapterIds.length > 0) {
+      await ActivityLog.destroy({
+        where: { chapter_id: { [Op.in]: chapterIds } },
+        transaction
+      });
+    }
+
+    // Delete activity logs that reference tests from this course
+    if (testIds.length > 0) {
+      await ActivityLog.destroy({
+        where: { test_id: { [Op.in]: testIds } },
+        transaction
+      });
+    }
+
     // Finally delete the course
     await course.destroy({ transaction });
 
@@ -663,8 +708,28 @@ const deleteCourse = async (req, res, next) => {
       message: 'Course deleted successfully'
     });
   } catch (error) {
-    await transaction.rollback();
-    logger.error('Delete course error:', error);
+    // Rollback transaction if it exists
+    if (transaction && !transaction.finished) {
+      await transaction.rollback();
+    }
+    
+    logger.error('Delete course error:', {
+      error: error.message,
+      stack: error.stack,
+      courseId: req.params.id,
+      userId: req.user?.id,
+      errorName: error.name
+    });
+    
+    // If it's a foreign key constraint error, provide a more helpful message
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      const appError = new AppError(
+        'Cannot delete course: There are still references to this course in the database. Please try again or contact support.',
+        400
+      );
+      return next(appError);
+    }
+    
     next(error);
   }
 };
@@ -1015,16 +1080,77 @@ const enrollInCourse = async (req, res, next) => {
       throw new AppError('Course is not published', 400);
     }
 
-    // Check if already enrolled
+    // Check if already enrolled (check for any status except 'dropped')
     const existingEnrollment = await Enrollment.findOne({
       where: {
         student_id: req.user.id,
-        course_id: id
+        course_id: id,
+        status: {
+          [Op.ne]: 'dropped' // Not dropped means they're enrolled
+        }
       }
     });
 
     if (existingEnrollment) {
+      // User is already enrolled (status: enrolled, in-progress, or completed)
       throw new AppError('Already enrolled in this course', 400);
+    }
+    
+    // Check if user previously dropped the course and wants to re-enroll
+    const droppedEnrollment = await Enrollment.findOne({
+      where: {
+        student_id: req.user.id,
+        course_id: id,
+        status: 'dropped'
+      }
+    });
+    
+    if (droppedEnrollment) {
+      // Re-enroll by updating the dropped enrollment
+      await droppedEnrollment.update({
+        status: 'enrolled',
+        enrolled_at: new Date(),
+        progress: 0,
+        completed_at: null
+      });
+      
+      // Update course enrollment count
+      await course.updateEnrollmentCount();
+      
+      // Log re-enrollment activity
+      try {
+        await ActivityLog.createActivity(
+          req.user.id,
+          'enrollment',
+          `Re-enrolled in ${course.title}`,
+          `Successfully re-enrolled in ${course.title} course`,
+          {
+            courseId: course.id,
+            metadata: {
+              courseTitle: course.title,
+              courseCategory: course.category,
+              courseDifficulty: course.difficulty
+            },
+            pointsEarned: 10
+          }
+        );
+      } catch (activityError) {
+        console.error('Failed to log re-enrollment activity:', activityError);
+      }
+      
+      logger.info(`User ${req.user.email} re-enrolled in course "${course.title}"`);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Successfully re-enrolled in course',
+        data: {
+          enrollment: {
+            id: droppedEnrollment.id,
+            status: droppedEnrollment.status,
+            enrolled_at: droppedEnrollment.enrolled_at
+          }
+        }
+      });
     }
 
     // Create enrollment

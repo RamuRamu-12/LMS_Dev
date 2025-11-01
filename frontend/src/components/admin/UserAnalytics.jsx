@@ -3,12 +3,12 @@ import { useState } from 'react'
 import { useQuery } from 'react-query'
 import { userService } from '../../services/userService'
 import { courseService } from '../../services/courseService'
+import { enrollmentService } from '../../services/enrollmentService'
 import { useAuth } from '../../context/AuthContext'
 
 const UserAnalytics = () => {
   const { user, isAuthenticated } = useAuth()
   const [selectedCourseId, setSelectedCourseId] = useState(null)
-  const [selectedCourseIdForCertificates, setSelectedCourseIdForCertificates] = useState(null)
   
   const { data: usersData, isLoading, error } = useQuery(
     'admin-users-analytics',
@@ -41,12 +41,22 @@ const UserAnalytics = () => {
   )
 
   const { data: certificatesData, isLoading: certificatesLoading } = useQuery(
-    ['course-certificates', selectedCourseIdForCertificates],
-    () => courseService.getCourseCertificates(selectedCourseIdForCertificates),
+    ['course-certificates', selectedCourseId],
+    () => courseService.getCourseCertificates(selectedCourseId),
     {
       refetchOnWindowFocus: false,
       staleTime: 30 * 1000,
-      enabled: isAuthenticated && user?.role === 'admin' && selectedCourseIdForCertificates !== null
+      enabled: isAuthenticated && user?.role === 'admin' && selectedCourseId !== null
+    }
+  )
+
+  const { data: adminStatsData } = useQuery(
+    'admin-stats-analytics',
+    () => enrollmentService.getAdminStats(),
+    {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+      enabled: isAuthenticated && user?.role === 'admin'
     }
   )
 
@@ -150,24 +160,80 @@ const UserAnalytics = () => {
     user.role === 'student' && !user.last_login
   ).length
 
+  // Calculate enrollment statistics
+  const courses = coursesData?.data?.courses || []
+  const adminStats = adminStatsData?.data?.stats || {}
+  
+  // Calculate meaningful enrollment insights
+  const totalEnrollments = adminStats.totalEnrolled || 0
+  const completedEnrollments = adminStats.totalCompleted || 0
+  const activeEnrollments = adminStats.totalActive || 0
+  const completionRate = adminStats.completionRate || 0
+  
+  // Average enrollments per course
+  const avgEnrollmentsPerCourse = courses.length > 0 
+    ? Math.round((totalEnrollments / courses.length) * 10) / 10 
+    : 0
+  
+  // Average enrollments per student
+  const avgCoursesPerStudent = studentUsers > 0 
+    ? Math.round((totalEnrollments / studentUsers) * 10) / 10 
+    : 0
+  
+  // Enrollment rate (percentage of students who have enrolled in at least one course)
+  // Estimate based on total enrollments vs total students
+  const enrollmentRate = studentUsers > 0 
+    ? Math.round(Math.min((totalEnrollments / studentUsers) * 100, 100))
+    : 0
+  
+  // Most popular courses (by enrollment count)
+  const popularCourses = [...courses]
+    .sort((a, b) => (b.enrollment_count || 0) - (a.enrollment_count || 0))
+    .slice(0, 5)
+  
+  // Calculate engagement rate (active students / total students)
+  const engagementRate = studentUsers > 0 
+    ? Math.round((activeStudents / studentUsers) * 100)
+    : 0
+  
+  // Students who logged in last 7 days
+  const sevenDaysAgoLogin = new Date()
+  sevenDaysAgoLogin.setDate(sevenDaysAgoLogin.getDate() - 7)
+  const activeStudentsLast7Days = users.filter(user => 
+    user.role === 'student' && user.last_login && new Date(user.last_login) >= sevenDaysAgoLogin
+  ).length
+  
+  // Calculate registration growth (compare this week vs last week)
+  const fourteenDaysAgo = new Date()
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+  const registrationsLastWeek = users.filter(user => 
+    user.role === 'student' && 
+    new Date(user.created_at) >= fourteenDaysAgo && 
+    new Date(user.created_at) < sevenDaysAgo
+  ).length
+  const registrationGrowth = registrationsLastWeek > 0
+    ? Math.round(((recentStudentRegistrations - registrationsLastWeek) / registrationsLastWeek) * 100)
+    : recentStudentRegistrations > 0 ? 100 : 0
+
+  // Calculate additional useful metrics
+  const publishedCoursesCount = adminStats.publishedCourses || 0
+  const totalCoursesCount = courses.length
+  const inProgressEnrollments = activeEnrollments
+  
+  // Calculate students enrolled in at least one course
+  const enrolledStudentsCount = studentUsers > 0 ? Math.min(totalEnrollments, studentUsers) : 0
+  
+  // Calculate average completion rate across all enrollments
+  const avgCompletionRate = totalEnrollments > 0 
+    ? Math.round((completedEnrollments / totalEnrollments) * 100)
+    : 0
+
   const stats = [
     {
-      title: 'Total Students',
-      value: studentUsers,
-      change: `+${recentStudentRegistrations} this week`,
-      changeType: 'positive',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.083 12.083 0 01.665-6.479L12 14z" />
-        </svg>
-      )
-    },
-    {
-      title: 'Active Students',
-      value: activeStudents,
-      change: `${studentUsers > 0 ? Math.round((activeStudents / studentUsers) * 100) : 0}% of students`,
-      changeType: 'neutral',
+      title: 'Course Completion Rate',
+      value: `${Math.round(completionRate)}%`,
+      change: `${completedEnrollments} of ${totalEnrollments} completed`,
+      changeType: completionRate >= 50 ? 'positive' : completionRate >= 30 ? 'neutral' : 'negative',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -175,72 +241,163 @@ const UserAnalytics = () => {
       )
     },
     {
-      title: 'Total Users',
-      value: totalUsers,
-      change: `${adminUsers} admin${adminUsers !== 1 ? 's' : ''}`,
+      title: 'Total Enrollments',
+      value: totalEnrollments,
+      change: `${inProgressEnrollments} in progress`,
       changeType: 'neutral',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       )
     },
     {
-      title: 'Recent Student Logins',
-      value: recentStudentLogins,
-      change: 'Last 24 hours',
-      changeType: 'positive',
+      title: 'Published Courses',
+      value: publishedCoursesCount,
+      change: `${totalCoursesCount} total courses`,
+      changeType: 'neutral',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+      )
+    },
+    {
+      title: 'Avg Courses/Student',
+      value: avgCoursesPerStudent,
+      change: `${enrolledStudentsCount} students enrolled`,
+      changeType: avgCoursesPerStudent >= 2 ? 'positive' : 'neutral',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       )
     }
   ]
 
   return (
-    <div className="space-y-6">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="card p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className={`text-xs mt-1 ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 
-                  stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
-                }`}>
-                  {stat.change}
-                </p>
-              </div>
-              <div className={`p-3 rounded-lg ${
-                stat.title === 'Total Users' ? 'bg-blue-100 text-blue-600' :
-                stat.title === 'Active Users' ? 'bg-green-100 text-green-600' :
-                stat.title === 'Students' ? 'bg-purple-100 text-purple-600' :
-                'bg-orange-100 text-orange-600'
-              }`}>
-                {stat.icon}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Additional Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Registration Activity */}
+    <div className="space-y-6 w-full overflow-x-hidden">
+      {/* Key Performance Indicators */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="card p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200"
+        >
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Enrollment Metrics</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Total Enrollments</span>
+              <span className="font-bold text-indigo-600">{totalEnrollments}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Completed</span>
+              <span className="font-semibold text-green-600">{completedEnrollments}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">In Progress</span>
+              <span className="font-semibold text-yellow-600">{activeEnrollments}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-blue-200">
+              <span className="text-xs font-medium text-gray-700">Completion Rate</span>
+              <span className="font-bold text-indigo-700">{Math.round(completionRate)}%</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="card p-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200"
+        >
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Engagement Metrics</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Active Students (7d)</span>
+              <span className="font-bold text-green-600">{activeStudentsLast7Days}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Recent Logins (24h)</span>
+              <span className="font-semibold text-green-600">{recentStudentLogins}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Never Logged In</span>
+              <span className="font-semibold text-orange-600">{studentsNeverLoggedIn}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-green-200">
+              <span className="text-xs font-medium text-gray-700">Engagement Rate</span>
+              <span className="font-bold text-green-700">{engagementRate}%</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="card p-6 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200"
+        >
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Growth Metrics</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">New This Week</span>
+              <span className="font-bold text-purple-600">+{recentStudentRegistrations}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Growth Rate</span>
+              <span className={`font-semibold ${registrationGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {registrationGrowth >= 0 ? '+' : ''}{registrationGrowth}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Avg Courses/Student</span>
+              <span className="font-semibold text-purple-600">{avgCoursesPerStudent}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-purple-200">
+              <span className="text-xs font-medium text-gray-700">Enrollment Rate</span>
+              <span className="font-bold text-purple-700">{enrollmentRate}%</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="card p-6 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200"
+        >
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Platform Metrics</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Total Courses</span>
+              <span className="font-bold text-amber-600">{courses.length}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Published Courses</span>
+              <span className="font-semibold text-amber-600">{adminStats.publishedCourses || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-600">Avg Enrollments/Course</span>
+              <span className="font-semibold text-amber-600">{avgEnrollmentsPerCourse}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-amber-200">
+              <span className="text-xs font-medium text-gray-700">Total Admins</span>
+              <span className="font-bold text-amber-700">{adminUsers}</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Additional Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-full">
+        {/* Registration Activity */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
           className="card p-6"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Registration Activity</h3>
@@ -264,11 +421,44 @@ const UserAnalytics = () => {
           </div>
         </motion.div>
 
-        {/* Recent Users */}
+        {/* Most Popular Courses */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.9 }}
+          className="card p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Popular Courses</h3>
+          <div className="space-y-3">
+            {popularCourses.length > 0 ? (
+              popularCourses.map((course, index) => (
+                <div key={course.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3 flex-1 min-w-0">
+                    <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-sm">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{course.title}</p>
+                      <p className="text-xs text-gray-500">{course.category || 'Uncategorized'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-semibold text-indigo-600">{course.enrollment_count || 0}</span>
+                    <span className="text-xs text-gray-500">enrollments</span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No courses available</p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Recent Student Registrations */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
           className="card p-6"
         >
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Student Registrations</h3>
@@ -301,17 +491,17 @@ const UserAnalytics = () => {
         </motion.div>
       </div>
 
-      {/* Course Enrollments Section */}
+      {/* Unified Course Enrollments & Certificates Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 1.1 }}
         className="card p-6"
       >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Enrollments</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Enrollments & Certificates</h3>
         <div className="mb-4">
           <label htmlFor="course-select" className="block text-sm font-medium text-gray-700 mb-2">
-            Select a course to view enrolled users
+            Select a course to view all enrollment and certification details
           </label>
           <select
             id="course-select"
@@ -330,104 +520,159 @@ const UserAnalytics = () => {
 
         {selectedCourseId && (
           <div className="mt-6">
-            {enrollmentsLoading ? (
+            {(enrollmentsLoading || certificatesLoading) ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                <p className="mt-2 text-sm text-gray-500">Loading enrolled users...</p>
+                <p className="mt-2 text-sm text-gray-500">Loading enrollment and certificate data...</p>
               </div>
             ) : enrollmentsData?.data?.enrollments && enrollmentsData.data.enrollments.length > 0 ? (
               <div>
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
                   <p className="text-sm text-gray-600">
                     <span className="font-semibold">{enrollmentsData.data.totalEnrollments}</span> users enrolled in{' '}
                     <span className="font-semibold text-indigo-600">{enrollmentsData.data.course.title}</span>
+                    {certificatesData?.data?.certificates && certificatesData.data.certificates.length > 0 && (
+                      <span className="ml-2">
+                        • <span className="font-semibold text-green-600">{certificatesData.data.totalCertificates}</span> certificate{certificatesData.data.totalCertificates !== 1 ? 's' : ''} issued
+                      </span>
+                    )}
                   </p>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Student
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Email
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Progress
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Enrolled Date
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Completed Date
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Last Accessed
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Certificate
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Cert #
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {enrollmentsData.data.enrollments.map((enrollment) => (
-                        <tr key={enrollment.enrollmentId} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={enrollment.student?.avatar || `https://ui-avatars.com/api/?name=${enrollment.student?.name}&background=6366f1&color=fff`}
-                                alt={enrollment.student?.name}
-                                className="w-10 h-10 rounded-full mr-3"
-                              />
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {enrollment.student?.name || 'Unknown'}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {enrollment.student?.isActive ? (
-                                    <span className="text-green-600">Active</span>
-                                  ) : (
-                                    <span className="text-gray-400">Inactive</span>
-                                  )}
+                      {enrollmentsData.data.enrollments.map((enrollment) => {
+                        // Find matching certificate for this enrollment
+                        const certificate = certificatesData?.data?.certificates?.find(
+                          cert => cert.student?.id === enrollment.student?.id || cert.student?.email === enrollment.student?.email
+                        )
+                        
+                        return (
+                          <tr key={enrollment.enrollmentId} className="hover:bg-gray-50">
+                            <td className="px-4 py-4">
+                              <div className="flex items-center min-w-0">
+                                <img
+                                  src={enrollment.student?.avatar || `https://ui-avatars.com/api/?name=${enrollment.student?.name}&background=6366f1&color=fff`}
+                                  alt={enrollment.student?.name}
+                                  className="w-10 h-10 rounded-full mr-3 flex-shrink-0"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-gray-900 truncate">
+                                    {enrollment.student?.name || 'Unknown'}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {enrollment.student?.isActive ? (
+                                      <span className="text-green-600">Active</span>
+                                    ) : (
+                                      <span className="text-gray-400">Inactive</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{enrollment.student?.email || 'N/A'}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              enrollment.status === 'completed' 
-                                ? 'bg-green-100 text-green-800'
-                                : enrollment.status === 'in-progress'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {enrollment.status || 'enrolled'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                                <div
-                                  className="bg-indigo-600 h-2 rounded-full"
-                                  style={{ width: `${enrollment.progress || 0}%` }}
-                                ></div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="text-sm text-gray-900 truncate max-w-xs">{enrollment.student?.email || 'N/A'}</div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                enrollment.status === 'completed' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : enrollment.status === 'in-progress'
+                                  ? 'bg-yellow-100 text-yellow-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {enrollment.status || 'enrolled'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center">
+                                <div className="w-16 bg-gray-200 rounded-full h-2 mr-2 flex-shrink-0">
+                                  <div
+                                    className={`h-2 rounded-full ${
+                                      enrollment.progress === 100 ? 'bg-green-600' : 'bg-indigo-600'
+                                    }`}
+                                    style={{ width: `${enrollment.progress || 0}%` }}
+                                  ></div>
+                                </div>
+                                <span className="text-sm text-gray-900 whitespace-nowrap">{enrollment.progress || 0}%</span>
                               </div>
-                              <span className="text-sm text-gray-900">{enrollment.progress || 0}%</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {enrollment.enrolledAt 
-                              ? new Date(enrollment.enrolledAt).toLocaleDateString() 
-                              : 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {enrollment.lastAccessedAt 
-                              ? new Date(enrollment.lastAccessedAt).toLocaleDateString() 
-                              : 'Never'}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
+                              {enrollment.enrolledAt 
+                                ? new Date(enrollment.enrolledAt).toLocaleDateString() 
+                                : 'N/A'}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
+                              {enrollment.completedAt || certificate?.completedAt
+                                ? new Date(enrollment.completedAt || certificate.completedAt).toLocaleDateString() 
+                                : enrollment.status === 'completed' 
+                                  ? 'Completed'
+                                  : '-'}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-500 whitespace-nowrap">
+                              {enrollment.lastAccessedAt 
+                                ? new Date(enrollment.lastAccessedAt).toLocaleDateString() 
+                                : 'Never'}
+                            </td>
+                            <td className="px-4 py-4">
+                              {certificate ? (
+                                <div className="flex items-center min-w-0">
+                                  <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                  </svg>
+                                  <span className="text-xs text-green-700 font-medium truncate">
+                                    {certificate.issuedDate 
+                                      ? new Date(certificate.issuedDate).toLocaleDateString() 
+                                      : 'Issued'}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400">No certificate</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-4">
+                              {certificate ? (
+                                <div className="text-xs text-gray-900 font-mono truncate max-w-32">
+                                  {certificate.certificateNumber || 'N/A'}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -445,154 +690,7 @@ const UserAnalytics = () => {
             <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <p className="text-sm">Select a course from the dropdown above to view enrolled users</p>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Course Certificates Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-        className="card p-6"
-      >
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Certificates</h3>
-        <div className="mb-4">
-          <label htmlFor="course-select-certificates" className="block text-sm font-medium text-gray-700 mb-2">
-            Select a course to view certificate holders
-          </label>
-          <select
-            id="course-select-certificates"
-            value={selectedCourseIdForCertificates || ''}
-            onChange={(e) => setSelectedCourseIdForCertificates(e.target.value ? parseInt(e.target.value) : null)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="">-- Select a course --</option>
-            {coursesData?.data?.courses?.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {selectedCourseIdForCertificates && (
-          <div className="mt-6">
-            {certificatesLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-                <p className="mt-2 text-sm text-gray-500">Loading certificate holders...</p>
-              </div>
-            ) : certificatesData?.data?.certificates && certificatesData.data.certificates.length > 0 ? (
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-semibold">{certificatesData.data.totalCertificates}</span> certificate{certificatesData.data.totalCertificates !== 1 ? 's' : ''} issued for{' '}
-                    <span className="font-semibold text-indigo-600">{certificatesData.data.course.title}</span>
-                  </p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Student
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Enrolled Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Completed Date
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Certificate Issued
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Certificate Number
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {certificatesData.data.certificates.map((certificate) => (
-                        <tr key={certificate.certificateId} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <img
-                                src={certificate.student?.avatar || `https://ui-avatars.com/api/?name=${certificate.student?.name}&background=6366f1&color=fff`}
-                                alt={certificate.student?.name}
-                                className="w-10 h-10 rounded-full mr-3"
-                              />
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {certificate.student?.name || 'Unknown'}
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  {certificate.student?.isActive ? (
-                                    <span className="text-green-600">Active</span>
-                                  ) : (
-                                    <span className="text-gray-400">Inactive</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{certificate.student?.email || 'N/A'}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {certificate.enrolledAt 
-                              ? new Date(certificate.enrolledAt).toLocaleDateString() 
-                              : 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {certificate.completedAt 
-                              ? new Date(certificate.completedAt).toLocaleDateString() 
-                              : 'N/A'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                              </svg>
-                              <span className="text-sm text-gray-900">
-                                {certificate.issuedDate 
-                                  ? new Date(certificate.issuedDate).toLocaleDateString() 
-                                  : 'N/A'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 font-mono">
-                              {certificate.certificateNumber || 'N/A'}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-                <p className="text-gray-500">No certificates issued for this course yet.</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {!selectedCourseIdForCertificates && (
-          <div className="text-center py-8 text-gray-500">
-            <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-            <p className="text-sm">Select a course from the dropdown above to view certificate holders</p>
+            <p className="text-sm">Select a course from the dropdown above to view enrollment and certificate details</p>
           </div>
         )}
       </motion.div>

@@ -1,4 +1,4 @@
-const { TestAttempt, TestAnswer, TestQuestion, TestQuestionOption, CourseTest, Course, Enrollment, ActivityLog } = require('../models');
+const { TestAttempt, TestAnswer, TestQuestion, TestQuestionOption, CourseTest, Course, Enrollment, ActivityLog, Achievement } = require('../models');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -391,6 +391,62 @@ const submitTest = async (req, res, next) => {
         });
 
         logger.info(`Certificate ${certificateNumber} successfully generated for student ${req.user.email}, course ${course.title} (ID: ${courseIdForCertificate}), test ${test.id}`);
+
+        // Create Achievement record so it shows up in achievements tab
+        try {
+          // Check if achievement already exists for this course
+          const existingAchievement = await Achievement.findOne({
+            where: {
+              student_id: req.user.id,
+              course_id: courseIdForCertificate,
+              achievement_type: 'course_completion'
+            }
+          });
+
+          if (!existingAchievement) {
+            // Generate certificate data for achievement
+            const certificateData = {
+              studentName: req.user.name,
+              courseTitle: course.title,
+              completionDate: new Date().toISOString(),
+              certificateId: certificateNumber,
+              issuedBy: 'GNANAM AI Learning Platform',
+              courseCategory: course.category || 'General',
+              courseDifficulty: course.difficulty || 'beginner',
+              score: Math.round(score),
+              passingScore: test.passing_score,
+              testTitle: test.title
+            };
+
+            // Create achievement
+            await Achievement.create({
+              student_id: req.user.id,
+              course_id: courseIdForCertificate,
+              achievement_type: 'course_completion',
+              title: `${course.title} Certificate`,
+              description: `Certificate of completion for ${course.title}`,
+              icon: '🎓',
+              certificate_data: certificateData,
+              points_earned: 100,
+              is_unlocked: true,
+              unlocked_at: new Date(),
+              metadata: {
+                courseTitle: course.title,
+                courseCategory: course.category,
+                courseDifficulty: course.difficulty,
+                completionDate: certificateData.completionDate,
+                certificateNumber: certificateNumber,
+                score: Math.round(score),
+                passingScore: test.passing_score
+              }
+            });
+
+            logger.info(`Achievement created for student ${req.user.email}, course ${course.title} (ID: ${courseIdForCertificate})`);
+          }
+        } catch (achievementError) {
+          // Log error but don't fail certificate creation if achievement creation fails
+          logger.error('Failed to create achievement for certificate:', achievementError);
+        }
       }
     }
 

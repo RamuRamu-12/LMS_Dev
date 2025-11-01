@@ -1,19 +1,28 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useQuery } from 'react-query'
+import { useQuery, useQueryClient } from 'react-query'
 import { enrollmentService } from '../services/enrollmentService'
 import { courseService } from '../services/courseService'
 import { achievementService } from '../services/achievementService'
+import { authService } from '../services/authService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import toast from 'react-hot-toast'
 
 const ProfilePage = () => {
-  const { user, updateProfile } = useAuth()
+  const { user, updateProfile, logout } = useAuth()
+  const queryClient = useQueryClient()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -29,13 +38,21 @@ const ProfilePage = () => {
     })
   }, [user])
 
+  // Refetch stats when switching to stats tab
+  useEffect(() => {
+    if (activeTab === 'stats') {
+      queryClient.invalidateQueries('student-stats')
+      queryClient.refetchQueries('student-stats')
+    }
+  }, [activeTab, queryClient])
+
   // Fetch user statistics - use stats API for accurate data
   const { data: statsData, isLoading: statsLoading } = useQuery(
     'student-stats',
     () => enrollmentService.getMyStats(),
     {
       refetchOnWindowFocus: true,
-      staleTime: 30 * 1000, // 30 seconds - shorter stale time for stats
+      staleTime: 0, // Always fetch fresh data to get updated progress and time
       cacheTime: 2 * 60 * 1000 // Keep in cache for 2 minutes
     }
   )
@@ -76,11 +93,16 @@ const ProfilePage = () => {
   const stats = {
     totalEnrolled: apiStats.totalCourses || enrollments.length,
     completedCourses: apiStats.completedCourses || enrollments.filter(e => e.status === 'completed').length,
-    inProgressCourses: apiStats.inProgressCourses || enrollments.filter(e => e.status === 'in-progress').length,
+    // In progress = enrolled with progress > 0 but not completed
+    inProgressCourses: apiStats.inProgressCourses !== undefined 
+      ? apiStats.inProgressCourses 
+      : enrollments.filter(e => e.status === 'enrolled' && e.progress > 0 && e.progress < 100).length,
     totalHours: Math.round((apiStats.totalTimeSpent || 0) / 60), // Convert minutes to hours
-    averageProgress: apiStats.averageProgress || (enrollments.length > 0 
-      ? Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)
-      : 0)
+    averageProgress: apiStats.averageProgress !== undefined
+      ? apiStats.averageProgress
+      : (enrollments.length > 0 
+          ? Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)
+          : 0)
   }
 
   const handleInputChange = (e) => {
@@ -313,6 +335,46 @@ const ProfilePage = () => {
       bio: user?.bio || '',
     })
     setIsEditing(false)
+  }
+
+  const handleChangePassword = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordData
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Please fill in all password fields')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New password and confirm password do not match')
+      return
+    }
+
+    if (currentPassword === newPassword) {
+      toast.error('New password must be different from current password')
+      return
+    }
+
+    setIsChangingPassword(true)
+    try {
+      await authService.changePassword(currentPassword, newPassword)
+      toast.success('Password changed successfully!')
+      setIsPasswordModalOpen(false)
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+    } catch (error) {
+      toast.error(error.message || 'Failed to change password')
+    } finally {
+      setIsChangingPassword(false)
+    }
   }
 
   if (!user) {
@@ -740,7 +802,7 @@ const ProfilePage = () => {
                           </div>
                         </div>
                         <button 
-                          onClick={() => alert('Password change functionality will be implemented soon!')}
+                          onClick={() => setIsPasswordModalOpen(true)}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                         >
                           Change
@@ -761,10 +823,7 @@ const ProfilePage = () => {
                           </div>
                         </div>
                         <button 
-                          onClick={() => {
-                            localStorage.removeItem('token');
-                            window.location.href = '/login';
-                          }}
+                          onClick={logout}
                           className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                         >
                           Sign Out
@@ -855,6 +914,108 @@ const ProfilePage = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* Change Password Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">Change Password</h3>
+              <button
+                onClick={() => {
+                  setIsPasswordModalOpen(false)
+                  setPasswordData({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                  })
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Enter current password"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Enter new password (min. 6 characters)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="Confirm new password"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setIsPasswordModalOpen(false)
+                  setPasswordData({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                  })
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isChangingPassword}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={isChangingPassword}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <LoadingSpinner size="sm" />
+                    <span className="ml-2">Changing...</span>
+                  </>
+                ) : (
+                  'Change Password'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

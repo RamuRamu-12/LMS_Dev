@@ -24,10 +24,24 @@ const ChapterNavigation = ({
   const completeChapterMutation = useMutation(
     () => enrollmentService.completeChapter(enrollmentId, currentChapter.id),
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         toast.success('Chapter completed!')
         queryClient.invalidateQueries(['course', currentChapter.course_id])
         queryClient.invalidateQueries(['enrollment', enrollmentId])
+        queryClient.invalidateQueries(['chapterProgression', enrollmentId])
+        queryClient.invalidateQueries(['chapterProgression'])
+        queryClient.invalidateQueries('student-enrollments') // Refetch enrollment to get updated progress
+        queryClient.invalidateQueries('student-stats') // Refetch stats to update progress and hours
+        queryClient.invalidateQueries(['course-tests']) // Refetch tests to update unlock status
+        // Force refetch of progression data, enrollment, and stats to get updated completion status
+        // IMPORTANT: Wait for chapterProgression to refetch so tests unlock immediately
+        await Promise.all([
+          queryClient.refetchQueries(['course', currentChapter.course_id]),
+          queryClient.refetchQueries(['chapterProgression', enrollmentId]),
+          queryClient.refetchQueries('student-enrollments'),
+          queryClient.refetchQueries('student-stats'), // Refetch stats immediately
+          queryClient.refetchQueries(['course-tests', currentChapter.course_id]) // Explicitly refetch tests
+        ])
         
         // If there's a next chapter, navigate to it
         if (data.data.nextChapter) {

@@ -92,17 +92,26 @@ const StudentDashboard = () => {
 
   // Enrollment mutation
   const enrollMutation = useMutation(
-    (courseId) => courseService.enrollInCourse(courseId),
+    (courseId) => enrollmentService.enrollInCourse(courseId),
     {
-      onSuccess: (response) => {
+      onSuccess: (response, courseId) => {
         toast.success('Successfully enrolled in course!')
-        // Refresh enrollments and courses data
-        queryClient.invalidateQueries('student-enrollments')
-        queryClient.invalidateQueries('student-courses')
-        queryClient.invalidateQueries('admin-users') // Also refresh admin data
+        // Invalidate and refetch ALL related queries to ensure consistency
+        Promise.all([
+          queryClient.invalidateQueries('student-enrollments'),
+          queryClient.invalidateQueries('student-courses'),
+          queryClient.invalidateQueries(['course', courseId]), // Invalidate specific course
+          queryClient.invalidateQueries(['courseContent', courseId]), // Invalidate course content
+          queryClient.invalidateQueries('admin-users') // Also refresh admin data
+        ]).then(() => {
+          // Refetch enrollments immediately to update UI
+          queryClient.refetchQueries('student-enrollments')
+        })
       },
       onError: (error) => {
-        toast.error(error.message || 'Failed to enroll in course')
+        const errorMessage = error.message || 'Failed to enroll in course'
+        toast.error(errorMessage)
+        console.error('Enrollment error:', error)
       }
     }
   )

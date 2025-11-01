@@ -243,19 +243,52 @@ const getMyStats = async (req, res, next) => {
         {
           model: Course,
           as: 'course',
-          attributes: ['id', 'title', 'category', 'difficulty']
+          attributes: ['id', 'title', 'category', 'difficulty'],
+          include: [
+            {
+              model: CourseChapter,
+              as: 'chapters',
+              attributes: ['id']
+            }
+          ]
         }
       ]
     });
 
+    // Calculate total time spent, estimating for completed courses with 0 time
+    let totalTimeSpent = 0;
+    for (const enrollment of enrollments) {
+      let enrollmentTime = enrollment.time_spent || 0;
+      
+      // If completed course has no time_spent, estimate based on progress and chapters
+      if (enrollment.status === 'completed' && enrollmentTime === 0) {
+        const totalChapters = enrollment.course?.chapters?.length || 0;
+        if (totalChapters > 0) {
+          // Estimate 12 minutes per chapter for completed courses
+          enrollmentTime = totalChapters * 12;
+        } else if (enrollment.progress > 0) {
+          // Fallback: estimate based on progress (assuming average 10 chapters = 120 minutes)
+          enrollmentTime = Math.round((enrollment.progress / 100) * 120);
+        }
+      } else if (enrollment.status === 'enrolled' && enrollment.progress > 0 && enrollmentTime === 0) {
+        // Estimate time for in-progress courses based on progress
+        const totalChapters = enrollment.course?.chapters?.length || 10; // Default to 10 if unknown
+        const estimatedTotalTime = totalChapters * 12; // 12 minutes per chapter
+        enrollmentTime = Math.round((enrollment.progress / 100) * estimatedTotalTime);
+      }
+      
+      totalTimeSpent += enrollmentTime;
+    }
+
     const stats = {
       totalCourses: enrollments.length,
       completedCourses: enrollments.filter(e => e.status === 'completed').length,
-      inProgressCourses: enrollments.filter(e => e.status === 'in-progress').length,
-      enrolledCourses: enrollments.filter(e => e.status === 'enrolled').length,
-      totalTimeSpent: enrollments.reduce((sum, e) => sum + (e.time_spent || 0), 0),
+      // In progress = enrolled courses with progress > 0 but not completed
+      inProgressCourses: enrollments.filter(e => e.status === 'enrolled' && e.progress > 0 && e.progress < 100).length,
+      enrolledCourses: enrollments.filter(e => e.status === 'enrolled' && e.progress === 0).length,
+      totalTimeSpent: totalTimeSpent,
       averageProgress: enrollments.length > 0 
-        ? Math.round(enrollments.reduce((sum, e) => sum + e.progress, 0) / enrollments.length)
+        ? Math.round(enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / enrollments.length)
         : 0,
       completionRate: enrollments.length > 0 
         ? Math.round((enrollments.filter(e => e.status === 'completed').length / enrollments.length) * 100)
@@ -277,7 +310,7 @@ const getMyStats = async (req, res, next) => {
       categoryBreakdown[category].total++;
       if (enrollment.status === 'completed') {
         categoryBreakdown[category].completed++;
-      } else if (enrollment.status === 'in-progress') {
+      } else if (enrollment.status === 'enrolled' && enrollment.progress > 0 && enrollment.progress < 100) {
         categoryBreakdown[category].inProgress++;
       }
     });
@@ -420,17 +453,8 @@ const completeCourse = async (req, res, next) => {
         }
       );
 
-      // Create course completion achievement
-      await Achievement.createCourseCompletionAchievement(
-        req.user.id,
-        course.id,
-        {
-          studentName: req.user.name,
-          courseTitle: course.title,
-          courseCategory: course.category,
-          courseDuration: course.duration || 'Self-paced'
-        }
-      );
+      // Note: Certificates are ONLY created when tests are passed (handled in testTakingController.js)
+      // Do NOT create certificates here for course completion alone
     }
 
     logger.info(`User ${req.user.email} completed course`);
@@ -558,6 +582,11 @@ const completeChapter = async (req, res, next) => {
 
     // Update enrollment progress
     await enrollment.updateProgress(newProgress);
+    
+    // Add time spent for this chapter (estimate 10-15 minutes per chapter completion)
+    // You can adjust this estimate or track actual time if needed
+    const estimatedTimeSpent = 12; // minutes per chapter
+    await enrollment.addTimeSpent(estimatedTimeSpent);
 
     // Log chapter completion activity
     try {
@@ -694,8 +723,11 @@ const getChapterProgression = async (req, res, next) => {
       chapter.title.toLowerCase().includes('final')
     );
 
-    // Check if all regular chapters are completed
-    const allRegularChaptersCompleted = regularChapters.every(chapter => {
+    // Check if all regular chapters are completed OR if course itself is completed
+    // If course is completed, all chapters/tests should be accessible regardless of individual chapter progress
+    const isCourseCompleted = enrollment.status === 'completed';
+    
+    const allRegularChaptersCompleted = isCourseCompleted || regularChapters.every(chapter => {
       const progress = progressMap[chapter.id];
       return progress ? progress.is_completed : false;
     });
@@ -704,16 +736,17 @@ const getChapterProgression = async (req, res, next) => {
     const regularChaptersWithProgress = regularChapters.map((chapter, index) => {
       const progress = progressMap[chapter.id];
       const isCompleted = progress ? progress.is_completed : false;
-      const isAccessible = index === 0 || (progressMap[regularChapters[index - 1].id]?.is_completed || false);
+      // If course is completed, all chapters are accessible; otherwise check sequential completion
+      const isAccessible = isCourseCompleted || (index === 0 || (progressMap[regularChapters[index - 1].id]?.is_completed || false));
 
       return {
         id: chapter.id,
         title: chapter.title,
         description: chapter.description,
         chapter_order: chapter.chapter_order,
-        is_completed: isCompleted,
+        is_completed: isCompleted || isCourseCompleted, // Mark as completed if course is completed
         is_accessible: isAccessible,
-        completed_at: progress?.completed_at || null,
+        completed_at: progress?.completed_at || (isCourseCompleted ? enrollment.completed_at : null),
         time_spent: progress?.time_spent || 0,
         is_assignment: false
       };
@@ -723,26 +756,26 @@ const getChapterProgression = async (req, res, next) => {
     const assignmentChaptersWithProgress = assignmentChapters.map((chapter) => {
       const progress = progressMap[chapter.id];
       const isCompleted = progress ? progress.is_completed : false;
-      // Assignment chapters are only accessible if all regular chapters are completed
-      const isAccessible = allRegularChaptersCompleted;
+      // Assignment chapters (tests) are accessible if all regular chapters are completed OR course is completed
+      const isAccessible = allRegularChaptersCompleted || isCourseCompleted;
 
       return {
         id: chapter.id,
         title: chapter.title,
         description: chapter.description,
         chapter_order: chapter.chapter_order,
-        is_completed: isCompleted,
+        is_completed: isCompleted || isCourseCompleted, // Mark as completed if course is completed
         is_accessible: isAccessible,
-        completed_at: progress?.completed_at || null,
+        completed_at: progress?.completed_at || (isCourseCompleted ? enrollment.completed_at : null),
         time_spent: progress?.time_spent || 0,
         is_assignment: true
       };
     });
 
-    // Only show assignment chapters if all regular chapters are completed
+    // Show assignment chapters if all regular chapters are completed OR course is completed
     const visibleChapters = [...regularChaptersWithProgress];
     
-    if (allRegularChaptersCompleted) {
+    if (allRegularChaptersCompleted || isCourseCompleted) {
       visibleChapters.push(...assignmentChaptersWithProgress);
     }
     
@@ -751,7 +784,11 @@ const getChapterProgression = async (req, res, next) => {
 
     const completedChapters = chaptersWithProgress.filter(ch => ch.is_completed).length;
     const totalChapters = chaptersWithProgress.length;
-    const isCourseCompleted = completedChapters === totalChapters;
+    // Use the existing isCourseCompleted variable (already declared above based on enrollment.status)
+    // Also check if all chapters are completed as an additional verification
+    const allChaptersCompleted = completedChapters === totalChapters && totalChapters > 0;
+    // Course is considered completed if enrollment status is 'completed' OR all chapters are completed
+    const courseIsCompleted = isCourseCompleted || allChaptersCompleted;
 
     res.json({
       success: true,
@@ -766,7 +803,7 @@ const getChapterProgression = async (req, res, next) => {
         stats: {
           completedChapters,
           totalChapters,
-          isCourseCompleted,
+          isCourseCompleted: courseIsCompleted,
           progressPercentage: Math.round((completedChapters / totalChapters) * 100)
         }
       }

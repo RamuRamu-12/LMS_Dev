@@ -119,5 +119,15 @@ export const enrollmentService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to get admin statistics')
     }
+  },
+
+  // Enroll in a course
+  enrollInCourse: async (courseId) => {
+    try {
+      const response = await api.post(`/courses/${courseId}/enroll`)
+      return response.data
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to enroll in course')
+    }
   }
 }

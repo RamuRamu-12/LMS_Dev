@@ -102,7 +102,7 @@ const StudentChapterView = ({
       return enrollmentService.completeChapter(enrollmentId, chapter.id)
     },
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         toast.success('Chapter completed!')
         // Invalidate all relevant queries to ensure UI updates
         queryClient.invalidateQueries(['course', chapter.course_id])
@@ -111,8 +111,18 @@ const StudentChapterView = ({
         queryClient.invalidateQueries(['enrollment'])
         queryClient.invalidateQueries(['chapterProgression', enrollmentId])
         queryClient.invalidateQueries(['chapterProgression'])
-        // Force refetch of course data to get updated progress
-        queryClient.refetchQueries(['course', chapter.course_id])
+        queryClient.invalidateQueries('student-enrollments') // Refetch enrollment to get updated progress
+        queryClient.invalidateQueries('student-stats') // Refetch stats to update progress and hours
+        queryClient.invalidateQueries(['course-tests']) // Refetch tests to update unlock status
+        // Force refetch of course data, progression, enrollment, and stats to get updated progress
+        // IMPORTANT: Wait for chapterProgression to refetch so tests unlock immediately
+        await Promise.all([
+          queryClient.refetchQueries(['course', chapter.course_id]),
+          queryClient.refetchQueries(['chapterProgression', enrollmentId]),
+          queryClient.refetchQueries('student-enrollments'),
+          queryClient.refetchQueries('student-stats'), // Refetch stats immediately
+          queryClient.refetchQueries(['course-tests', chapter.course_id]) // Explicitly refetch tests
+        ])
       },
       onError: (error) => {
         console.error('Complete chapter error:', error)
@@ -169,9 +179,17 @@ const StudentChapterView = ({
 
   const handleCloseTestModal = () => {
     setIsTestModalOpen(false)
-    // Refresh the chapter data after test completion
+    // Refresh the chapter data and enrollment after test completion
     queryClient.invalidateQueries(['course', chapter.course_id])
     queryClient.invalidateQueries(['chapterProgression', enrollmentId])
+    queryClient.invalidateQueries('student-enrollments')
+    queryClient.invalidateQueries(['course-tests'])
+    // Force refetch to update test progress immediately
+    Promise.all([
+      queryClient.refetchQueries(['course', chapter.course_id]),
+      queryClient.refetchQueries(['chapterProgression', enrollmentId]),
+      queryClient.refetchQueries('student-enrollments')
+    ])
   }
 
   return (

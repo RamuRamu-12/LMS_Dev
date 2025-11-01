@@ -1,4 +1,4 @@
-const { Achievement, User, Course } = require('../models');
+const { Achievement, User, Course, Certificate } = require('../models');
 const logger = require('../utils/logger');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -9,6 +9,23 @@ const getMyAchievements = async (req, res, next) => {
   try {
     const studentId = req.user.id;
 
+    // Get all certificates for this student
+    const certificates = await Certificate.findAll({
+      where: { 
+        student_id: studentId,
+        is_valid: true
+      },
+      include: [
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'title', 'category', 'difficulty', 'logo']
+        }
+      ],
+      order: [['issued_date', 'DESC']]
+    });
+
+    // Get all existing achievements
     const achievements = await Achievement.findAll({
       where: { student_id: studentId },
       include: [
@@ -21,8 +38,77 @@ const getMyAchievements = async (req, res, next) => {
       order: [['unlocked_at', 'DESC']]
     });
 
+    // Create achievements for certificates that don't have achievements yet
+    const achievementCourseIds = new Set(achievements.map(a => a.course_id).filter(Boolean));
+    
+    for (const certificate of certificates) {
+      if (certificate.course_id && !achievementCourseIds.has(certificate.course_id)) {
+        try {
+          const course = certificate.course || await Course.findByPk(certificate.course_id);
+          if (course) {
+            const certificateData = {
+              studentName: req.user.name,
+              courseTitle: course.title,
+              completionDate: certificate.issued_date ? certificate.issued_date.toISOString() : new Date().toISOString(),
+              certificateId: certificate.certificate_number || `CERT-${studentId}-${certificate.course_id}`,
+              issuedBy: 'GNANAM AI Learning Platform',
+              courseCategory: course.category || 'General',
+              courseDifficulty: course.difficulty || 'beginner',
+              score: certificate.metadata?.score || null,
+              passingScore: certificate.metadata?.passingScore || null,
+              testTitle: certificate.metadata?.testTitle || null
+            };
+
+            const newAchievement = await Achievement.create({
+              student_id: studentId,
+              course_id: certificate.course_id,
+              achievement_type: 'course_completion',
+              title: `${course.title} Certificate`,
+              description: `Certificate of completion for ${course.title}`,
+              icon: '🎓',
+              certificate_data: certificateData,
+              points_earned: 100,
+              is_unlocked: true,
+              unlocked_at: certificate.issued_date || new Date(),
+              metadata: {
+                courseTitle: course.title,
+                courseCategory: course.category,
+                courseDifficulty: course.difficulty,
+                completionDate: certificateData.completionDate,
+                certificateNumber: certificate.certificate_number,
+                score: certificateData.score,
+                passingScore: certificateData.passingScore
+              }
+            });
+
+            // Add to achievements array
+            achievements.push(newAchievement);
+            achievementCourseIds.add(certificate.course_id);
+            
+            logger.info(`Created achievement for existing certificate: student ${req.user.email}, course ${course.title}`);
+          }
+        } catch (createError) {
+          logger.error(`Failed to create achievement for certificate ${certificate.id}:`, createError);
+          // Continue with other certificates
+        }
+      }
+    }
+
+    // Reload achievements with course data to ensure all have proper course relations
+    const allAchievements = await Achievement.findAll({
+      where: { student_id: studentId },
+      include: [
+        {
+          model: Course,
+          as: 'course',
+          attributes: ['id', 'title', 'category', 'difficulty', 'logo']
+        }
+      ],
+      order: [['unlocked_at', 'DESC']]
+    });
+
     // Format achievements for frontend
-    const formattedAchievements = achievements.map(achievement => {
+    const formattedAchievements = allAchievements.map(achievement => {
       return {
         id: achievement.id,
         type: achievement.achievement_type,
