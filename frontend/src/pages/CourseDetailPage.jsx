@@ -464,7 +464,7 @@ const CourseDetailPage = () => {
                               <button
                                 onClick={async () => {
                                   try {
-                                    console.log('enrollmentService file:', require.resolve('../services/enrollmentService'));
+    
                                     console.log('enrollmentService:', enrollmentService);
                                     await enrollmentService.enrollInCourse(id)
                                     // Invalidate and refetch ALL related queries
