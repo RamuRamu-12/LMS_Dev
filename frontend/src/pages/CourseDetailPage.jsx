@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
+// import enrollmentService from '../services/enrollmentService';
 import { useAuth } from '../context/AuthContext'
 import useCourseLogo from '../hooks/useCourseLogo'
 import Header from '../components/common/Header'
@@ -463,6 +464,8 @@ const CourseDetailPage = () => {
                               <button
                                 onClick={async () => {
                                   try {
+                                    console.log('enrollmentService file:', require.resolve('../services/enrollmentService'));
+                                    console.log('enrollmentService:', enrollmentService);
                                     await enrollmentService.enrollInCourse(id)
                                     // Invalidate and refetch ALL related queries
                                     await Promise.all([
