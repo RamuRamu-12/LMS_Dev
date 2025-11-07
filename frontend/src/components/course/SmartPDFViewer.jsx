@@ -1,195 +1,261 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { FiDownload, FiExternalLink, FiFile, FiAlertCircle, FiLoader, FiRefreshCw, FiCheckCircle } from 'react-icons/fi'
+import {
+  normalizePdfSource,
+  getDownloadUrl,
+  getOpenInNewTabUrl,
+  getProxyUrl
+} from '../../utils/pdfUrlUtils'
 
-const SmartPDFViewer = ({ 
-  pdfUrl, 
-  title = 'PDF Document', 
+const METHOD_METADATA = {
+  iframe: { id: 'iframe', name: 'Direct Embed', description: 'Try to embed the PDF directly in the browser' },
+  googledrive: { id: 'googledrive', name: 'Google Viewer', description: 'Use Google Drive / Docs viewer for better compatibility' },
+  proxy: { id: 'proxy', name: 'Secure Proxy', description: 'Stream through LMS proxy to bypass CORS & Drive quirks' },
+  external: { id: 'external', name: 'Open Externally', description: 'Let the user open or download using their browser' }
+}
+
+const DRIVE_METHOD_SEQUENCE = ['googledrive', 'proxy', 'external']
+const DEFAULT_METHOD_SEQUENCE = ['iframe', 'googledrive', 'proxy', 'external']
+
+const SmartPDFViewer = ({
+  pdfUrl,
+  title = 'PDF Document',
   className = '',
-  showControls = true 
+  showControls = true
 }) => {
-  const [currentMethod, setCurrentMethod] = useState('iframe')
+  const [normalizedSource, setNormalizedSource] = useState(null)
+  const [methodSequence, setMethodSequence] = useState([])
+  const [currentMethod, setCurrentMethod] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [attemptCount, setAttemptCount] = useState(0)
+  const retryTimerRef = useRef(null)
 
-  const methods = [
-    { id: 'iframe', name: 'Direct Embed', description: 'Try to embed PDF directly' },
-    { id: 'googledrive', name: 'Google Drive', description: 'Use Google Drive viewer' },
-    { id: 'proxy', name: 'Proxy Server', description: 'Use backend proxy to avoid CORS' },
-    { id: 'external', name: 'External View', description: 'Open in new tab with options' }
-  ]
+  const clearScheduledTimeout = () => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = null
+    }
+  }
+
+  const scheduleTimeout = (callback, delay) => {
+    clearScheduledTimeout()
+    const id = setTimeout(() => {
+      retryTimerRef.current = null
+      callback()
+    }, delay)
+    retryTimerRef.current = id
+    return id
+  }
 
   useEffect(() => {
+    return () => {
+      clearScheduledTimeout()
+    }
+  }, [])
+
+  useEffect(() => {
+    clearScheduledTimeout()
+
     if (!pdfUrl) {
+      setNormalizedSource(null)
       setError('No PDF URL provided')
       setIsLoading(false)
+      setSuccess(false)
+      setMethodSequence([])
+      setCurrentMethod(null)
       return
     }
 
-    tryNextMethod()
-  }, [pdfUrl])
+    const normalized = normalizePdfSource(pdfUrl)
+    const sequence = normalized.isGoogleDrive ? DRIVE_METHOD_SEQUENCE : DEFAULT_METHOD_SEQUENCE
 
-  const tryNextMethod = () => {
-    if (attemptCount >= methods.length) {
-      setError('All viewing methods failed. Please try downloading the PDF.')
-      setIsLoading(false)
-      return
-    }
-
-    const method = methods[attemptCount]
-    setCurrentMethod(method.id)
+    setNormalizedSource(normalized)
+    setMethodSequence(sequence)
+    setCurrentMethod(sequence[0] || null)
     setIsLoading(true)
     setError(null)
     setSuccess(false)
 
-    // Simulate trying the method
-    setTimeout(() => {
-      if (method.id === 'iframe') {
-        tryIframeMethod()
-      } else if (method.id === 'googledrive') {
-        tryGoogleDriveMethod()
-      } else if (method.id === 'proxy') {
-        tryProxyMethod()
-      } else {
-        tryExternalMethod()
-      }
-    }, 1000)
-  }
+    if (sequence.length > 0) {
+      scheduleTimeout(() => {
+        attemptMethod(0, normalized, sequence)
+      }, 200)
+    }
+  }, [pdfUrl])
 
-  const tryIframeMethod = () => {
-    // Check if iframe can load the PDF
-    const iframe = document.createElement('iframe')
-    iframe.style.display = 'none'
-    iframe.src = `${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`
-    
-    iframe.onload = () => {
+  const attemptMethod = (index, normalized, sequence) => {
+    const info = normalized || normalizedSource
+    const methods = sequence || methodSequence
+
+    if (!info || !methods.length || index >= methods.length) {
+      setError('All viewing strategies were blocked. Try downloading the PDF or adjust sharing permissions.')
+      setIsLoading(false)
+      setSuccess(false)
+      return
+    }
+
+    const method = methods[index]
+    setCurrentMethod(method)
+    setIsLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    const onSuccess = () => {
+      clearScheduledTimeout()
       setSuccess(true)
       setIsLoading(false)
-      document.body.removeChild(iframe)
     }
-    
-    iframe.onerror = () => {
-      document.body.removeChild(iframe)
-      setAttemptCount(prev => prev + 1)
-      setTimeout(tryNextMethod, 500)
+
+    const onFailure = () => {
+      scheduleTimeout(() => {
+        attemptMethod(index + 1, info, methods)
+      }, 400)
     }
-    
-    document.body.appendChild(iframe)
-    
-    // Timeout after 5 seconds
-    setTimeout(() => {
-      if (document.body.contains(iframe)) {
+
+    if (method === 'iframe') {
+      tryIframeMethod(info, onSuccess, onFailure)
+    } else if (method === 'googledrive') {
+      tryGoogleViewer(info, onSuccess, onFailure)
+    } else if (method === 'proxy') {
+      tryProxyMethod(info, onSuccess, onFailure)
+    } else {
+      tryExternalMethod(onSuccess)
+    }
+  }
+
+  const tryIframeMethod = (info, onSuccess, onFailure) => {
+    if (!info || !info.previewUrl || info.isGoogleDrive) {
+      onFailure()
+      return
+    }
+
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    iframe.src = `${info.previewUrl}#toolbar=1&navpanes=1&scrollbar=1`
+
+    const cleanup = () => {
+      if (iframe && document.body.contains(iframe)) {
         document.body.removeChild(iframe)
-        setAttemptCount(prev => prev + 1)
-        setTimeout(tryNextMethod, 500)
       }
+    }
+
+    iframe.onload = () => {
+      clearScheduledTimeout()
+      cleanup()
+      onSuccess()
+    }
+
+    iframe.onerror = () => {
+      clearScheduledTimeout()
+      cleanup()
+      onFailure()
+    }
+
+    document.body.appendChild(iframe)
+
+    scheduleTimeout(() => {
+      cleanup()
+      onFailure()
     }, 5000)
   }
 
-  const tryGoogleDriveMethod = () => {
-    // Convert URL to Google Drive format
-    const googleDriveUrl = convertToGoogleDriveUrl(pdfUrl)
-    if (googleDriveUrl && googleDriveUrl.includes('drive.google.com')) {
-      // Test if Google Drive URL is accessible
-      const testIframe = document.createElement('iframe')
-      testIframe.style.display = 'none'
-      testIframe.src = googleDriveUrl
-      
-      testIframe.onload = () => {
-        setSuccess(true)
-        setIsLoading(false)
-        document.body.removeChild(testIframe)
-      }
-      
-      testIframe.onerror = () => {
-        document.body.removeChild(testIframe)
-        setAttemptCount(prev => prev + 1)
-        setTimeout(tryNextMethod, 500)
-      }
-      
-      document.body.appendChild(testIframe)
-      
-      // Timeout after 3 seconds
-      setTimeout(() => {
-        if (document.body.contains(testIframe)) {
-          document.body.removeChild(testIframe)
-          setAttemptCount(prev => prev + 1)
-          setTimeout(tryNextMethod, 500)
-        }
-      }, 3000)
-    } else {
-      setAttemptCount(prev => prev + 1)
-      setTimeout(tryNextMethod, 500)
+  const tryGoogleViewer = (info, onSuccess, onFailure) => {
+    const viewerUrl = info?.isGoogleDrive ? info.previewUrl : info?.docsViewerUrl
+
+    if (!viewerUrl) {
+      onFailure()
+      return
     }
+
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    iframe.src = viewerUrl
+
+    const cleanup = () => {
+      if (iframe && document.body.contains(iframe)) {
+        document.body.removeChild(iframe)
+      }
+    }
+
+    iframe.onload = () => {
+      clearScheduledTimeout()
+      cleanup()
+      onSuccess()
+    }
+
+    iframe.onerror = () => {
+      clearScheduledTimeout()
+      cleanup()
+      onFailure()
+    }
+
+    document.body.appendChild(iframe)
+
+    scheduleTimeout(() => {
+      cleanup()
+      onFailure()
+    }, 4000)
   }
 
-  const tryProxyMethod = () => {
-    // Try using backend proxy
-    const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`
-    fetch(proxyUrl, { method: 'HEAD' })
-      .then(response => {
-        if (response.ok) {
-          setSuccess(true)
-          setIsLoading(false)
-        } else {
-          throw new Error('Proxy failed')
-        }
-      })
-      .catch(() => {
-        setAttemptCount(prev => prev + 1)
-        setTimeout(tryNextMethod, 500)
-      })
-  }
+  const tryProxyMethod = async (info, onSuccess, onFailure) => {
+    if (!info) {
+      onFailure()
+      return
+    }
 
-  const tryExternalMethod = () => {
-    // External method always works (just shows options)
-    setSuccess(true)
-    setIsLoading(false)
-  }
-
-  const convertToGoogleDriveUrl = (url) => {
     try {
-      // Try to convert various URLs to Google Drive embeddable format
-      let fileId = null
-      
-      // Handle different Google Drive URL formats
-      const match1 = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-      const match2 = url.match(/[?&]id=([a-zA-Z0-9-_]+)/)
-      const match3 = url.match(/\/document\/d\/([a-zA-Z0-9-_]+)/)
-      
-      if (match1) fileId = match1[1]
-      else if (match2) fileId = match2[1]
-      else if (match3) fileId = match3[1]
-      
-      if (fileId) {
-        return `https://drive.google.com/file/d/${fileId}/preview`
+      const sourceUrl = info.proxySourceUrl || info.downloadUrl || info.originalUrl
+      if (!sourceUrl) {
+        throw new Error('Missing proxy source URL')
       }
-      
-      // For other URLs, try Google Docs viewer
-      return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`
-    } catch (error) {
-      return null
+
+      const response = await fetch(`/api/pdf/info?url=${encodeURIComponent(sourceUrl)}`)
+      if (!response.ok) {
+        throw new Error('Proxy info failed')
+      }
+
+      const payload = await response.json()
+      if (payload?.success) {
+        clearScheduledTimeout()
+        onSuccess()
+      } else {
+        throw new Error('Proxy info rejected')
+      }
+    } catch (err) {
+      onFailure()
     }
+  }
+
+  const tryExternalMethod = (onSuccess) => {
+    onSuccess()
   }
 
   const handleRetry = () => {
-    setAttemptCount(0)
+    const refreshed = normalizedSource || normalizePdfSource(pdfUrl)
+    const sequence = (normalizedSource && methodSequence.length)
+      ? methodSequence
+      : (refreshed.isGoogleDrive ? DRIVE_METHOD_SEQUENCE : DEFAULT_METHOD_SEQUENCE)
+
+    setNormalizedSource(refreshed)
+    setMethodSequence(sequence)
+    setCurrentMethod(sequence[0] || null)
     setError(null)
     setSuccess(false)
-    tryNextMethod()
-  }
+    setIsLoading(true)
 
-  const handleMethodChange = (methodId) => {
-    const methodIndex = methods.findIndex(m => m.id === methodId)
-    setAttemptCount(methodIndex)
-    tryNextMethod()
+    scheduleTimeout(() => {
+      attemptMethod(0, refreshed, sequence)
+    }, 150)
   }
 
   const handleDownload = () => {
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const downloadUrl = getDownloadUrl(normalized)
+
     const link = document.createElement('a')
-    link.href = pdfUrl
+    link.href = downloadUrl || pdfUrl
     link.download = title || 'document.pdf'
     link.target = '_blank'
     document.body.appendChild(link)
@@ -198,19 +264,20 @@ const SmartPDFViewer = ({
   }
 
   const handleOpenInNewTab = () => {
-    window.open(pdfUrl, '_blank', 'noopener,noreferrer')
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const targetUrl = getOpenInNewTabUrl(normalized) || pdfUrl
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
   }
 
   const renderContent = () => {
     if (isLoading) {
+      const meta = METHOD_METADATA[currentMethod]
       return (
         <div className="flex items-center justify-center h-full bg-gray-50">
           <div className="text-center">
             <FiLoader className="w-8 h-8 text-indigo-600 animate-spin mx-auto mb-2" />
-            <p className="text-sm text-gray-600">Trying {methods[attemptCount]?.name}...</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {methods[attemptCount]?.description}
-            </p>
+            <p className="text-sm text-gray-600">Trying {meta?.name || 'next best method'}...</p>
+            <p className="text-xs text-gray-500 mt-1">{meta?.description}</p>
           </div>
         </div>
       )
@@ -244,10 +311,12 @@ const SmartPDFViewer = ({
       )
     }
 
+    const info = normalizedSource || normalizePdfSource(pdfUrl)
+
     if (currentMethod === 'iframe' && success) {
       return (
         <iframe
-          src={`${pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+          src={`${info?.previewUrl || pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
           title={title}
           className="w-full h-full border-0"
           frameBorder="0"
@@ -256,46 +325,23 @@ const SmartPDFViewer = ({
     }
 
     if (currentMethod === 'googledrive' && success) {
-      const googleDriveUrl = convertToGoogleDriveUrl(pdfUrl)
+      const viewerUrl = info?.isGoogleDrive ? info.previewUrl : info?.docsViewerUrl
       return (
         <div className="w-full h-full">
           <iframe
-            src={googleDriveUrl}
+            src={viewerUrl || info?.previewUrl || pdfUrl}
             title={title}
             className="w-full h-full border-0"
             frameBorder="0"
             allow="fullscreen"
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            onLoad={(e) => {
-              // Check if loaded content shows permission error
-              const iframe = e.target
-              try {
-                // If we can access the iframe content, check for permission errors
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document
-                if (iframeDoc) {
-                  const bodyText = iframeDoc.body?.innerText || ''
-                  if (bodyText.includes('You need access') || bodyText.includes('permission')) {
-                    setError('This file requires permission to view. Please download or open in new tab.')
-                    setSuccess(false)
-                    setCurrentMethod('external')
-                  }
-                }
-              } catch (err) {
-                // Cross-origin error is expected for Google Drive
-              }
-            }}
           />
-          <div className="absolute top-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-b border-l border-gray-200 rounded-bl-lg">
-            <p className="text-xs text-gray-600 max-w-xs">
-              If you see "You need access", click "Open" or "Download" to view the PDF
-            </p>
-          </div>
         </div>
       )
     }
 
     if (currentMethod === 'proxy' && success) {
-      const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`
+      const proxyUrl = getProxyUrl(info)
       return (
         <iframe
           src={proxyUrl}
@@ -315,7 +361,7 @@ const SmartPDFViewer = ({
             </div>
             <h4 className="text-lg font-medium text-gray-900 mb-2">PDF Ready to View</h4>
             <p className="text-sm text-gray-600 mb-6 max-w-md">
-              This PDF is hosted externally. Choose how you'd like to view it:
+              Choose how you would like to open this document.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
@@ -341,13 +387,14 @@ const SmartPDFViewer = ({
     return null
   }
 
+  const activeMeta = METHOD_METADATA[currentMethod]
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`bg-white rounded-lg shadow-sm overflow-hidden ${className}`}
     >
-      {/* Header */}
       <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-4 py-3 border-b border-indigo-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
@@ -360,7 +407,7 @@ const SmartPDFViewer = ({
               </div>
             )}
           </div>
-          
+
           {showControls && (
             <div className="flex items-center space-x-2">
               <button
@@ -382,15 +429,13 @@ const SmartPDFViewer = ({
         </div>
       </div>
 
-      {/* Content */}
       <div className="relative w-full" style={{ height: 'calc(100vh - 200px)' }}>
         {renderContent()}
       </div>
 
-      {/* Footer */}
       <div className="bg-gray-50 px-4 py-2 border-t border-gray-200">
         <p className="text-xs text-gray-500">
-          Smart PDF Viewer • Method: {methods.find(m => m.id === currentMethod)?.name}
+          Smart PDF Viewer • Method: {activeMeta?.name || '—'}
         </p>
       </div>
     </motion.div>

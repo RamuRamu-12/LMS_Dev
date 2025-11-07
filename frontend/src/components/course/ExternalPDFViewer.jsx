@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiDownload, FiExternalLink, FiFile, FiAlertCircle, FiLoader, FiEye } from 'react-icons/fi'
+import {
+  normalizePdfSource,
+  getDownloadUrl,
+  getOpenInNewTabUrl,
+  getProxyUrl
+} from '../../utils/pdfUrlUtils'
 
 const ExternalPDFViewer = ({ 
   pdfUrl, 
@@ -11,6 +17,7 @@ const ExternalPDFViewer = ({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
   const [pdfInfo, setPdfInfo] = useState(null)
+  const [normalizedSource, setNormalizedSource] = useState(null)
 
   useEffect(() => {
     if (!pdfUrl) {
@@ -26,14 +33,17 @@ const ExternalPDFViewer = ({
   const checkPDFAccessibility = async () => {
     try {
       setIsLoading(true)
+      const normalized = normalizePdfSource(pdfUrl)
+      setNormalizedSource(normalized)
       
       // Try to get PDF info from our backend
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/pdf/info?url=${encodeURIComponent(pdfUrl)}`)
+      const sourceUrl = normalized.proxySourceUrl || normalized.downloadUrl || pdfUrl
+      const response = await fetch(`${apiUrl}/api/pdf/info?url=${encodeURIComponent(sourceUrl)}`)
       
       if (response.ok) {
         const data = await response.json()
-        setPdfInfo(data.data)
+        setPdfInfo({ ...(data.data || {}), url: sourceUrl, accessible: true })
         setIsLoading(false)
       } else {
         throw new Error('PDF not accessible')
@@ -47,12 +57,16 @@ const ExternalPDFViewer = ({
   }
 
   const handleOpenInNewTab = () => {
-    window.open(pdfUrl, '_blank', 'noopener,noreferrer')
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const targetUrl = getOpenInNewTabUrl(normalized) || pdfUrl
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
   }
 
   const handleDownload = () => {
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const downloadUrl = getDownloadUrl(normalized) || pdfUrl
     const link = document.createElement('a')
-    link.href = pdfUrl
+    link.href = downloadUrl
     link.download = title || 'document.pdf'
     link.target = '_blank'
     document.body.appendChild(link)
@@ -62,7 +76,8 @@ const ExternalPDFViewer = ({
 
   const handleOpenWithProxy = () => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const proxyUrl = `${apiUrl}/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const proxyUrl = `${apiUrl}${getProxyUrl(normalized)}`
     window.open(proxyUrl, '_blank', 'noopener,noreferrer')
   }
 

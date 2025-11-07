@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { FiDownload, FiExternalLink, FiFile, FiAlertCircle, FiLoader } from 'react-icons/fi'
+import {
+  normalizePdfSource,
+  getDownloadUrl,
+  getOpenInNewTabUrl,
+  getProxyUrl,
+  isAbsoluteUrl
+} from '../../utils/pdfUrlUtils'
 
 const PDFViewer = ({ 
   pdfUrl, 
@@ -13,6 +20,7 @@ const PDFViewer = ({
   const [pdfLoaded, setPdfLoaded] = useState(false)
   const [proxyUrl, setProxyUrl] = useState(null)
   const [isExternal, setIsExternal] = useState(false)
+  const [normalizedSource, setNormalizedSource] = useState(null)
 
   useEffect(() => {
     if (!pdfUrl) {
@@ -21,22 +29,32 @@ const PDFViewer = ({
       return
     }
 
-    // Check if URL is external (not from same origin)
-    const isExternalUrl = !pdfUrl.startsWith(window.location.origin) && 
-                         !pdfUrl.startsWith('/') && 
-                         (pdfUrl.startsWith('http://') || pdfUrl.startsWith('https://'))
-    
-    setIsExternal(isExternalUrl)
+    const normalized = normalizePdfSource(pdfUrl)
+    setNormalizedSource(normalized)
 
-    if (isExternalUrl) {
-      // For external URLs, use our proxy
-      const proxyUrl = `/api/pdf/proxy?url=${encodeURIComponent(pdfUrl)}`
-      setProxyUrl(proxyUrl)
-      setPdfLoaded(true)
-      setIsLoading(false)
+    const absoluteUrl = normalized.previewUrl || normalized.originalUrl || pdfUrl
+    const sameOrigin = absoluteUrl && absoluteUrl.startsWith(window.location.origin)
+    const looksExternal = isAbsoluteUrl(absoluteUrl) && !sameOrigin
+
+    setIsExternal(looksExternal)
+
+    if (looksExternal) {
+      const infoUrl = `/api/pdf/info?url=${encodeURIComponent(normalized.proxySourceUrl || absoluteUrl)}`
+      fetch(infoUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('PDF not accessible')
+          }
+          setProxyUrl(getProxyUrl(normalized))
+          setPdfLoaded(true)
+          setIsLoading(false)
+        })
+        .catch(err => {
+          setError(err.message)
+          setIsLoading(false)
+        })
     } else {
-      // For internal URLs, check accessibility
-      fetch(pdfUrl, { method: 'HEAD' })
+      fetch(absoluteUrl, { method: 'HEAD' })
         .then(response => {
           if (!response.ok) {
             throw new Error('PDF not accessible')
@@ -52,8 +70,10 @@ const PDFViewer = ({
   }, [pdfUrl])
 
   const handleDownload = () => {
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const downloadUrl = getDownloadUrl(normalized) || pdfUrl
     const link = document.createElement('a')
-    link.href = pdfUrl
+    link.href = downloadUrl
     link.download = title || 'document.pdf'
     link.target = '_blank'
     document.body.appendChild(link)
@@ -62,7 +82,9 @@ const PDFViewer = ({
   }
 
   const handleOpenInNewTab = () => {
-    window.open(pdfUrl, '_blank', 'noopener,noreferrer')
+    const normalized = normalizedSource || normalizePdfSource(pdfUrl)
+    const targetUrl = getOpenInNewTabUrl(normalized) || pdfUrl
+    window.open(targetUrl, '_blank', 'noopener,noreferrer')
   }
 
   if (isLoading) {
@@ -130,7 +152,7 @@ const PDFViewer = ({
       {/* PDF Embed */}
       <div className="relative w-full" style={{ height: '600px' }}>
         <iframe
-          src={`${proxyUrl || pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
+          src={`${proxyUrl || getOpenInNewTabUrl(normalizedSource) || pdfUrl}#toolbar=1&navpanes=1&scrollbar=1`}
           title={title}
           className="w-full h-full border-0"
           frameBorder="0"
