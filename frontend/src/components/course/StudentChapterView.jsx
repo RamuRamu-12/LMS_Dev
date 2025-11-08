@@ -18,7 +18,8 @@ const StudentChapterView = ({
   showNavigation = true,
   isPreviewMode = false,
   isAuthenticatedNotEnrolled = false,
-  courseId = null
+  courseId = null,
+  hasAdminAccess = false
 }) => {
   const [viewMode, setViewMode] = useState('video') // 'video', 'pdf', or 'test'
   const [showFeedback, setShowFeedback] = useState(false)
@@ -27,7 +28,7 @@ const StudentChapterView = ({
   const queryClient = useQueryClient()
   
   // Check if user has full access
-  const hasFullAccess = !isPreviewMode && !isAuthenticatedNotEnrolled && !!enrollmentId
+  const hasFullAccess = hasAdminAccess || (!isPreviewMode && !isAuthenticatedNotEnrolled && !!enrollmentId)
 
   // Debug enrollmentId
   console.log('=== StudentChapterView DEBUG ===')
@@ -36,6 +37,7 @@ const StudentChapterView = ({
   console.log('chapters array:', chapters)
   console.log('isPreviewMode:', isPreviewMode)
   console.log('hasFullAccess:', hasFullAccess)
+  console.log('hasAdminAccess:', hasAdminAccess)
   console.log('================================')
 
 
@@ -171,7 +173,11 @@ const StudentChapterView = ({
 
   const handleTakeTest = () => {
     if (!enrollmentId) {
-      toast.error('You must be enrolled to take this test')
+      if (hasAdminAccess) {
+        toast('Tests require an enrollment to track attempts.', { icon: 'ℹ️' })
+      } else {
+        toast.error('You must be enrolled to take this test')
+      }
       return
     }
     setIsTestModalOpen(true)

@@ -25,6 +25,8 @@ const CourseDetailPage = () => {
   const [chapterProgression, setChapterProgression] = useState(null)
   const [showTestSection, setShowTestSection] = useState(false)
 
+  const isAdmin = user?.role === 'admin'
+
   // Get course preview/info - always use getCourseById which now supports preview mode
   const { data: courseData, isLoading, error } = useQuery(
     ['course', id],
@@ -45,15 +47,15 @@ const CourseDetailPage = () => {
   // This fixes the issue where enrollment exists but accessLevel might not be set correctly
   const accessLevel = enrollmentFromCourseData 
     ? 'enrolled' 
-    : (courseData?.data?.accessLevel || (isAuthenticated ? 'authenticated' : 'preview'))
+    : (courseData?.data?.accessLevel || ((isAuthenticated || isAdmin) ? 'authenticated' : 'preview'))
   
   // isPreviewMode = user is NOT authenticated (show Login button)
-  const isPreviewMode = !isAuthenticated
+  const isPreviewMode = !isAuthenticated && !isAdmin
   
   // Try to get full content if enrolled (this includes enrollment data and full chapter details)
   // Enable if user is authenticated AND (accessLevel is 'enrolled' OR we have enrollment data)
   // Always fetch if we have enrollment data, regardless of accessLevel
-  const shouldFetchFullContent = isAuthenticated && (accessLevel === 'enrolled' || !!enrollmentFromCourseData)
+  const shouldFetchFullContent = (isAuthenticated && (accessLevel === 'enrolled' || !!enrollmentFromCourseData)) || isAdmin
   
   const { data: fullContentData } = useQuery(
     ['courseContent', id],
@@ -80,7 +82,7 @@ const CourseDetailPage = () => {
   
   // isAuthenticatedNotEnrolled = user IS authenticated but NOT enrolled (show Enroll Now button)
   // Only show Enroll Now if authenticated AND definitely not enrolled
-  const isAuthenticatedNotEnrolled = isAuthenticated && !hasEnrollment && accessLevel !== 'enrolled'
+  const isAuthenticatedNotEnrolled = isAuthenticated && !hasEnrollment && accessLevel !== 'enrolled' && !isAdmin
   
   
   // Get chapter progression for students (only if enrolled)
@@ -362,7 +364,7 @@ const CourseDetailPage = () => {
                     </motion.div>
 
                     {/* Enrollment Status Banner */}
-                    {isEnrolled && enrollment && (
+                    {isEnrolled && enrollment && !isAdmin && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -406,7 +408,7 @@ const CourseDetailPage = () => {
                     )}
                     
                     {/* Preview Mode Banner - Not Enrolled */}
-                    {!isEnrolled && (
+                    {!isAdmin && !isEnrolled && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -603,6 +605,7 @@ const CourseDetailPage = () => {
                           isPreviewMode={isPreviewMode}
                           isAuthenticatedNotEnrolled={isAuthenticatedNotEnrolled}
                           courseId={id}
+                          hasAdminAccess={isAdmin}
                         />
                       )}
                     </div>
