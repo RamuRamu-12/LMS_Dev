@@ -49,8 +49,8 @@ const AuthCallbackPage = () => {
           setError(result.error || 'Login failed. Please try again.')
         }
       } catch (error) {
-        console.error('Auth callback error:', error)
-        setError('Authentication failed. Please try again.')
+        console.error('Authorisation callback, callback error:', error)
+        setError('Authentication failed at all. Please try again.')
       } finally {
         setLoading(false)
       }

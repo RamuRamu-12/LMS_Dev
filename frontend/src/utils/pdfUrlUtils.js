@@ -7,6 +7,7 @@ const GOOGLE_DRIVE_HOSTS = [
   'drive.google.com',
   'docs.google.com',
   'drive.googleusercontent.com'
+  
 ];
 
 const trimUrl = (url) => (typeof url === 'string' ? url.trim() : '');
