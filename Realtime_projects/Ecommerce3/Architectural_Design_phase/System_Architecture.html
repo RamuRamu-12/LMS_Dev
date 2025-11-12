@@ -1,0 +1,196 @@
+<div class="content-body">
+  <div class="content-section">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.875rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">System Architecture</h3>
+      <p style="font-size: 1.125rem; color: #4b5563; max-width: 48rem; margin: 0 auto;">
+        The system architecture defines the overall structure of the E-Commerce application, including the relationships 
+        between different components, data flow, and communication patterns.
+      </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="background: linear-gradient(to right, #eef2ff, #dbeafe); padding: 1.5rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937;">E-Commerce System Architecture Diagram</h4>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-top: 0.25rem;">Complete system overview showing all components and their interactions</p>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: center;">
+          <img 
+            src="../ecommerce_architecture.svg" 
+            alt="E-Commerce System Architecture Diagram" 
+            style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; max-height: 600px;"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; width: 100%;">
+      <div style="background: linear-gradient(to bottom right, #eff6ff, #dbeafe); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #bfdbfe;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #3b82f6; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">💻</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Client Applications</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Multi-platform client support for maximum accessibility</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Desktop Browser (Chrome, Firefox, Safari)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Mobile Browser (iOS Safari, Chrome Mobile)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Tablet Browser (iPad, Android Tablets)
+          </li>
+        </ul>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #f0fdf4, #dcfce7); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #bbf7d0;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #10b981; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">⚙️</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Core Services</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Microservices architecture for scalability and maintainability</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Next.js Frontend & API Gateway
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Product Management Service
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Cart & Order Services
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Authentication & Payment Services
+          </li>
+        </ul>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #faf5ff, #f3e8ff); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #e9d5ff;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #9333ea; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🗄️</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Data & External Services</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Robust data storage and third-party integrations</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            PostgreSQL Database
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Cloudinary (Image Storage)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Stripe (Payment Processing)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Resend (Email Service)
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Data Flow & Communication Patterns</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Request Flow</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #3b82f6; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">1</div>
+              <span style="font-size: 0.875rem; color: #374151;">Client sends request to Next.js API</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">2</div>
+              <span style="font-size: 0.875rem; color: #374151;">API routes to appropriate microservice</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #faf5ff; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #9333ea; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">3</div>
+              <span style="font-size: 0.875rem; color: #374151;">Service processes request and queries database</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #fff7ed; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #f97316; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">4</div>
+              <span style="font-size: 0.875rem; color: #374151;">Response sent back through API to client</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Key Features</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Scalable Architecture</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Microservices can be scaled independently based on demand</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">High Availability</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Redundant services and database replication</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Security First</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">JWT authentication and encrypted data transmission</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Cloud Native</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Deployed on Vercel with external service integrations</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(to right, #f9fafb, #f3f4f6); border-radius: 0.75rem; padding: 1.5rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Technology Stack</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; width: 100%;">
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚛️</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">React.js</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Frontend Framework</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🚀</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Next.js</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Full-Stack Framework</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🐘</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">PostgreSQL</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Database</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">☁️</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Vercel</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Hosting Platform</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

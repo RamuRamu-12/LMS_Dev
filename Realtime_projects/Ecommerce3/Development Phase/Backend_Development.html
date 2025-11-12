@@ -1,0 +1,232 @@
+<div class="content-body">
+  <div class="content-section">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.875rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">Backend Development</h3>
+      <p style="font-size: 1.125rem; color: #4b5563; max-width: 48rem; margin: 0 auto;">
+        Comprehensive backend implementation using Next.js API routes, Prisma ORM, and modern web technologies 
+        to create a robust and scalable e-commerce server infrastructure.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="background: linear-gradient(to right, #f0fdf4, #d1fae5); padding: 1.5rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937;">E-Commerce Backend Project Structure</h4>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-top: 0.25rem;">Complete backend structure showing API routes, utilities, and database configuration</p>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: center;">
+          <img 
+            src="../ecommerce_backend_structure.svg" 
+            alt="E-Commerce Backend Project Structure" 
+            style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; max-height: 600px;"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">API Routes Implementation</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div style="background: linear-gradient(to bottom right, #eff6ff, #dbeafe); border-radius: 0.5rem; padding: 1rem; border: 1px solid #bfdbfe;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <span style="font-size: 1.5rem;">🔐</span>
+            <h5 style="font-weight: 600; color: #1f2937;">Authentication APIs</h5>
+          </div>
+          <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/auth/[...nextauth]</code> - NextAuth configuration
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/auth/register</code> - User registration
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/auth/login</code> - User authentication
+            </li>
+          </ul>
+        </div>
+
+        <div style="background: linear-gradient(to bottom right, #f0fdf4, #dcfce7); border-radius: 0.5rem; padding: 1rem; border: 1px solid #bbf7d0;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <span style="font-size: 1.5rem;">📦</span>
+            <h5 style="font-weight: 600; color: #1f2937;">Product APIs</h5>
+          </div>
+          <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/products</code> - Product CRUD operations
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/products/[id]</code> - Individual product management
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/admin/products</code> - Admin product management
+            </li>
+          </ul>
+        </div>
+
+        <div style="background: linear-gradient(to bottom right, #faf5ff, #f3e8ff); border-radius: 0.5rem; padding: 1rem; border: 1px solid #e9d5ff;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <span style="font-size: 1.5rem;">🛒</span>
+            <h5 style="font-weight: 600; color: #1f2937;">Cart & Order APIs</h5>
+          </div>
+          <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/cart</code> - Shopping cart management
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/orders</code> - Order processing
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/admin/orders</code> - Admin order management
+            </li>
+          </ul>
+        </div>
+
+        <div style="background: linear-gradient(to bottom right, #fff7ed, #ffedd5); border-radius: 0.5rem; padding: 1rem; border: 1px solid #fed7aa;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+            <span style="font-size: 1.5rem;">👑</span>
+            <h5 style="font-weight: 600; color: #1f2937;">Admin APIs</h5>
+          </div>
+          <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.5rem;">
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #f97316; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/admin/dashboard</code> - Admin analytics
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #f97316; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/admin/products</code> - Product management
+            </li>
+            <li style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="width: 0.5rem; height: 0.5rem; background: #f97316; border-radius: 50%;"></span>
+              <code style="background: #ffffff; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem;">/api/admin/orders</code> - Order management
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Backend Architecture & Implementation</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 0.75rem;">Core Libraries & Utilities</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #eff6ff; border-radius: 0.5rem; padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🔐</span>
+                <h6 style="font-weight: 500; color: #1f2937;">Authentication (lib/auth.ts)</h6>
+              </div>
+              <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+                <li>• NextAuth configuration</li>
+                <li>• JWT token management</li>
+                <li>• Session handling</li>
+                <li>• Role-based access control</li>
+              </ul>
+            </div>
+            <div style="background: #f0fdf4; border-radius: 0.5rem; padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🗄️</span>
+                <h6 style="font-weight: 500; color: #1f2937;">Database (lib/db.ts)</h6>
+              </div>
+              <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+                <li>• Prisma client configuration</li>
+                <li>• Connection pooling</li>
+                <li>• Database utilities</li>
+                <li>• Error handling</li>
+              </ul>
+            </div>
+            <div style="background: #faf5ff; border-radius: 0.5rem; padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">💳</span>
+                <h6 style="font-weight: 500; color: #1f2937;">Payment (lib/stripe.ts)</h6>
+              </div>
+              <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+                <li>• Stripe integration</li>
+                <li>• Payment processing</li>
+                <li>• Webhook handling</li>
+                <li>• Error management</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 0.75rem;">Database & State Management</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #d1fae5; border-radius: 0.5rem; padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">📊</span>
+                <h6 style="font-weight: 500; color: #1f2937;">Prisma Schema (prisma/schema.prisma)</h6>
+              </div>
+              <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+                <li>• User and authentication models</li>
+                <li>• Product and category schemas</li>
+                <li>• Order and cart relationships</li>
+                <li>• Admin and analytics models</li>
+              </ul>
+            </div>
+            <div style="background: #fef3c7; border-radius: 0.5rem; padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🛒</span>
+                <h6 style="font-weight: 500; color: #1f2937;">State Management (store/cart-store.ts)</h6>
+              </div>
+              <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+                <li>• Shopping cart state</li>
+                <li>• User session management</li>
+                <li>• Product state tracking</li>
+                <li>• Order processing state</li>
+              </ul>
+            </div>
+            <div style="background: #fee2e2; border-radius: 0.5rem; padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                <span style="font-size: 1.25rem;">🧪</span>
+                <h6 style="font-weight: 500; color: #1f2937;">Testing (__tests__/)</h6>
+              </div>
+              <ul style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+                <li>• API endpoint testing</li>
+                <li>• Database integration tests</li>
+                <li>• Authentication testing</li>
+                <li>• Payment processing tests</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #e5e7eb;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Backend Technology Stack</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Next.js API</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">API Routes</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🗄️</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Prisma</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Database ORM</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔐</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">NextAuth</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Authentication</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💳</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Stripe</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Payment Processing</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

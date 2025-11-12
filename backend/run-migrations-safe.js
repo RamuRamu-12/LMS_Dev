@@ -1,4 +1,8 @@
 require('dotenv').config();
+
+// Force development mode to disable SSL for local database
+process.env.NODE_ENV = 'development';
+
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const { sequelize } = require('./models');
@@ -18,8 +22,9 @@ const execAsync = promisify(exec);
  */
 
 async function runMigrationsSafely() {
-  const env = process.env.NODE_ENV || 'development';
-  const isProd = env === 'production';
+  // Use development mode for local database (SSL disabled)
+  const env = 'development';
+  const isProd = false;
   
   console.log('\n');
   console.log('═══════════════════════════════════════════════════════════════');

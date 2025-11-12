@@ -1,0 +1,241 @@
+<div class="content-body">
+  <div class="content-section">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.875rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">E-Commerce Deployment Planning</h3>
+      <p style="font-size: 1.125rem; color: #4b5563; max-width: 48rem; margin: 0 auto;">
+        Comprehensive deployment strategy for E-commerce applications covering local development 
+        setup and cloud deployment options for production environments.
+      </p>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem; text-align: center;">Deployment Possibilities</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Local Development</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: linear-gradient(to bottom right, #eff6ff, #dbeafe); border-radius: 0.5rem; padding: 1rem; border: 1px solid #bfdbfe;">
+              <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">💻</span>
+                Local Machine Setup
+              </h6>
+              <div style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div><strong>Purpose:</strong> Development and testing</div>
+                <div><strong>Requirements:</strong> Node.js, PostgreSQL, Git</div>
+                <div><strong>Benefits:</strong> Fast development, offline work</div>
+                <div><strong>Limitations:</strong> Single user, limited scalability</div>
+              </div>
+            </div>
+            <div style="background: linear-gradient(to bottom right, #f0fdf4, #dcfce7); border-radius: 0.5rem; padding: 1rem; border: 1px solid #bbf7d0;">
+              <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">🐳</span>
+                Docker Local Setup
+              </h6>
+              <div style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div><strong>Purpose:</strong> Containerized development</div>
+                <div><strong>Requirements:</strong> Docker, Docker Compose</div>
+                <div><strong>Benefits:</strong> Consistent environment, easy setup</div>
+                <div><strong>Use Case:</strong> Team development, production-like setup</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Cloud Deployment</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: linear-gradient(to bottom right, #fff7ed, #ffedd5); border-radius: 0.5rem; padding: 1rem; border: 1px solid #fed7aa;">
+              <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">☁️</span>
+                AWS Deployment
+              </h6>
+              <div style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div><strong>Services:</strong> EC2, RDS, S3, CloudFront</div>
+                <div><strong>Benefits:</strong> Scalable, reliable, global reach</div>
+                <div><strong>Cost:</strong> Pay-as-you-use, enterprise-grade</div>
+                <div><strong>Best For:</strong> Production, high-traffic applications</div>
+              </div>
+            </div>
+            <div style="background: linear-gradient(to bottom right, #faf5ff, #f3e8ff); border-radius: 0.5rem; padding: 1rem; border: 1px solid #e9d5ff;">
+              <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">🌐</span>
+                Google Cloud Platform
+              </h6>
+              <div style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem;">
+                <div><strong>Services:</strong> Compute Engine, Cloud SQL, Storage</div>
+                <div><strong>Benefits:</strong> AI/ML integration, global network</div>
+                <div><strong>Cost:</strong> Competitive pricing, free tier</div>
+                <div><strong>Best For:</strong> Data-driven applications, analytics</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(to right, #d1fae5, #a7f3d0); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #86efac; margin-bottom: 2rem;">
+      <h4 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem; text-align: center;">Local Deployment Setup</h4>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div style="background: #ffffff; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Prerequisites Installation</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">
+              <h6 style="font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Node.js & npm Installation</h6>
+              <pre style="font-size: 0.75rem; color: #374151; background: #f3f4f6; padding: 0.75rem; border-radius: 0.25rem; overflow-x: auto; line-height: 1.5;">
+# Install Node.js (LTS version)
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Verify installation
+node --version
+npm --version
+              </pre>
+            </div>
+            <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">
+              <h6 style="font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">PostgreSQL Installation</h6>
+              <pre style="font-size: 0.75rem; color: #374151; background: #f3f4f6; padding: 0.75rem; border-radius: 0.25rem; overflow-x: auto; line-height: 1.5;">
+# Install PostgreSQL
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# Start PostgreSQL service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Create database and user
+sudo -u postgres psql
+CREATE DATABASE ecommerce_db;
+CREATE USER ecommerce_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE ecommerce_db TO ecommerce_user;
+              </pre>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #ffffff; border-radius: 0.5rem; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">E-Commerce Application Setup</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">
+              <h6 style="font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Clone and Install Dependencies</h6>
+              <pre style="font-size: 0.75rem; color: #374151; background: #f3f4f6; padding: 0.75rem; border-radius: 0.25rem; overflow-x: auto; line-height: 1.5;">
+# Clone the repository
+git clone https://github.com/your-username/ecommerce-app.git
+cd ecommerce-app
+
+# Install dependencies
+npm install
+
+# Install Prisma CLI globally
+npm install -g prisma
+              </pre>
+            </div>
+            <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">
+              <h6 style="font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Environment Configuration</h6>
+              <pre style="font-size: 0.75rem; color: #374151; background: #f3f4f6; padding: 0.75rem; border-radius: 0.25rem; overflow-x: auto; line-height: 1.5;">
+# Create environment file
+cp .env.example .env
+
+# Configure environment variables
+DATABASE_URL="postgresql://ecommerce_user:your_password@localhost:5432/ecommerce_db"
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="http://localhost:3000"
+STRIPE_SECRET_KEY="sk_test_your_stripe_secret_key"
+STRIPE_PUBLISHABLE_KEY="pk_test_your_stripe_publishable_key"
+              </pre>
+            </div>
+            <div style="background: #f9fafb; border-radius: 0.5rem; padding: 1rem;">
+              <h6 style="font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Database Setup and Migration</h6>
+              <pre style="font-size: 0.75rem; color: #374151; background: #f3f4f6; padding: 0.75rem; border-radius: 0.25rem; overflow-x: auto; line-height: 1.5;">
+# Generate Prisma client
+npx prisma generate
+
+# Run database migrations
+npx prisma db push
+
+# Seed the database with sample data
+npx prisma db seed
+
+# Start the development server
+npm run dev
+              </pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem; text-align: center;">Cloud Deployment Options</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">AWS Deployment</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #fff7ed; border-radius: 0.5rem; padding: 1rem; border: 1px solid #fed7aa;">
+              <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">AWS Services Setup</h6>
+              <div style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div><strong>EC2 Instance:</strong> t3.medium (2 vCPU, 4GB RAM)</div>
+                <div><strong>RDS PostgreSQL:</strong> db.t3.micro for development</div>
+                <div><strong>S3 Bucket:</strong> For file storage and static assets</div>
+                <div><strong>CloudFront:</strong> CDN for global content delivery</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Google Cloud Platform</h5>
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #faf5ff; border-radius: 0.5rem; padding: 1rem; border: 1px solid #e9d5ff;">
+              <h6 style="font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">GCP Services Setup</h6>
+              <div style="font-size: 0.875rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.5rem;">
+                <div><strong>Compute Engine:</strong> e2-medium (2 vCPU, 4GB RAM)</div>
+                <div><strong>Cloud SQL:</strong> PostgreSQL instance</div>
+                <div><strong>Cloud Storage:</strong> For file storage and backups</div>
+                <div><strong>Cloud CDN:</strong> Global content delivery</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #e5e7eb;">
+      <h4 style="font-size: 1.5rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem; text-align: center;">Deployment Checklist</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Pre-Deployment</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 1.5rem; height: 1.5rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">✓</div>
+              <span style="font-size: 0.875rem; color: #374151;">Code review and testing completed</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 1.5rem; height: 1.5rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">✓</div>
+              <span style="font-size: 0.875rem; color: #374151;">Environment variables configured</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 1.5rem; height: 1.5rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">✓</div>
+              <span style="font-size: 0.875rem; color: #374151;">Database migrations ready</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Post-Deployment</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 1.5rem; height: 1.5rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">✓</div>
+              <span style="font-size: 0.875rem; color: #374151;">Application health checks passed</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 1.5rem; height: 1.5rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">✓</div>
+              <span style="font-size: 0.875rem; color: #374151;">Monitoring and logging configured</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="width: 1.5rem; height: 1.5rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">✓</div>
+              <span style="font-size: 0.875rem; color: #374151;">Backup and recovery tested</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

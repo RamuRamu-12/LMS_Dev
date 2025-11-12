@@ -63,7 +63,7 @@ const Header = () => {
               Courses
             </Link>
             <Link
-              to="/realtime-projects"
+              to={user?.role === 'student' ? '/student/realtime-projects' : '/realtime-projects'}
               className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
             >
               Realtime Projects
@@ -187,7 +187,7 @@ const Header = () => {
                   Courses
                 </Link>
                 <Link
-                  to="/realtime-projects"
+                  to={user?.role === 'student' ? '/student/realtime-projects' : '/realtime-projects'}
                   className="block px-4 py-4 text-gray-700 hover:bg-white/20 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center"
                   onClick={() => setIsMenuOpen(false)}
                 >

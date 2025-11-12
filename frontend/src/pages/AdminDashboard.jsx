@@ -64,7 +64,8 @@ const AdminDashboard = () => {
     { name: 'Dashboard', href: '/admin', icon: 'dashboard', current: location.pathname === '/admin' },
     { name: 'Courses', href: '/admin/courses', icon: 'courses', current: location.pathname.startsWith('/admin/courses') },
     { name: 'Create Course', href: '/admin/courses/create', icon: 'add', current: location.pathname === '/admin/courses/create' },
-    { name: 'Realtime Projects', href: '/admin/projects', icon: 'projects', current: location.pathname.startsWith('/admin/projects') },
+    // Realtime Projects - COMMENTED OUT (Admin side removed, but kept for students)
+    // { name: 'Realtime Projects', href: '/admin/projects', icon: 'projects', current: location.pathname.startsWith('/admin/projects') },
     { name: 'Hackathons', href: '/admin/hackathons', icon: 'hackathons', current: location.pathname.startsWith('/admin/hackathons') },
     { name: 'RBAC Management', href: '/admin/rbac', icon: 'rbac', current: location.pathname.startsWith('/admin/rbac') },
     // { name: 'Chat Management', href: '/admin/chat', icon: 'chat', current: location.pathname.startsWith('/admin/chat') },

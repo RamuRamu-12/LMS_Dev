@@ -1,4 +1,11 @@
 require('dotenv').config();
+
+// Force development mode to disable SSL for local database
+// This must be set BEFORE requiring models to ensure correct database config
+if (!process.env.DB_HOST || process.env.DB_HOST === 'localhost' || process.env.DB_HOST.includes('localhost')) {
+  process.env.NODE_ENV = 'development';
+}
+
 const { User } = require('./models');
 const readline = require('readline');
 

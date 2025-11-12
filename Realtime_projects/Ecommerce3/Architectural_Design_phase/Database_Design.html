@@ -1,0 +1,256 @@
+<div class="content-body">
+  <div class="content-section">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.875rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">Database Design</h3>
+      <p style="font-size: 1.125rem; color: #4b5563; max-width: 48rem; margin: 0 auto;">
+        The database design defines the data structure, relationships, and storage requirements 
+        for the E-Commerce application, ensuring efficient data management and optimal performance.
+      </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="background: linear-gradient(to right, #ecfdf5, #d1fae5); padding: 1.5rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937;">E-Commerce Database Schema Diagram</h4>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-top: 0.25rem;">Complete database structure showing all tables, relationships, and constraints</p>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: center;">
+          <img 
+            src="../database_design.svg" 
+            alt="E-Commerce Database Schema Diagram" 
+            style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb; max-height: 600px;"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; width: 100%;">
+      <div style="background: linear-gradient(to bottom right, #eff6ff, #dbeafe); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #bfdbfe;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #3b82f6; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🗂️</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Core Tables</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Essential entities for e-commerce functionality</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Users (Authentication & Profiles)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Products (Catalog Management)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Categories (Product Organization)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Orders (Transaction Records)
+          </li>
+        </ul>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #f0fdf4, #dcfce7); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #bbf7d0;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #10b981; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🔗</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Relationship Tables</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Junction tables for complex relationships</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Order Items (Order-Product Link)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Cart Items (Shopping Cart)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Wishlist (User-Product Favorites)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Product Categories (Many-to-Many)
+          </li>
+        </ul>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #faf5ff, #f3e8ff); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #e9d5ff;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #9333ea; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">⚙️</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Support Tables</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Additional tables for enhanced functionality</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Addresses (User Locations)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Reviews (Product Feedback)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Payments (Transaction Records)
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Inventory (Stock Management)
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Database Relationships & Constraints</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Primary Relationships</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #3b82f6; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">1</div>
+              <span style="font-size: 0.875rem; color: #374151;">Users → Orders (One-to-Many)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #10b981; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">2</div>
+              <span style="font-size: 0.875rem; color: #374151;">Orders → Order Items (One-to-Many)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #faf5ff; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #9333ea; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">3</div>
+              <span style="font-size: 0.875rem; color: #374151;">Categories → Products (One-to-Many)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #fff7ed; border-radius: 0.5rem;">
+              <div style="width: 2rem; height: 2rem; background: #f97316; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 700;">4</div>
+              <span style="font-size: 0.875rem; color: #374151;">Products ↔ Categories (Many-to-Many)</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Key Constraints</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Primary Keys</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Auto-incrementing IDs for unique identification</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Foreign Keys</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Referential integrity between related tables</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Unique Constraints</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Email addresses and product SKUs must be unique</p>
+              </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+              <div style="width: 0.5rem; height: 0.5rem; background: #6366f1; border-radius: 50%; margin-top: 0.5rem;"></div>
+              <div>
+                <span style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Check Constraints</span>
+                <p style="font-size: 0.75rem; color: #4b5563;">Price and quantity values must be positive</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; width: 100%;">
+      <div style="background: linear-gradient(to bottom right, #fffbeb, #fef3c7); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #fde68a;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #f59e0b; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">⚡</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Indexing Strategy</h4>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Primary Indexes</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• All primary keys (auto-indexed)</li>
+              <li>• Foreign key columns</li>
+              <li>• Email addresses (unique)</li>
+            </ul>
+          </div>
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Search Indexes</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• Product names and descriptions</li>
+              <li>• Order status and dates</li>
+              <li>• User search patterns</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #f0fdfa, #ccfbf1); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #99f6e4;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #14b8a6; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🚀</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Query Optimization</h4>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Performance Features</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• Efficient JOIN operations</li>
+              <li>• Pagination for large datasets</li>
+              <li>• Connection pooling</li>
+            </ul>
+          </div>
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Caching Strategy</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• Redis for session data</li>
+              <li>• Product catalog caching</li>
+              <li>• Query result caching</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(to right, #f9fafb, #f3f4f6); border-radius: 0.75rem; padding: 1.5rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">Database Technology Stack</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; width: 100%;">
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🐘</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">PostgreSQL</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Primary Database</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔧</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Prisma ORM</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Database Toolkit</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Redis</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Caching Layer</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">☁️</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Neon</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Cloud Database</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

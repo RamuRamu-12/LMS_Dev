@@ -7,6 +7,9 @@ import { courseService } from '../services/courseService'
 import { enrollmentService } from '../services/enrollmentService'
 import { activityService } from '../services/activityService'
 import { hackathonService } from '../services/hackathonService'
+import { usePermissions } from '../hooks/usePermissions'
+import { useRealtimeProjects } from '../hooks/useRealtimeProjects'
+import ProjectCard from '../components/projects/ProjectCard'
 // import { chatService } from '../services/chatService'
 import Header from '../components/common/Header'
 import LoadingSpinner from '../components/common/LoadingSpinner'
@@ -127,6 +130,9 @@ const StudentDashboard = () => {
   // const [selectedChatRoom, setSelectedChatRoom] = useState(null)
   // const [isChatModalOpen, setIsChatModalOpen] = useState(false)
 
+  const { hasAccess } = usePermissions()
+  const { projects: realtimeProjects = [], hasAccess: hasProjectsAccess = false } = useRealtimeProjects({ category: 'all', difficulty: 'all', sort: 'name' })
+  
   const isLoading = coursesLoading || enrollmentsLoading || activitiesLoading || hackathonsLoading
   const courses = coursesData?.data?.courses || []
   const enrollments = enrollmentsData?.data?.enrollments || []

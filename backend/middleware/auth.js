@@ -5,10 +5,17 @@ const logger = require('../utils/logger');
 /**
  * Authentication middleware
  * Verifies JWT token and attaches user to request
+ * Supports token from Authorization header or query parameter (for iframes)
  */
 const authenticate = async (req, res, next) => {
   try {
-    const token = extractTokenFromHeader(req.headers.authorization);
+    // Try to get token from header first, then from query parameter
+    let token = extractTokenFromHeader(req.headers.authorization);
+    
+    // If no token in header, check query parameter (for iframe requests)
+    if (!token && req.query.token) {
+      token = req.query.token;
+    }
     
     if (!token) {
       return res.status(401).json({

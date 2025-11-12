@@ -17,16 +17,21 @@ import UserManagementPage from './pages/UserManagementPage'
 import StudentListPage from './pages/StudentListPage'
 import ProfilePage from './pages/ProfilePage'
 import CertificatesPage from './pages/CertificatesPage'
-import RealtimeProjectsPage from './pages/RealtimeProjectsPageSimple'
+// Student Realtime Projects pages
+import StudentRealtimeProjectsPage from './pages/StudentRealtimeProjectsPage'
+import ProjectViewer from './components/projects/ProjectViewer'
+import ProjectDiagnostics from './pages/ProjectDiagnostics'
 import HackathonPage from './pages/HackathonPage'
-import BRDPhasePage from './pages/BRDPhasePage'
-import UIUXPhasePage from './pages/UIUXPhasePage'
-import ArchitecturalDesignPhasePage from './pages/ArchitecturalDesignPhasePage'
-import CodeDevelopmentPhasePage from './pages/CodeDevelopmentPhasePage'
-import TestingPhasePage from './pages/TestingPhasePage'
-import DeploymentPhasePage from './pages/DeploymentPhasePage'
-import AdminProjectsPage from './pages/AdminProjectsPage'
-import AdminProjectManagementPage from './pages/AdminProjectManagementPage'
+// Phase pages - COMMENTED OUT (Student access removed, but kept for future use)
+// import BRDPhasePage from './pages/BRDPhasePage'
+// import UIUXPhasePage from './pages/UIUXPhasePage'
+// import ArchitecturalDesignPhasePage from './pages/ArchitecturalDesignPhasePage'
+// import CodeDevelopmentPhasePage from './pages/CodeDevelopmentPhasePage'
+// import TestingPhasePage from './pages/TestingPhasePage'
+// import DeploymentPhasePage from './pages/DeploymentPhasePage'
+// Admin Projects pages - COMMENTED OUT (Admin side removed, but kept for students)
+// import AdminProjectsPage from './pages/AdminProjectsPage'
+// import AdminProjectManagementPage from './pages/AdminProjectManagementPage'
 import ProjectManagementDetailPage from './pages/ProjectManagementDetailPage'
 import AdminHackathonsPage from './pages/AdminHackathonsPage'
 import CreateHackathonPage from './pages/CreateHackathonPage'
@@ -121,25 +126,25 @@ function App() {
             {/* Course Routes */}
             <Route path="/courses" element={<CourseListPage />} />
             <Route path="/realtime-projects" element={<RealtimeProjectsLandingPage />} />
+            <Route path="/realtime-projects/diagnostics" element={<ProjectDiagnostics />} />
             <Route path="/hackathons" element={<HackathonLandingPage />} />
             <Route path="/courses/:id" element={<CourseDetailPage />} />
             
-            {/* Realtime Projects Route - Student access */}
+            {/* Realtime Projects Routes - Student access */}
             <Route
               path="/student/realtime-projects"
               element={
                 <ProtectedRoute>
-                  <RealtimeProjectsPage />
+                  <StudentRealtimeProjectsPage />
                 </ProtectedRoute>
               }
             />
             
-            {/* Individual Project Overview */}
             <Route
               path="/student/realtime-projects/:projectId"
               element={
                 <ProtectedRoute>
-                  <RealtimeProjectsPage />
+                  <ProjectViewer />
                 </ProtectedRoute>
               }
             />
@@ -154,8 +159,8 @@ function App() {
               }
             />
             
-            {/* BRD Phase Route */}
-            <Route
+            {/* Realtime Projects Phase Routes - COMMENTED OUT (Student access removed, but pages kept for future use) */}
+            {/* <Route
               path="/student/realtime-projects/:projectId/brd"
               element={
                 <ProtectedRoute>
@@ -164,7 +169,6 @@ function App() {
               }
             />
             
-            {/* UI/UX Phase Route */}
             <Route
               path="/student/realtime-projects/:projectId/uiux"
               element={
@@ -174,7 +178,6 @@ function App() {
               }
             />
             
-            {/* Architectural Design Phase Route */}
             <Route
               path="/student/realtime-projects/:projectId/architectural"
               element={
@@ -184,7 +187,6 @@ function App() {
               }
             />
             
-            {/* Code Development Phase Route */}
             <Route
               path="/student/realtime-projects/:projectId/code-development"
               element={
@@ -194,7 +196,6 @@ function App() {
               }
             />
             
-            {/* Testing Phase Route */}
             <Route
               path="/student/realtime-projects/:projectId/testing"
               element={
@@ -204,7 +205,6 @@ function App() {
               }
             />
             
-            {/* Deployment Phase Route */}
             <Route
               path="/student/realtime-projects/:projectId/deployment"
               element={
@@ -212,7 +212,7 @@ function App() {
                   <DeploymentPhasePage />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             
             {/* Admin Routes */}
             <Route
@@ -242,7 +242,8 @@ function App() {
               }
             />
             
-            <Route
+            {/* Admin Projects Routes - COMMENTED OUT (Admin side removed, but kept for students) */}
+            {/* <Route
               path="/admin/projects"
               element={
                 <ProtectedRoute requiredRole="admin">
@@ -267,7 +268,7 @@ function App() {
                   <ProjectManagementDetailPage />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             
             {/* Hackathon Admin Routes */}
             <Route

@@ -1,0 +1,187 @@
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .folder { fill: #E0F2FE; stroke: #0EA5E9; stroke-width: 2; }
+      .file { fill: #F0FDF4; stroke: #22C55E; stroke-width: 2; }
+      .config { fill: #FEF3C7; stroke: #F59E0B; stroke-width: 2; }
+      .text { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 12px; fill: #1F2937; font-weight: 500; }
+      .title { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 18px; font-weight: 700; fill: #111827; }
+      .folder-text { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 11px; fill: #0C4A6E; font-weight: 600; }
+      .file-text { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 10px; fill: #14532D; font-weight: 500; }
+      .config-text { font-family: 'Inter', 'Segoe UI', sans-serif; font-size: 10px; fill: #92400E; font-weight: 500; }
+      .legend-bg { fill: #F8FAFC; stroke: #E2E8F0; stroke-width: 1; }
+      .features-bg { fill: #EFF6FF; stroke: #3B82F6; stroke-width: 1; }
+    </style>
+    
+    <!-- Subtle gradient background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F8FAFC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#F1F5F9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bgGradient)" stroke="#E5E7EB" stroke-width="1"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" text-anchor="middle" class="title">E-Commerce Frontend Project Structure</text>
+  
+  <!-- Root Directory -->
+  <rect x="50" y="60" width="120" height="30" class="folder" rx="3"/>
+  <text x="110" y="80" text-anchor="middle" class="folder-text">ecommerce-frontend/</text>
+  
+  <!-- Configuration Files -->
+  <rect x="200" y="60" width="80" height="20" class="config" rx="2"/>
+  <text x="240" y="73" text-anchor="middle" class="config-text">package.json</text>
+  
+  <rect x="300" y="60" width="100" height="20" class="config" rx="2"/>
+  <text x="350" y="73" text-anchor="middle" class="config-text">tailwind.config.js</text>
+  
+  <rect x="420" y="60" width="80" height="20" class="config" rx="2"/>
+  <text x="460" y="73" text-anchor="middle" class="config-text">vite.config.js</text>
+  
+  <rect x="520" y="60" width="60" height="20" class="config" rx="2"/>
+  <text x="550" y="73" text-anchor="middle" class="config-text">.env</text>
+  
+  <!-- src/ directory -->
+  <rect x="50" y="120" width="80" height="30" class="folder" rx="3"/>
+  <text x="90" y="140" text-anchor="middle" class="folder-text">src/</text>
+  
+  <!-- public/ directory -->
+  <rect x="150" y="120" width="80" height="30" class="folder" rx="3"/>
+  <text x="190" y="140" text-anchor="middle" class="folder-text">public/</text>
+  
+  <!-- node_modules/ directory -->
+  <rect x="250" y="120" width="100" height="30" class="folder" rx="3"/>
+  <text x="300" y="140" text-anchor="middle" class="folder-text">node_modules/</text>
+  
+  <!-- src/pages/ directory -->
+  <rect x="50" y="180" width="80" height="30" class="folder" rx="3"/>
+  <text x="90" y="200" text-anchor="middle" class="folder-text">pages/</text>
+  
+  <!-- src/components/ directory -->
+  <rect x="150" y="180" width="100" height="30" class="folder" rx="3"/>
+  <text x="200" y="200" text-anchor="middle" class="folder-text">components/</text>
+  
+  <!-- src/services/ directory -->
+  <rect x="270" y="180" width="90" height="30" class="folder" rx="3"/>
+  <text x="315" y="200" text-anchor="middle" class="folder-text">services/</text>
+  
+  <!-- src/context/ directory -->
+  <rect x="380" y="180" width="80" height="30" class="folder" rx="3"/>
+  <text x="420" y="200" text-anchor="middle" class="folder-text">context/</text>
+  
+  <!-- src/utils/ directory -->
+  <rect x="480" y="180" width="70" height="30" class="folder" rx="3"/>
+  <text x="515" y="200" text-anchor="middle" class="folder-text">utils/</text>
+  
+  <!-- Page files -->
+  <rect x="50" y="240" width="120" height="20" class="file" rx="2"/>
+  <text x="110" y="253" text-anchor="middle" class="file-text">LandingPage.jsx</text>
+  
+  <rect x="180" y="240" width="120" height="20" class="file" rx="2"/>
+  <text x="240" y="253" text-anchor="middle" class="file-text">CourseListPage.jsx</text>
+  
+  <rect x="310" y="240" width="130" height="20" class="file" rx="2"/>
+  <text x="375" y="253" text-anchor="middle" class="file-text">CourseDetailPage.jsx</text>
+  
+  <rect x="450" y="240" width="120" height="20" class="file" rx="2"/>
+  <text x="510" y="253" text-anchor="middle" class="file-text">StudentDashboard.jsx</text>
+  
+  <rect x="580" y="240" width="100" height="20" class="file" rx="2"/>
+  <text x="630" y="253" text-anchor="middle" class="file-text">LoginPage.jsx</text>
+  
+  <!-- Component directories -->
+  <rect x="50" y="280" width="90" height="25" class="folder" rx="2"/>
+  <text x="95" y="297" text-anchor="middle" class="folder-text">common/</text>
+  
+  <rect x="150" y="280" width="90" height="25" class="folder" rx="2"/>
+  <text x="195" y="297" text-anchor="middle" class="folder-text">course/</text>
+  
+  <rect x="250" y="280" width="90" height="25" class="folder" rx="2"/>
+  <text x="295" y="297" text-anchor="middle" class="folder-text">auth/</text>
+  
+  <rect x="350" y="280" width="90" height="25" class="folder" rx="2"/>
+  <text x="395" y="297" text-anchor="middle" class="folder-text">projects/</text>
+  
+  <!-- Common components -->
+  <rect x="50" y="320" width="70" height="18" class="file" rx="2"/>
+  <text x="85" y="332" text-anchor="middle" class="file-text">Header.jsx</text>
+  
+  <rect x="130" y="320" width="70" height="18" class="file" rx="2"/>
+  <text x="165" y="332" text-anchor="middle" class="file-text">Footer.jsx</text>
+  
+  <rect x="210" y="320" width="100" height="18" class="file" rx="2"/>
+  <text x="260" y="332" text-anchor="middle" class="file-text">LoadingSpinner.jsx</text>
+  
+  <rect x="320" y="320" width="100" height="18" class="file" rx="2"/>
+  <text x="370" y="332" text-anchor="middle" class="file-text">ErrorBoundary.jsx</text>
+  
+  <!-- Course components -->
+  <rect x="50" y="350" width="80" height="18" class="file" rx="2"/>
+  <text x="90" y="362" text-anchor="middle" class="file-text">CourseCard.jsx</text>
+  
+  <rect x="140" y="350" width="90" height="18" class="file" rx="2"/>
+  <text x="185" y="362" text-anchor="middle" class="file-text">CourseFilters.jsx</text>
+  
+  <rect x="240" y="350" width="90" height="18" class="file" rx="2"/>
+  <text x="285" y="362" text-anchor="middle" class="file-text">VideoPlayer.jsx</text>
+  
+  <rect x="340" y="350" width="80" height="18" class="file" rx="2"/>
+  <text x="380" y="362" text-anchor="middle" class="file-text">CourseList.jsx</text>
+  
+  <!-- Service files -->
+  <rect x="50" y="390" width="60" height="18" class="file" rx="2"/>
+  <text x="80" y="402" text-anchor="middle" class="file-text">api.js</text>
+  
+  <rect x="120" y="390" width="90" height="18" class="file" rx="2"/>
+  <text x="165" y="402" text-anchor="middle" class="file-text">authService.js</text>
+  
+  <rect x="220" y="390" width="100" height="18" class="file" rx="2"/>
+  <text x="270" y="402" text-anchor="middle" class="file-text">courseService.js</text>
+  
+  <rect x="330" y="390" width="120" height="18" class="file" rx="2"/>
+  <text x="390" y="402" text-anchor="middle" class="file-text">enrollmentService.js</text>
+  
+  <!-- Context files -->
+  <rect x="50" y="430" width="100" height="18" class="file" rx="2"/>
+  <text x="100" y="442" text-anchor="middle" class="file-text">AuthContext.jsx</text>
+  
+  <rect x="160" y="430" width="100" height="18" class="file" rx="2"/>
+  <text x="210" y="442" text-anchor="middle" class="file-text">ThemeContext.jsx</text>
+  
+  <rect x="270" y="430" width="140" height="18" class="file" rx="2"/>
+  <text x="340" y="442" text-anchor="middle" class="file-text">ProjectProgressContext.jsx</text>
+  
+  <!-- Public assets -->
+  <rect x="50" y="470" width="60" height="18" class="file" rx="2"/>
+  <text x="80" y="482" text-anchor="middle" class="file-text">index.html</text>
+  
+  <rect x="120" y="470" width="80" height="18" class="file" rx="2"/>
+  <text x="160" y="482" text-anchor="middle" class="file-text">lms_logo.svg</text>
+  
+  <rect x="210" y="470" width="100" height="18" class="file" rx="2"/>
+  <text x="260" y="482" text-anchor="middle" class="file-text">favicon.ico</text>
+  
+  <!-- Legend -->
+  <rect x="500" y="320" width="200" height="120" class="legend-bg" rx="8"/>
+  <text x="600" y="340" text-anchor="middle" class="title" font-size="14">Legend</text>
+  
+  <rect x="520" y="350" width="20" height="15" class="folder" rx="3"/>
+  <text x="550" y="362" class="text" font-size="11">Directory/Folder</text>
+  
+  <rect x="520" y="375" width="20" height="15" class="file" rx="3"/>
+  <text x="550" y="387" class="text" font-size="11">React Component</text>
+  
+  <rect x="520" y="400" width="20" height="15" class="config" rx="3"/>
+  <text x="550" y="412" class="text" font-size="11">Configuration File</text>
+  
+  <!-- Key Features -->
+  <rect x="500" y="460" width="200" height="100" class="features-bg" rx="8"/>
+  <text x="600" y="480" text-anchor="middle" class="title" font-size="14" fill="#1E40AF">Key Features</text>
+  
+  <text x="520" y="500" class="text" font-size="11">• Component-based Architecture</text>
+  <text x="520" y="515" class="text" font-size="11">• Responsive Design with Tailwind</text>
+  <text x="520" y="530" class="text" font-size="11">• State Management with Context</text>
+  <text x="520" y="545" class="text" font-size="11">• API Integration with Services</text>
+</svg>

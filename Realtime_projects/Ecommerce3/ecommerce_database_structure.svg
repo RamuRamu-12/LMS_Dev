@@ -1,0 +1,182 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #1f2937; }
+      .table { font-family: Arial, sans-serif; font-size: 12px; fill: #1e40af; font-weight: 600; }
+      .field { font-family: Arial, sans-serif; font-size: 11px; fill: #059669; }
+      .type { font-family: Arial, sans-serif; font-size: 10px; fill: #7c3aed; }
+      .enum { font-family: Arial, sans-serif; font-size: 11px; fill: #dc2626; }
+      .rect-table { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
+      .rect-field { fill: #d1fae5; stroke: #10b981; stroke-width: 1; }
+      .rect-enum { fill: #fecaca; stroke: #dc2626; stroke-width: 2; }
+      .rect-relation { fill: #fef3c7; stroke: #f59e0b; stroke-width: 1; }
+      .legend-text { font-family: Arial, sans-serif; font-size: 11px; fill: #374151; }
+      .pk { fill: #fbbf24; stroke: #f59e0b; stroke-width: 2; }
+      .fk { fill: #a78bfa; stroke: #8b5cf6; stroke-width: 1; }
+    </style>
+  </defs>
+  
+  <!-- Title -->
+  <text x="20" y="30" class="title">E-Commerce Database Schema Structure</text>
+  
+  <!-- Users Table -->
+  <rect x="20" y="60" width="200" height="120" class="rect-table" rx="5"/>
+  <text x="30" y="80" class="table">users</text>
+  <rect x="30" y="90" width="180" height="20" class="pk" rx="2"/>
+  <text x="35" y="103" class="field">id (String, PK)</text>
+  <rect x="30" y="110" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="35" y="121" class="field">email (String, UNIQUE)</text>
+  <rect x="30" y="125" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="35" y="136" class="field">name (String?)</text>
+  <rect x="30" y="140" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="35" y="151" class="field">password (String?)</text>
+  <rect x="30" y="155" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="35" y="166" class="field">createdAt, updatedAt</text>
+  
+  <!-- Products Table -->
+  <rect x="250" y="60" width="200" height="140" class="rect-table" rx="5"/>
+  <text x="260" y="80" class="table">products</text>
+  <rect x="260" y="90" width="180" height="20" class="pk" rx="2"/>
+  <text x="265" y="103" class="field">id (String, PK)</text>
+  <rect x="260" y="110" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="121" class="field">name (String, UNIQUE)</text>
+  <rect x="260" y="125" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="136" class="field">description (String?)</text>
+  <rect x="260" y="140" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="151" class="field">price (Decimal)</text>
+  <rect x="260" y="155" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="166" class="field">image (String?)</text>
+  <rect x="260" y="170" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="181" class="field">stock (Int)</text>
+  <rect x="260" y="185" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="196" class="field">isActive (Boolean)</text>
+  
+  <!-- Orders Table -->
+  <rect x="480" y="60" width="200" height="140" class="rect-table" rx="5"/>
+  <text x="490" y="80" class="table">orders</text>
+  <rect x="490" y="90" width="180" height="20" class="pk" rx="2"/>
+  <text x="495" y="103" class="field">id (String, PK)</text>
+  <rect x="490" y="110" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="121" class="field">orderNumber (String, UNIQUE)</text>
+  <rect x="490" y="125" width="180" height="15" class="fk" rx="2"/>
+  <text x="495" y="136" class="field">userId (String, FK)</text>
+  <rect x="490" y="140" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="151" class="field">total (Decimal)</text>
+  <rect x="490" y="155" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="166" class="field">status (OrderStatus)</text>
+  <rect x="490" y="170" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="181" class="field">shippingAddress (Json?)</text>
+  <rect x="490" y="185" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="196" class="field">createdAt, updatedAt</text>
+  
+  <!-- Order Items Table -->
+  <rect x="20" y="220" width="200" height="100" class="rect-table" rx="5"/>
+  <text x="30" y="240" class="table">order_items</text>
+  <rect x="30" y="250" width="180" height="20" class="pk" rx="2"/>
+  <text x="35" y="263" class="field">id (String, PK)</text>
+  <rect x="30" y="270" width="180" height="15" class="fk" rx="2"/>
+  <text x="35" y="281" class="field">orderId (String, FK)</text>
+  <rect x="30" y="285" width="180" height="15" class="fk" rx="2"/>
+  <text x="35" y="296" class="field">productId (String, FK)</text>
+  <rect x="30" y="300" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="35" y="311" class="field">quantity (Int)</text>
+  <rect x="30" y="315" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="35" y="326" class="field">price (Decimal)</text>
+  
+  <!-- Cart Items Table -->
+  <rect x="250" y="220" width="200" height="100" class="rect-table" rx="5"/>
+  <text x="260" y="240" class="table">cart_items</text>
+  <rect x="260" y="250" width="180" height="20" class="pk" rx="2"/>
+  <text x="265" y="263" class="field">id (String, PK)</text>
+  <rect x="260" y="270" width="180" height="15" class="fk" rx="2"/>
+  <text x="265" y="281" class="field">userId (String, FK)</text>
+  <rect x="260" y="285" width="180" height="15" class="fk" rx="2"/>
+  <text x="265" y="296" class="field">productId (String, FK)</text>
+  <rect x="260" y="300" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="311" class="field">quantity (Int)</text>
+  <rect x="260" y="315" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="265" y="326" class="field">UNIQUE(userId, productId)</text>
+  
+  <!-- Order Status Enum -->
+  <rect x="480" y="220" width="200" height="100" class="rect-enum" rx="5"/>
+  <text x="490" y="240" class="enum">OrderStatus (Enum)</text>
+  <rect x="490" y="250" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="261" class="field">PENDING</text>
+  <rect x="490" y="265" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="276" class="field">PROCESSING</text>
+  <rect x="490" y="280" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="291" class="field">SHIPPED</text>
+  <rect x="490" y="295" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="306" class="field">DELIVERED</text>
+  <rect x="490" y="310" width="180" height="15" class="rect-field" rx="2"/>
+  <text x="495" y="321" class="field">CANCELLED</text>
+  
+  <!-- Relationships -->
+  <!-- Users to Orders -->
+  <line x1="220" y1="120" x2="250" y2="120" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="230" y="115" class="legend-text" font-size="10">1:N</text>
+  
+  <!-- Users to Cart Items -->
+  <line x1="120" y1="180" x2="120" y2="220" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="125" y="200" class="legend-text" font-size="10">1:N</text>
+  
+  <!-- Products to Order Items -->
+  <line x1="350" y1="130" x2="350" y2="220" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="355" y="175" class="legend-text" font-size="10">1:N</text>
+  
+  <!-- Products to Cart Items -->
+  <line x1="350" y1="200" x2="250" y2="200" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="290" y="195" class="legend-text" font-size="10">1:N</text>
+  
+  <!-- Orders to Order Items -->
+  <line x1="580" y1="130" x2="580" y2="220" stroke="#3b82f6" stroke-width="3" marker-end="url(#arrowhead)"/>
+  <text x="585" y="175" class="legend-text" font-size="10">1:N</text>
+  
+  <!-- Order Status to Orders -->
+  <line x1="580" y1="200" x2="480" y2="200" stroke="#dc2626" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="520" y="195" class="legend-text" font-size="10">enum</text>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
+    </marker>
+  </defs>
+  
+  <!-- Legend -->
+  <rect x="20" y="350" width="300" height="200" fill="#f9fafb" stroke="#d1d5db" stroke-width="1" rx="5"/>
+  <text x="30" y="370" class="legend-text" font-weight="bold">Database Schema Legend</text>
+  
+  <rect x="30" y="380" width="20" height="15" class="rect-table" rx="2"/>
+  <text x="60" y="392" class="legend-text">Database Table</text>
+  
+  <rect x="30" y="400" width="20" height="15" class="pk" rx="2"/>
+  <text x="60" y="412" class="legend-text">Primary Key</text>
+  
+  <rect x="30" y="420" width="20" height="15" class="fk" rx="2"/>
+  <text x="60" y="432" class="legend-text">Foreign Key</text>
+  
+  <rect x="30" y="440" width="20" height="15" class="rect-field" rx="2"/>
+  <text x="60" y="452" class="legend-text">Table Field</text>
+  
+  <rect x="30" y="460" width="20" height="15" class="rect-enum" rx="2"/>
+  <text x="60" y="472" class="legend-text">Enum Type</text>
+  
+  <rect x="30" y="480" width="20" height="15" class="rect-relation" rx="2"/>
+  <text x="60" y="492" class="legend-text">Relationship</text>
+  
+  <!-- Key Features -->
+  <rect x="350" y="350" width="300" height="200" fill="#eff6ff" stroke="#3b82f6" stroke-width="1" rx="5"/>
+  <text x="360" y="370" class="legend-text" font-weight="bold">Database Features</text>
+  
+  <text x="360" y="390" class="legend-text">• PostgreSQL Database</text>
+  <text x="360" y="405" class="legend-text">• Prisma ORM Integration</text>
+  <text x="360" y="420" class="legend-text">• User Authentication</text>
+  <text x="360" y="435" class="legend-text">• Product Management</text>
+  <text x="360" y="450" class="legend-text">• Order Processing</text>
+  <text x="360" y="465" class="legend-text">• Shopping Cart</text>
+  <text x="360" y="480" class="legend-text">• Status Tracking</text>
+  <text x="360" y="495" class="legend-text">• Data Relationships</text>
+  <text x="360" y="510" class="legend-text">• Type Safety</text>
+  <text x="360" y="525" class="legend-text">• Migration Support</text>
+</svg>

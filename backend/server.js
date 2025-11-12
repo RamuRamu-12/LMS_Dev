@@ -7,6 +7,12 @@ const rateLimit = require('express-rate-limit');
 const passport = require('passport');
 require('dotenv').config();
 
+// Force development mode to disable SSL for local database
+// This must be set BEFORE requiring models to ensure correct database config
+if (!process.env.DB_HOST || process.env.DB_HOST === 'localhost' || process.env.DB_HOST.includes('localhost')) {
+  process.env.NODE_ENV = 'development';
+}
+
 const { sequelize } = require('./models');
 const passportConfig = require('./config/passport');
 const authRoutes = require('./routes/auth');
@@ -19,6 +25,7 @@ const chapterProgressRoutes = require('./routes/chapterProgress');
 const pdfRoutes = require('./routes/pdf');
 const projectRoutes = require('./routes/projects');
 const progressRoutes = require('./routes/progress-simple');
+// Realtime projects routes (for students with permission)
 const realtimeProjectsRoutes = require('./routes/realtimeProjects');
 const hackathonRoutes = require('./routes/hackathons');
 const groupRoutes = require('./routes/groups');
@@ -48,17 +55,45 @@ if (!process.env.JWT_REFRESH_SECRET) {
 }
 
 // Security middleware
+// Configure Helmet with CSP that allows iframe embedding from frontend
+// Support both local development and production deployments
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const frameAncestors = [
+  "'self'",
+  frontendUrl,
+  // Support localhost for development
+  "http://localhost:3000",
+  "https://localhost:3000",
+  "http://localhost:*",
+  "https://localhost:*",
+  // Support production domain if specified
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+].filter(Boolean);
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'", "https://accounts.google.com"],
-      connectSrc: ["'self'", "https://accounts.google.com"],
+      imgSrc: ["'self'", "data:", "https:", "https://us-assets.i.posthog.com", "https://eu-assets.i.posthog.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://app.posthog.com", "https://us-assets.i.posthog.com", "https://eu-assets.i.posthog.com"],
+      connectSrc: [
+        "'self'", 
+        "https://accounts.google.com",
+        "https://app.posthog.com",
+        "https://us.i.posthog.com",
+        "https://eu.i.posthog.com",
+        "https://i.posthog.com",
+        "https://us-assets.i.posthog.com",
+        "https://eu-assets.i.posthog.com"
+      ],
+      // Allow framing from frontend origin for project iframes (supports both local and production)
+      frameAncestors: frameAncestors,
     },
   },
+  // Disable frameGuard for realtime projects routes (handled by CSP frameAncestors)
+  frameguard: { action: 'sameorigin' },
 }));
 
 app.use(cors());
@@ -215,6 +250,15 @@ app.use('/api/files', fileRoutes);
 app.use('/api/progress', chapterProgressRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/projects', projectRoutes);
+// Middleware to disable CSP for realtime projects (to allow iframe embedding)
+app.use('/api/realtime-projects', (req, res, next) => {
+  // Remove CSP headers that block iframe embedding
+  res.removeHeader('Content-Security-Policy');
+  res.removeHeader('X-Frame-Options');
+  next();
+});
+
+// Realtime projects API (for students with permission)
 app.use('/api/realtime-projects', realtimeProjectsRoutes);
 app.use('/api/hackathons', hackathonRoutes);
 app.use('/api/groups', groupRoutes);
@@ -237,7 +281,7 @@ console.log('- /api/files');
 console.log('- /api/courses/:courseId/chapters');
 console.log('- /api/progress (chapter progress tracking)');
 console.log('- /api/pdf (PDF proxy for CORS)');
-console.log('- /api/projects (realtime projects)');
+// console.log('- /api/projects (realtime projects)'); // COMMENTED OUT (Admin side removed)
 console.log('- /api/tests (test management)');
 console.log('- /api/test-taking (student test taking)');
 console.log('- /api/certificates (certificate management)');

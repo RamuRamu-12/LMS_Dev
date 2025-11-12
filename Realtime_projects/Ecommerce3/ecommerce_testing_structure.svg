@@ -1,0 +1,187 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; fill: #1f2937; }
+      .directory { font-family: Arial, sans-serif; font-size: 12px; fill: #1e40af; }
+      .file { font-family: Arial, sans-serif; font-size: 12px; fill: #059669; }
+      .config { font-family: Arial, sans-serif; font-size: 12px; fill: #ea580c; }
+      .rect-directory { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
+      .rect-file { fill: #d1fae5; stroke: #10b981; stroke-width: 2; }
+      .rect-config { fill: #fed7aa; stroke: #f97316; stroke-width: 2; }
+      .rect-test { fill: #fef3c7; stroke: #f59e0b; stroke-width: 2; }
+      .rect-unit { fill: #d1fae5; stroke: #10b981; stroke-width: 2; }
+      .rect-integration { fill: #dbeafe; stroke: #3b82f6; stroke-width: 2; }
+      .rect-e2e { fill: #fecaca; stroke: #dc2626; stroke-width: 2; }
+      .legend-text { font-family: Arial, sans-serif; font-size: 11px; fill: #374151; }
+    </style>
+  </defs>
+  
+  <!-- Title -->
+  <text x="20" y="30" class="title">E-Commerce Testing Architecture</text>
+  
+  <!-- Root Directory -->
+  <rect x="20" y="50" width="140" height="30" class="rect-directory" rx="5"/>
+  <text x="30" y="70" class="directory">ecommerce-testing/</text>
+  
+  <!-- Configuration Files -->
+  <rect x="20" y="90" width="80" height="25" class="rect-config" rx="3"/>
+  <text x="25" y="107" class="config">jest.config.js</text>
+  
+  <rect x="110" y="90" width="80" height="25" class="rect-config" rx="3"/>
+  <text x="115" y="107" class="config">jest.setup.js</text>
+  
+  <rect x="200" y="90" width="80" height="25" class="rect-config" rx="3"/>
+  <text x="205" y="107" class="config">package.json</text>
+  
+  <rect x="290" y="90" width="80" height="25" class="rect-config" rx="3"/>
+  <text x="295" y="107" class="config">tsconfig.json</text>
+  
+  <!-- Test Directories -->
+  <rect x="20" y="130" width="60" height="25" class="rect-directory" rx="3"/>
+  <text x="25" y="147" class="directory">__tests__/</text>
+  
+  <rect x="90" y="130" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="95" y="147" class="directory">cypress/</text>
+  
+  <rect x="180" y="130" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="185" y="147" class="directory">playwright/</text>
+  
+  <rect x="270" y="130" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="275" y="147" class="directory">test-utils/</text>
+  
+  <!-- Jest Tests Structure -->
+  <rect x="20" y="170" width="60" height="25" class="rect-directory" rx="3"/>
+  <text x="25" y="187" class="directory">__tests__/</text>
+  
+  <!-- Unit Tests -->
+  <rect x="90" y="170" width="80" height="20" class="rect-directory" rx="2"/>
+  <text x="95" y="183" class="directory">components/</text>
+  
+  <rect x="180" y="170" width="60" height="20" class="rect-directory" rx="2"/>
+  <text x="185" y="183" class="directory">pages/</text>
+  
+  <rect x="250" y="170" width="60" height="20" class="rect-directory" rx="2"/>
+  <text x="255" y="183" class="directory">api/</text>
+  
+  <rect x="320" y="170" width="60" height="20" class="rect-directory" rx="2"/>
+  <text x="325" y="183" class="directory">lib/</text>
+  
+  <!-- Component Tests -->
+  <rect x="90" y="200" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="95" y="212" class="file">button.test.tsx</text>
+  
+  <rect x="180" y="200" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="185" y="212" class="file">card.test.tsx</text>
+  
+  <rect x="270" y="200" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="275" y="212" class="file">input.test.tsx</text>
+  
+  <rect x="360" y="200" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="365" y="212" class="file">badge.test.tsx</text>
+  
+  <!-- Page Tests -->
+  <rect x="90" y="230" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="95" y="242" class="file">home.test.tsx</text>
+  
+  <rect x="180" y="230" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="185" y="242" class="file">products.test.tsx</text>
+  
+  <rect x="270" y="230" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="275" y="242" class="file">cart.test.tsx</text>
+  
+  <rect x="360" y="230" width="80" height="18" class="rect-unit" rx="2"/>
+  <text x="365" y="242" class="file">checkout.test.tsx</text>
+  
+  <!-- API Tests -->
+  <rect x="90" y="260" width="80" height="18" class="rect-integration" rx="2"/>
+  <text x="95" y="272" class="file">auth.test.ts</text>
+  
+  <rect x="180" y="260" width="80" height="18" class="rect-integration" rx="2"/>
+  <text x="185" y="272" class="file">products.test.ts</text>
+  
+  <rect x="270" y="260" width="80" height="18" class="rect-integration" rx="2"/>
+  <text x="275" y="272" class="file">orders.test.ts</text>
+  
+  <rect x="360" y="260" width="80" height="18" class="rect-integration" rx="2"/>
+  <text x="365" y="272" class="file">cart.test.ts</text>
+  
+  <!-- E2E Tests -->
+  <rect x="20" y="300" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="25" y="317" class="directory">cypress/</text>
+  
+  <rect x="110" y="300" width="80" height="18" class="rect-e2e" rx="2"/>
+  <text x="115" y="312" class="file">user-journey.cy.ts</text>
+  
+  <rect x="200" y="300" width="80" height="18" class="rect-e2e" rx="2"/>
+  <text x="205" y="312" class="file">checkout.cy.ts</text>
+  
+  <rect x="290" y="300" width="80" height="18" class="rect-e2e" rx="2"/>
+  <text x="295" y="312" class="file">admin.cy.ts</text>
+  
+  <!-- Playwright Tests -->
+  <rect x="20" y="330" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="25" y="347" class="directory">playwright/</text>
+  
+  <rect x="110" y="330" width="80" height="18" class="rect-e2e" rx="2"/>
+  <text x="115" y="342" class="file">product-search.spec.ts</text>
+  
+  <rect x="200" y="330" width="80" height="18" class="rect-e2e" rx="2"/>
+  <text x="205" y="342" class="file">payment-flow.spec.ts</text>
+  
+  <rect x="290" y="330" width="80" height="18" class="rect-e2e" rx="2"/>
+  <text x="295" y="342" class="file">mobile-responsive.spec.ts</text>
+  
+  <!-- Test Utilities -->
+  <rect x="20" y="360" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="25" y="377" class="directory">test-utils/</text>
+  
+  <rect x="110" y="360" width="80" height="18" class="rect-file" rx="2"/>
+  <text x="115" y="372" class="file">test-helpers.ts</text>
+  
+  <rect x="200" y="360" width="80" height="18" class="rect-file" rx="2"/>
+  <text x="205" y="372" class="file">mock-data.ts</text>
+  
+  <rect x="290" y="360" width="80" height="18" class="rect-file" rx="2"/>
+  <text x="295" y="372" class="file">test-setup.ts</text>
+  
+  <!-- Test Coverage -->
+  <rect x="20" y="390" width="80" height="25" class="rect-directory" rx="3"/>
+  <text x="25" y="407" class="directory">coverage/</text>
+  
+  <rect x="110" y="390" width="80" height="18" class="rect-file" rx="2"/>
+  <text x="115" y="402" class="file">lcov-report/</text>
+  
+  <rect x="200" y="390" width="80" height="18" class="rect-file" rx="2"/>
+  <text x="205" y="402" class="file">coverage.json</text>
+  
+  <!-- Legend -->
+  <rect x="500" y="50" width="250" height="200" fill="#f9fafb" stroke="#d1d5db" stroke-width="1" rx="5"/>
+  <text x="510" y="70" class="legend-text" font-weight="bold">Testing Types Legend</text>
+  
+  <rect x="510" y="80" width="20" height="15" class="rect-unit" rx="2"/>
+  <text x="540" y="92" class="legend-text">Unit Tests</text>
+  
+  <rect x="510" y="105" width="20" height="15" class="rect-integration" rx="2"/>
+  <text x="540" y="117" class="legend-text">Integration Tests</text>
+  
+  <rect x="510" y="130" width="20" height="15" class="rect-e2e" rx="2"/>
+  <text x="540" y="142" class="legend-text">E2E Tests</text>
+  
+  <rect x="510" y="155" width="20" height="15" class="rect-config" rx="2"/>
+  <text x="540" y="167" class="legend-text">Configuration</text>
+  
+  <!-- Testing Features -->
+  <rect x="500" y="270" width="250" height="200" fill="#eff6ff" stroke="#3b82f6" stroke-width="1" rx="5"/>
+  <text x="510" y="290" class="legend-text" font-weight="bold">E-commerce Testing Features</text>
+  
+  <text x="510" y="310" class="legend-text">• Component Testing (Jest + RTL)</text>
+  <text x="510" y="325" class="legend-text">• API Integration Testing</text>
+  <text x="510" y="340" class="legend-text">• User Journey Testing</text>
+  <text x="510" y="355" class="legend-text">• Payment Flow Testing</text>
+  <text x="510" y="370" class="legend-text">• Cart Functionality Testing</text>
+  <text x="510" y="385" class="legend-text">• Admin Panel Testing</text>
+  <text x="510" y="400" class="legend-text">• Mobile Responsive Testing</text>
+  <text x="510" y="415" class="legend-text">• Database Testing</text>
+  <text x="510" y="430" class="legend-text">• Authentication Testing</text>
+  <text x="510" y="445" class="legend-text">• Performance Testing</text>
+</svg>

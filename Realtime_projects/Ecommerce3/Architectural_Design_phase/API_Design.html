@@ -1,0 +1,273 @@
+<div class="content-body">
+  <div class="content-section">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h3 style="font-size: 1.875rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">API Design</h3>
+      <p style="font-size: 1.125rem; color: #4b5563; max-width: 48rem; margin: 0 auto;">
+        The API design defines the communication interface between the frontend and backend, 
+        ensuring consistent and efficient data exchange with robust security and performance.
+      </p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+      <div style="background: linear-gradient(to right, #f5f3ff, #ede9fe); padding: 1.5rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+        <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937;">E-Commerce API Architecture Diagram</h4>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-top: 0.25rem;">Complete API structure showing endpoints, authentication, and data flow</p>
+      </div>
+      <div style="padding: 1.5rem;">
+        <div style="display: flex; justify-content: center;">
+          <img 
+            src="../api_design_clear.svg" 
+            alt="E-Commerce API Design Diagram" 
+            style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e5e7eb;"
+          />
+        </div>
+      </div>
+    </div>
+
+     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; width: 100%;">
+      <div style="background: linear-gradient(to bottom right, #eff6ff, #dbeafe); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #bfdbfe;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #3b82f6; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🔐</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Authentication APIs</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Secure user authentication and authorization</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            User Registration & Login
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            JWT Token Management
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Password Reset & Recovery
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #3b82f6; border-radius: 50%;"></span>
+            Profile Management
+          </li>
+        </ul>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #f0fdf4, #dcfce7); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #bbf7d0;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #10b981; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">📦</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Product APIs</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Product catalog and inventory management</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Product CRUD Operations
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Category Management
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Search & Filtering
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #10b981; border-radius: 50%;"></span>
+            Inventory Tracking
+          </li>
+        </ul>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #faf5ff, #f3e8ff); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #e9d5ff;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #9333ea; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🛒</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Order APIs</h4>
+        </div>
+        <p style="font-size: 0.875rem; color: #4b5563; margin-bottom: 1rem;">Shopping cart and order processing</p>
+        <ul style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #374151;">
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Cart Management
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Order Processing
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Payment Integration
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 0.5rem; height: 0.5rem; background: #9333ea; border-radius: 50%;"></span>
+            Order Tracking
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">RESTful API Endpoints</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; width: 100%;">
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Authentication Endpoints</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">POST</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/auth/register</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">User registration</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">POST</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/auth/login</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">User login</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #dbeafe; color: #1e40af; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">GET</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/auth/profile</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">Get user profile</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #eff6ff; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #fef3c7; color: #92400e; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">PUT</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/auth/profile</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">Update profile</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 style="font-size: 1.125rem; font-weight: 500; color: #1f2937; margin-bottom: 1rem;">Product Endpoints</h5>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #dbeafe; color: #1e40af; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">GET</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/products</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">Get all products</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #dbeafe; color: #1e40af; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">GET</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/products/:id</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">Get product by ID</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #dcfce7; color: #166534; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">POST</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/products</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">Create product</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 0.5rem;">
+              <span style="padding: 0.25rem 0.5rem; background: #fef3c7; color: #92400e; border-radius: 0.25rem; font-size: 0.75rem; font-family: monospace;">PUT</span>
+              <span style="font-family: monospace; color: #4b5563; font-size: 0.875rem;">/api/products/:id</span>
+              <span style="font-size: 0.875rem; color: #6b7280;">Update product</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; width: 100%;">
+      <div style="background: linear-gradient(to bottom right, #fffbeb, #fef3c7); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #fde68a;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #f59e0b; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">📋</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Request/Response Standards</h4>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Data Format</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• JSON for all requests/responses</li>
+              <li>• Consistent error message format</li>
+              <li>• Standardized HTTP status codes</li>
+            </ul>
+          </div>
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Pagination</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• Limit and offset parameters</li>
+              <li>• Total count in response headers</li>
+              <li>• Consistent pagination metadata</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(to bottom right, #fef2f2, #fee2e2); border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #fecaca;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <div style="width: 2.5rem; height: 2.5rem; background: #ef4444; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+            <span style="color: #ffffff; font-size: 1.125rem;">🛡️</span>
+          </div>
+          <h4 style="font-size: 1.125rem; font-weight: 600; color: #1f2937;">Security Features</h4>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Authentication</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• JWT token-based authentication</li>
+              <li>• Role-based access control (RBAC)</li>
+              <li>• Token refresh mechanism</li>
+            </ul>
+          </div>
+          <div style="background: #ffffff; border-radius: 0.5rem; padding: 0.75rem;">
+            <h5 style="font-size: 0.875rem; font-weight: 500; color: #1f2937; margin-bottom: 0.5rem;">Protection</h5>
+            <ul style="font-size: 0.75rem; color: #4b5563; display: flex; flex-direction: column; gap: 0.25rem; list-style: none; padding: 0;">
+              <li>• Rate limiting per endpoint</li>
+              <li>• Input validation & sanitization</li>
+              <li>• CORS configuration</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 2rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">API Performance & Monitoring</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; width: 100%;">
+        <div style="text-align: center; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⚡</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Response Time</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Average &lt; 200ms</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📊</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Monitoring</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Real-time metrics</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f9fafb; border-radius: 0.5rem;">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔄</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Caching</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Redis integration</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: linear-gradient(to right, #f9fafb, #f3f4f6); border-radius: 0.75rem; padding: 1.5rem;">
+      <h4 style="font-size: 1.25rem; font-weight: 600; color: #1f2937; margin-bottom: 1.5rem;">API Technology Stack</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; width: 100%;">
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🚀</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Next.js API</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">API Routes</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔧</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Prisma</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Database ORM</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔐</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">JWT</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">Authentication</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #ffffff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📝</div>
+          <div style="font-size: 0.875rem; font-weight: 500; color: #1f2937;">Swagger</div>
+          <div style="font-size: 0.75rem; color: #4b5563;">API Documentation</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

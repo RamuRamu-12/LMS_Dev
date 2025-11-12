@@ -1,0 +1,31 @@
+<svg width="200" height="60" viewBox="0 0 200 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon Section -->
+  <g transform="translate(10, 10)">
+    <!-- Bar Chart Bars -->
+    <rect x="0" y="25" width="6" height="15" fill="#1e3a8a" rx="1"/>
+    <rect x="8" y="20" width="6" height="20" fill="#1e3a8a" rx="1"/>
+    <rect x="16" y="15" width="6" height="25" fill="#1e3a8a" rx="1"/>
+    
+    <!-- Arrow -->
+    <path d="M12 10 L20 5 L18 7 L22 7 L22 9 L18 9 L20 11 Z" fill="#1e3a8a"/>
+    
+    <!-- Pixelated Data Points -->
+    <rect x="2" y="5" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="5" y="3" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="8" y="6" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="11" y="4" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="14" y="7" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="17" y="2" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="20" y="8" width="2" height="2" fill="#1e3a8a"/>
+    <rect x="23" y="5" width="2" height="2" fill="#1e3a8a"/>
+  </g>
+  
+  <!-- Text Section -->
+  <g transform="translate(50, 20)">
+    <!-- GNANAM text in dark blue -->
+    <text x="0" y="20" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1e3a8a">GNANAM</text>
+    
+    <!-- AI text in orange -->
+    <text x="85" y="20" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#f97316">AI</text>
+  </g>
+</svg>
