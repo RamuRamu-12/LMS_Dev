@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { courseService } from '../../services/courseService'
@@ -71,6 +71,18 @@ const AllCoursesModal = ({ isOpen, onClose }) => {
     }
   }
 
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    const { style } = document.body
+    const previousOverflow = style.overflow
+    style.overflow = 'hidden'
+
+    return () => {
+      style.overflow = previousOverflow
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (
@@ -79,25 +91,24 @@ const AllCoursesModal = ({ isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
       >
-        <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-            onClick={onClose}
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full"
-          >
-            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-              <div className="flex items-center justify-between mb-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-gray-500/70 transition-opacity"
+          onClick={onClose}
+        />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="relative w-full max-w-6xl bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all"
+        >
+          <div className="bg-white px-4 pt-5 pb-4 sm:px-8 sm:pt-8 sm:pb-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6 sticky top-0 bg-white z-10 pb-4 border-b border-gray-100">
                 <h3 className="text-2xl font-bold text-gray-900">
                   All Available Courses
                 </h3>
@@ -111,12 +122,13 @@ const AllCoursesModal = ({ isOpen, onClose }) => {
                 </button>
               </div>
 
+            <div className="max-h-[70vh] overflow-y-auto pr-1 sm:pr-2">
               {coursesLoading ? (
                 <div className="flex justify-center py-12">
                   <LoadingSpinner size="lg" />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-96 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
                   {courses.map((course, index) => (
                     <motion.div
                       key={course.id}
@@ -238,8 +250,8 @@ const AllCoursesModal = ({ isOpen, onClose }) => {
                 </div>
               )}
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </motion.div>
     </AnimatePresence>
   )

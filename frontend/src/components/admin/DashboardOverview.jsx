@@ -1,51 +1,31 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return 'Just now'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = now - date
+
+  const seconds = Math.floor(diff / 1000)
+  if (seconds < 60) return `${seconds}s ago`
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return date.toLocaleDateString()
+}
+
 const DashboardOverview = ({ courses, users, stats }) => {
   const recentCourses = courses?.slice(0, 5) || []
   const recentUsers = users?.slice(0, 5) || []
 
-  const activities = [
-    {
-      id: 1,
-      type: 'course',
-      action: 'created',
-      title: 'React Fundamentals',
-      user: 'John Doe',
-      time: '2 hours ago',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      )
-    },
-    {
-      id: 2,
-      type: 'user',
-      action: 'registered',
-      title: 'New student enrolled',
-      user: 'Jane Smith',
-      time: '4 hours ago',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-      )
-    },
-    {
-      id: 3,
-      type: 'enrollment',
-      action: 'completed',
-      title: 'JavaScript Basics',
-      user: 'Mike Johnson',
-      time: '6 hours ago',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      )
-    }
-  ]
+  const recentStudentRegistrations = (users || [])
+    .filter(user => user.role === 'student')
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5)
 
   return (
     <div className="space-y-8">
@@ -176,26 +156,39 @@ const DashboardOverview = ({ courses, users, stats }) => {
           </div>
           
           <div className="space-y-4">
-            {activities.map((activity, index) => (
-              <motion.div
-                key={activity.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
-                className="flex items-start space-x-3"
-              >
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-xs">
-                  {activity.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900">
-                    <span className="font-medium">{activity.user}</span> {activity.action}{' '}
-                    <span className="font-medium">{activity.title}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">{activity.time}</p>
-                </div>
-              </motion.div>
-            ))}
+            {recentStudentRegistrations.length > 0 ? (
+              recentStudentRegistrations.map((student, index) => (
+                <motion.div
+                  key={student.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="flex items-start space-x-3"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold uppercase">
+                    {(student.name || student.email || '?').charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">
+                      {student.name || 'Unnamed Student'}
+                    </p>
+                    {student.email && (
+                      <p className="text-xs text-gray-500 truncate">{student.email}</p>
+                    )}
+                    <p className="text-xs text-gray-400 mt-1">
+                      Registered {formatRelativeTime(student.created_at)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <p className="text-sm text-gray-500">No recent student registrations.</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

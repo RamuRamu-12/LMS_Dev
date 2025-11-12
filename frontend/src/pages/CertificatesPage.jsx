@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { useQuery } from 'react-query'
+import { jsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
 import { certificateService } from '../services/certificateService'
 import Header from '../components/common/Header'
 import Footer from '../components/common/Footer'
@@ -37,243 +39,236 @@ const CertificatesPage = () => {
   }
 
   const handleDownloadCertificate = async (certificate) => {
+    let downloadContainer = null
     try {
       const response = await certificateService.downloadCertificate(certificate.id)
       const certificateData = response.data.certificate
-      
-      // Create certificate HTML content with logo
-      const certificateHTML = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Certificate - ${certificateData.metadata?.courseName || 'Course Completion'}</title>
-            <meta charset="UTF-8">
-            <style>
-              @media print {
-                body { margin: 0; padding: 0; background: white; }
-                .no-print { display: none; }
-                .certificate { box-shadow: none; border: 2px solid #e2e8f0; }
-              }
-              body { 
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                margin: 0; 
-                padding: 20px; 
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-              }
-              .certificate { 
-                background: white; 
-                padding: 60px; 
-                border-radius: 20px; 
-                box-shadow: 0 25px 50px rgba(0,0,0,0.15); 
-                text-align: center;
-                max-width: 800px;
-                margin: 0 auto;
-                position: relative;
-                overflow: hidden;
-                min-height: 600px;
-              }
-              .certificate::before {
-                content: '';
-                position: absolute;
-                top: -50%;
-                left: -50%;
-                width: 200%;
-                height: 200%;
-                background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-                pointer-events: none;
-                z-index: 0;
-              }
-              .watermark {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%) rotate(-45deg);
-                width: 1000px;
-                height: 1000px;
-                opacity: 0.05;
-                z-index: 0;
-                pointer-events: none;
-              }
-              .watermark img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-              }
-              .logo-container {
-                position: absolute;
-                top: 30px;
-                left: 30px;
-                width: 200px;
-                height: 100px;
-                z-index: 2;
-              }
-              .logo-container img {
-                max-width: 100%;
-                max-height: 100%;
-                object-fit: contain;
-              }
-              .header { 
-                color: #4a5568; 
-                margin-bottom: 40px; 
-                position: relative;
-                z-index: 1;
-                margin-top: 20px;
-              }
-              .title { 
-                font-size: 42px; 
-                font-weight: bold; 
-                color: #2d3748; 
-                margin-bottom: 20px;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-              }
-              .subtitle { 
-                font-size: 20px; 
-                color: #718096; 
-                margin-bottom: 40px;
-                font-style: italic;
-              }
-              .student-name { 
-                font-size: 32px; 
-                font-weight: bold; 
-                color: #2d3748; 
-                margin-bottom: 20px;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-                position: relative;
-                z-index: 1;
-              }
-              .course-title { 
-                font-size: 28px; 
-                color: #4a5568; 
-                margin-bottom: 30px;
-                font-weight: 500;
-                position: relative;
-                z-index: 1;
-              }
-              .details { 
-                display: flex; 
-                justify-content: space-between; 
-                margin-top: 50px; 
-                font-size: 16px; 
-                color: #718096;
-                border-top: 2px solid #e2e8f0;
-                padding-top: 30px;
-                position: relative;
-                z-index: 1;
-              }
-              .certificate-id { 
-                font-size: 14px; 
-                color: #a0aec0; 
-                margin-top: 30px;
-                font-family: 'Courier New', monospace;
-                position: relative;
-                z-index: 1;
-              }
-              .verification-code {
-                font-size: 12px;
-                color: #a0aec0;
-                margin-top: 10px;
-                font-family: 'Courier New', monospace;
-                position: relative;
-                z-index: 1;
-              }
-              .score {
-                background: linear-gradient(135deg, #48bb78, #38a169);
-                color: white;
-                padding: 10px 20px;
-                border-radius: 25px;
-                display: inline-block;
-                margin: 20px 0;
-                font-weight: bold;
-                font-size: 18px;
-                position: relative;
-                z-index: 1;
-              }
-              .print-button {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 12px 24px;
-                background: #6366f1;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: 600;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                z-index: 1000;
-              }
-              .print-button:hover {
-                background: #4f46e5;
-              }
-            </style>
-          </head>
-          <body>
-            <button class="print-button no-print" onclick="window.print()">Download as PDF</button>
-            <div class="certificate">
-              <div class="watermark">
-                <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
-              </div>
-              <div class="logo-container">
-                <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
-              </div>
-              <div class="header">
-                <h1>CERTIFICATE OF COMPLETION</h1>
-                <p class="subtitle">This is to certify that</p>
-              </div>
-              <div class="student-name">${certificateData.metadata?.studentName || 'Student'}</div>
-              <div class="course-title">has successfully completed the course</div>
-              <div class="course-title" style="font-weight: bold; color: #2d3748;">${certificateData.metadata?.courseName || 'Course'}</div>
-              ${certificateData.metadata?.score ? `<div class="score">Score: ${Math.round(certificateData.metadata.score)}%</div>` : ''}
-              <div class="details">
-                <div>Issued by: GNANAM AI Learning Platform</div>
-                <div>Date: ${new Date(certificateData.issued_date).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}</div>
-              </div>
-              <div class="certificate-id">Certificate ID: ${certificateData.certificate_number}</div>
-              <div class="verification-code">Verification Code: ${certificateData.verification_code}</div>
+
+      const studentName = certificateData.metadata?.studentName || certificateData.studentName || 'Student'
+      const courseName = certificateData.metadata?.courseName || certificateData.course?.title || 'Course'
+      const score = certificateData.metadata?.score
+      const certificateNumber = certificateData.certificate_number
+      const verificationCode = certificateData.verification_code
+      const issuedDate = new Date(certificateData.issued_date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+      const logoUrl = `${window.location.origin}/lms_logo.svg`
+
+      downloadContainer = document.createElement('div')
+      downloadContainer.style.position = 'fixed'
+      downloadContainer.style.top = '0'
+      downloadContainer.style.left = '0'
+      downloadContainer.style.width = '100vw'
+      downloadContainer.style.height = '100vh'
+      downloadContainer.style.pointerEvents = 'none'
+      downloadContainer.style.opacity = '0'
+      downloadContainer.style.zIndex = '-1'
+      downloadContainer.innerHTML = `
+        <style>
+          .download-wrapper {
+            width: 960px;
+            padding: 40px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          }
+          .certificate {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 860px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            min-height: 600px;
+          }
+          .certificate::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+          }
+          .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            width: 1000px;
+            height: 1000px;
+            opacity: 0.05;
+            z-index: 0;
+            pointer-events: none;
+          }
+          .watermark img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+          .logo-container {
+            width: 180px;
+            margin: 0 auto 30px auto;
+            position: relative;
+            z-index: 3;
+          }
+          .logo-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            filter: drop-shadow(0 6px 12px rgba(56, 189, 248, 0.25));
+          }
+          .header {
+            color: #4a5568;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+            margin-top: 20px;
+          }
+          .header h1 {
+            font-size: 42px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+          }
+          .header .subtitle {
+            font-size: 20px;
+            color: #718096;
+            margin-bottom: 40px;
+            font-style: italic;
+          }
+          .student-name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+          }
+          .course-title {
+            font-size: 28px;
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+          }
+          .details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            font-size: 16px;
+            color: #718096;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 30px;
+            position: relative;
+            z-index: 1;
+          }
+          .certificate-id {
+            font-size: 14px;
+            color: #a0aec0;
+            margin-top: 30px;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            z-index: 1;
+          }
+          .verification-code {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            z-index: 1;
+          }
+          .score {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin: 20px 0;
+            font-weight: bold;
+            font-size: 18px;
+            position: relative;
+            z-index: 1;
+          }
+        </style>
+        <div class="download-wrapper">
+          <div class="certificate certificate-download">
+            <div class="watermark">
+              <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
             </div>
-            <script>
-              // Auto-trigger print dialog for download
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                }, 500);
-              };
-            </script>
-          </body>
-        </html>
+            <div class="logo-container">
+              <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
+            </div>
+            <div class="logo-container">
+              <img src="${logoUrl}" alt="GNANAM AI">
+            </div>
+            <div class="header">
+              <h1>CERTIFICATE OF COMPLETION</h1>
+              <p class="subtitle">This is to certify that</p>
+            </div>
+            <div class="student-name">${studentName}</div>
+            <div class="course-title">has successfully completed the course</div>
+            <div class="course-title" style="font-weight: bold; color: #2d3748;">${courseName}</div>
+            ${score ? `<div class="score">Score: ${Math.round(score)}%</div>` : ''}
+            <div class="details">
+              <div>Issued by: GNANAM AI Learning Platform</div>
+              <div>Date: ${issuedDate}</div>
+            </div>
+            <div class="certificate-id">Certificate ID: ${certificateNumber}</div>
+            <div class="verification-code">Verification Code: ${verificationCode}</div>
+          </div>
+        </div>
       `
-      
-      // Open in new window and write HTML directly, then trigger print for PDF download
-      const certificateWindow = window.open('', '_blank')
-      certificateWindow.document.write(certificateHTML)
-      certificateWindow.document.close()
-      
-      // After window loads, trigger print dialog (which allows Save as PDF)
-      certificateWindow.addEventListener('load', function() {
-        setTimeout(function() {
-          certificateWindow.print()
-        }, 500)
-      }, true)
-      
-      // Fallback: trigger print after a delay if load event doesn't fire
-      setTimeout(function() {
-        try {
-          certificateWindow.print()
-        } catch (e) {
-          console.log('Print dialog will appear when certificate loads')
-        }
-      }, 1000)
-      
-      toast.success('Certificate opened! Use "Save as PDF" in the print dialog to download.')
+
+      document.body.appendChild(downloadContainer)
+
+      const templateElement = downloadContainer.querySelector('.certificate-download')
+      if (!templateElement) {
+        throw new Error('Certificate template not found')
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      const canvas = await html2canvas(templateElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      })
+
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF('landscape', 'pt', 'a4')
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+
+      const imgWidth = pdfWidth
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+      const imgY = (pdfHeight - imgHeight) / 2
+
+      pdf.addImage(imgData, 'PNG', 0, imgY, imgWidth, imgHeight)
+
+      const safeStudentName = studentName.replace(/\s+/g, '_')
+      const safeCourseName = courseName.replace(/\s+/g, '_')
+      const fileName = `${safeStudentName}_${safeCourseName}_certificate.pdf`
+      pdf.save(fileName)
+
+      toast.success('Certificate downloaded successfully!')
     } catch (error) {
       console.error('Error downloading certificate:', error)
       toast.error('Failed to download certificate. Please try again.')
+    } finally {
+      if (downloadContainer && document.body.contains(downloadContainer)) {
+        document.body.removeChild(downloadContainer)
+      }
     }
   }
 
@@ -444,11 +439,11 @@ const CertificatesPage = () => {
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-6 md:p-10 max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">Certificate Details</h3>
+              <h3 className="text-2xl font-bold text-gray-900">Certificate Preview</h3>
               <button
                 onClick={() => setShowCertificateModal(false)}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -458,60 +453,55 @@ const CertificatesPage = () => {
                 </svg>
               </button>
             </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Course Name</label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {selectedCertificate.metadata?.courseName || 'N/A'}
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student Name</label>
-                <p className="text-lg text-gray-900">
-                  {selectedCertificate.metadata?.studentName || 'N/A'}
-                </p>
-              </div>
-              
-              {selectedCertificate.metadata?.score && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Score</label>
-                  <p className="text-lg font-semibold text-green-600">
-                    {Math.round(selectedCertificate.metadata.score)}%
-                  </p>
+
+            <div className="relative bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 rounded-[32px] px-8 md:px-16 py-10 md:py-14 shadow-lg overflow-hidden">
+              <div className="absolute -top-20 -left-10 w-64 h-64 bg-indigo-100/60 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-32 -right-10 w-80 h-80 bg-purple-100/60 rounded-full blur-3xl"></div>
+              <div className="relative z-10">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-10">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.4em] text-indigo-400 font-semibold">Certificate of Completion</p>
+                    <h4 className="mt-4 text-3xl md:text-4xl font-extrabold text-slate-800">
+                      {selectedCertificate.metadata?.courseName || 'Course Certificate'}
+                    </h4>
+                    <p className="mt-3 text-base md:text-lg text-slate-500 max-w-xl">
+                      This certificate is proudly presented to the learner for successfully completing the course requirements with outstanding performance.
+                    </p>
+                  </div>
+                  <div className="mt-8 md:mt-0 text-left md:text-right">
+                    <p className="text-sm text-slate-500">Issued Date</p>
+                    <p className="text-lg font-semibold text-slate-700">{formatDate(selectedCertificate.issued_date)}</p>
+                    <p className="mt-4 text-sm text-slate-500">Verification Code</p>
+                    <p className="text-lg font-mono text-slate-700 break-all">{selectedCertificate.verification_code}</p>
+                  </div>
                 </div>
-              )}
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Issued Date</label>
-                <p className="text-lg text-gray-900">
-                  {formatDate(selectedCertificate.issued_date)}
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Certificate Number</label>
-                <p className="text-lg font-mono text-gray-900">
-                  {selectedCertificate.certificate_number}
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
-                <p className="text-lg font-mono text-gray-900">
-                  {selectedCertificate.verification_code}
-                </p>
+
+                <div className="text-center my-12">
+                  <p className="text-sm uppercase tracking-[0.6em] text-indigo-300 font-semibold">Awarded To</p>
+                  <p className="mt-6 text-4xl md:text-5xl font-black text-slate-800">
+                    {selectedCertificate.metadata?.studentName || 'Learner Name'}
+                  </p>
+                  {selectedCertificate.metadata?.score && (
+                    <p className="mt-3 text-lg font-semibold text-emerald-500">
+                      Completed with a score of {Math.round(selectedCertificate.metadata.score)}%
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
+                  <div>
+                    <p className="text-sm text-slate-500">Certificate Number</p>
+                    <p className="text-lg font-mono text-slate-700">{selectedCertificate.certificate_number}</p>
+                  </div>
+                  <div className="border-t border-slate-200 pt-6 md:pt-4 md:border-none md:text-right">
+                    <p className="text-base font-semibold text-slate-700">GNANAM AI</p>
+                    <p className="text-sm text-slate-500">Authorized Signature</p>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div className="flex space-x-4 mt-8">
-              <button
-                onClick={() => handleDownloadCertificate(selectedCertificate)}
-                className="flex-1 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-              >
-                Download Certificate
-              </button>
+
+            <div className="flex justify-end mt-8">
               <button
                 onClick={() => setShowCertificateModal(false)}
                 className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"

@@ -14,8 +14,8 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
   })
   return (
     <motion.div
-      whileHover={{ y: -8, scale: 1.02 }}
-      className="bg-white/10 backdrop-blur-sm rounded-2xl hover:bg-white/20 transition-all duration-300 overflow-hidden group border border-white/20 shadow-2xl hover:shadow-purple-500/20 w-full"
+      whileHover={{ y: -6, scale: 1.01 }}
+      className="bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-300 overflow-hidden group border border-white/20 shadow-xl hover:shadow-purple-500/20 w-full"
     >
       <Link to={`/courses/${course.id}`} className="block">
         <div className="relative overflow-hidden">
@@ -23,17 +23,17 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
             <img
               src={logoUrl}
               alt={course.title}
-              className="w-full h-40 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : course.logo && logoLoading ? (
-            <div className="w-full h-40 sm:h-48 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-              <div className="animate-pulse text-white text-2xl font-bold">
+            <div className="w-full h-32 sm:h-40 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+              <div className="animate-pulse text-white text-xl font-bold">
                 {course.title?.charAt(0)}
               </div>
             </div>
           ) : course.logo && logoError ? (
-            <div className="w-full h-40 sm:h-48 bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
-              <div className="text-white text-2xl font-bold">
+            <div className="w-full h-32 sm:h-40 bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
+              <div className="text-white text-xl font-bold">
                 {course.title?.charAt(0)}
               </div>
             </div>
@@ -41,12 +41,12 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
             <img
               src={course.thumbnail || `https://via.placeholder.com/400x225/6366f1/ffffff?text=${course.title?.charAt(0)}`}
               alt={course.title}
-              className="w-full h-40 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+              className="w-full h-32 sm:h-40 object-cover group-hover:scale-105 transition-transform duration-500"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
           <div className="absolute top-4 right-4">
-            <span className={`px-3 py-1 text-xs font-bold rounded-full backdrop-blur-sm ${
+            <span className={`px-2 py-1 text-[10px] font-bold rounded-full backdrop-blur-sm ${
               course.difficulty === 'beginner' 
                 ? 'bg-green-500/80 text-white'
                 : course.difficulty === 'intermediate'
@@ -57,7 +57,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
             </span>
           </div>
           <div className="absolute top-4 left-4">
-            <span className={`px-3 py-1 text-xs font-bold rounded-full backdrop-blur-sm ${
+            <span className={`px-2 py-1 text-[10px] font-bold rounded-full backdrop-blur-sm ${
               course.is_published 
                 ? 'bg-blue-500/80 text-white'
                 : 'bg-gray-500/80 text-white'
@@ -67,56 +67,56 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
           </div>
         </div>
         
-        <div className="p-4 sm:p-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
+        <div className="p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center space-x-2">
               {course.logo && (
                 <>
                   {logoLoading && (
-                    <div className="w-8 h-8 rounded-lg border border-white/20 bg-gray-600 animate-pulse flex items-center justify-center">
-                      <span className="text-xs text-white">...</span>
+                    <div className="w-7 h-7 rounded-lg border border-white/20 bg-gray-600 animate-pulse flex items-center justify-center">
+                      <span className="text-[10px] text-white">...</span>
                     </div>
                   )}
                   {logoUrl && !logoLoading && (
                     <img
                       src={logoUrl}
                       alt={`${course.title} logo`}
-                      className="w-8 h-8 rounded-lg object-cover border border-white/20"
+                      className="w-7 h-7 rounded-lg object-cover border border-white/20"
                       onLoad={() => console.log('Logo loaded successfully for course:', course.title)}
                     />
                   )}
                   {logoError && !logoLoading && (
-                    <div className="w-8 h-8 rounded-lg border border-white/20 bg-gray-600 flex items-center justify-center">
-                      <span className="text-xs text-white" title={`Logo error: ${logoError}`}>!</span>
+                    <div className="w-7 h-7 rounded-lg border border-white/20 bg-gray-600 flex items-center justify-center">
+                      <span className="text-[10px] text-white" title={`Logo error: ${logoError}`}>!</span>
                     </div>
                   )}
                 </>
               )}
-              <span className="text-sm text-purple-400 font-semibold bg-purple-500/20 px-3 py-1 rounded-full">
+              <span className="text-xs text-purple-400 font-semibold bg-purple-500/20 px-2 py-1 rounded-full">
                 {course.category}
               </span>
             </div>
-            <span className="text-sm text-gray-300 bg-white/10 px-3 py-1 rounded-full">
+            <span className="text-xs text-gray-300 bg-white/10 px-2 py-1 rounded-full">
               {course.enrollment_count || 0} students
             </span>
           </div>
           
-          <h3 className="text-lg sm:text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-purple-300 transition-colors">
+          <h3 className="text-base sm:text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-purple-300 transition-colors">
             {course.title}
           </h3>
           
-          <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+          <p className="text-gray-300 text-xs sm:text-sm mb-3 line-clamp-2">
             {course.description}
           </p>
           
           {showInstructor && course.instructor && (
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-3">
               <img
                 src={course.instructor.avatar || `https://ui-avatars.com/api/?name=${course.instructor.name}&background=6366f1&color=fff`}
                 alt={course.instructor.name}
-                className="w-8 h-8 rounded-full mr-3 border-2 border-white/20"
+                className="w-7 h-7 rounded-full mr-2 border border-white/20"
               />
-              <span className="text-sm text-gray-300">
+              <span className="text-xs sm:text-sm text-gray-300">
                 {course.instructor.name}
               </span>
             </div>
@@ -132,7 +132,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
                     return (
                       <svg
                         key={i}
-                        className={`w-4 h-4 ${
+                        className={`w-3.5 h-3.5 ${
                           i < Math.floor(numericRating)
                             ? 'text-yellow-400'
                             : 'text-gray-500'
@@ -144,7 +144,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
                       </svg>
                     );
                   })}
-                  <span className="ml-2 text-sm text-gray-300 font-medium">
+                  <span className="ml-1.5 text-xs sm:text-sm text-gray-300 font-medium">
                     {(() => {
                       const rating = course.average_rating;
                       if (rating && typeof rating === 'number' && !isNaN(rating)) {
@@ -154,7 +154,7 @@ const CourseCard = ({ course, showInstructor = true, showRating = true }) => {
                     })()}
                   </span>
                 </div>
-                <span className="text-sm text-gray-400 ml-3">
+                <span className="text-xs sm:text-sm text-gray-400 ml-2.5">
                   ({course.total_ratings || 0})
                 </span>
               </div>
