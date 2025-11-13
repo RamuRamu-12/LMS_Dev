@@ -3,8 +3,40 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { courseService } from '../../services/courseService'
 import { enrollmentService } from '../../services/enrollmentService'
+import useCourseLogo from '../../hooks/useCourseLogo'
 import LoadingSpinner from '../common/LoadingSpinner'
 import toast from 'react-hot-toast'
+
+// Component for course image with logo support
+const CourseImage = ({ course }) => {
+  const { logoUrl, loading: logoLoading, error: logoError } = useCourseLogo(course.id, !!course.logo)
+  
+  if (course.logo && logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={course.title}
+        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+    )
+  } else if (course.logo && logoLoading) {
+    return (
+      <div className="w-full h-32 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+        <div className="animate-pulse text-white text-xl font-bold">
+          {course.title?.charAt(0)}
+        </div>
+      </div>
+    )
+  } else {
+    return (
+      <img
+        src={course.thumbnail || `https://via.placeholder.com/400x225/6366f1/ffffff?text=${course.title?.charAt(0)}`}
+        alt={course.title}
+        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+    )
+  }
+}
 
 const AllCoursesModal = ({ isOpen, onClose }) => {
   const queryClient = useQueryClient()
@@ -138,11 +170,7 @@ const AllCoursesModal = ({ isOpen, onClose }) => {
                       className="card hover:shadow-lg transition-all duration-300 overflow-hidden group"
                     >
                       <div className="relative">
-                        <img
-                          src={course.thumbnail || `https://via.placeholder.com/400x225/6366f1/ffffff?text=${course.title?.charAt(0)}`}
-                          alt={course.title}
-                          className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
+                        <CourseImage course={course} />
                         <div className="absolute top-2 right-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             course.difficulty === 'beginner' 

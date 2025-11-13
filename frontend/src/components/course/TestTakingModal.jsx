@@ -20,25 +20,61 @@ const TestTakingModal = ({
   const [testResults, setTestResults] = useState(null)
   const [testAttemptId, setTestAttemptId] = useState(null)
 
+  // Debug: Log when modal opens and test data
+  useEffect(() => {
+    if (isOpen) {
+      console.log('TestTakingModal opened:', {
+        isOpen,
+        testId: test?.id,
+        test: test,
+        enrollmentId,
+        willFetchQuestions: !!test?.id && isOpen,
+        queryEnabled: !!test?.id && isOpen
+      })
+      
+      // If test doesn't have an ID, log an error
+      if (!test?.id) {
+        console.error('❌ Test object missing ID:', test)
+      }
+    }
+  }, [isOpen, test, enrollmentId])
+
   // Fetch questions for the test
   const { data: questionsData, isLoading: questionsLoading } = useQuery(
     ['test-questions', test?.id],
-    () => testService.getTestQuestionsForStudent(test.id),
+    () => {
+      if (!test?.id) {
+        throw new Error('Test ID is required')
+      }
+      console.log('🔵 API CALL: Fetching test questions for test ID:', test.id)
+      return testService.getTestQuestionsForStudent(test.id)
+    },
     {
       enabled: !!test?.id && isOpen,
       refetchOnWindowFocus: false,
+      retry: 1,
       onError: (err) => {
+        console.error('❌ Error fetching test questions:', err)
         if (err.message?.includes('already passed') || err.message?.includes('certificate')) {
           toast.error('You have already passed this test and received a certificate. No retakes allowed.')
         } else {
           toast.error(err.message || 'Failed to load questions')
         }
         onClose()
+      },
+      onSuccess: (data) => {
+        console.log('✅ Test questions fetched successfully:', data)
       }
     }
   )
 
   const questions = questionsData?.data?.questions || []
+  // Merge test data from questions response and prop to ensure all fields are available
+  // The prop might have time_limit_minutes and max_attempts that getPublicInfo() doesn't return
+  const testData = {
+    ...test,
+    ...(questionsData?.data?.test || {})
+  }
 
   // Start test mutation
   const startTestMutation = useMutation(
@@ -47,8 +83,8 @@ const TestTakingModal = ({
       onSuccess: (data) => {
         setTestAttemptId(data.data.attempt.id)
         setTestStarted(true)
-        if (test.time_limit_minutes) {
-          setTimeLeft(test.time_limit_minutes * 60) // Convert to seconds
+        if (testData?.time_limit_minutes) {
+          setTimeLeft(testData.time_limit_minutes * 60) // Convert to seconds
         }
         toast.success('Test started! Good luck!')
       },
@@ -152,7 +188,7 @@ const TestTakingModal = ({
     return ((currentQuestionIndex + 1) / questions.length) * 100
   }
 
-  const isPassing = testResults?.score >= test?.passing_score
+  const isPassing = testResults?.score >= testData?.passing_score
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -199,8 +235,8 @@ const TestTakingModal = ({
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold">{test?.title}</h2>
-                <p className="text-indigo-100">{test?.description}</p>
+                <h2 className="text-2xl font-bold">{testData?.title || test?.title}</h2>
+                <p className="text-indigo-100">{testData?.description || test?.description}</p>
               </div>
               <button
                 onClick={onClose}
@@ -247,19 +283,19 @@ const TestTakingModal = ({
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Start?</h3>
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                  This test contains {questions.length} questions. You have {test?.time_limit_minutes || 'unlimited'} minutes to complete it.
+                  This test contains {questions.length} questions. You have {testData?.time_limit_minutes != null ? `${testData.time_limit_minutes} minutes` : 'unlimited time'} to complete it.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-indigo-600">{test?.passing_score}%</div>
+                    <div className="text-2xl font-bold text-indigo-600">{testData?.passing_score || test?.passing_score}%</div>
                     <div className="text-sm text-gray-600">Passing Score</div>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{test?.time_limit_minutes || '∞'}</div>
+                    <div className="text-2xl font-bold text-blue-600">{testData?.time_limit_minutes != null ? testData.time_limit_minutes : '∞'}</div>
                     <div className="text-sm text-gray-600">Time Limit (min)</div>
                   </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">{test?.max_attempts || '∞'}</div>
+                    <div className="text-2xl font-bold text-purple-600">{testData?.max_attempts != null ? testData.max_attempts : '∞'}</div>
                     <div className="text-sm text-gray-600">Max Attempts</div>
                   </div>
                 </div>
@@ -320,7 +356,7 @@ const TestTakingModal = ({
                 ) : (
                   <div className="space-y-4">
                     <p className="text-red-600 font-semibold">
-                      You need {test?.passing_score}% to pass.
+                      You need {testData?.passing_score || test?.passing_score}% to pass.
                     </p>
                     <button
                       onClick={onClose}

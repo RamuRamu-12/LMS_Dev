@@ -46,6 +46,8 @@ const CertificatesPage = () => {
 
       const studentName = certificateData.metadata?.studentName || certificateData.studentName || 'Student'
       const courseName = certificateData.metadata?.courseName || certificateData.course?.title || 'Course'
+      const courseDuration = certificateData.metadata?.courseDuration || certificateData.course?.estimated_duration || null
+      const courseNameWithDuration = courseDuration ? `${courseName} (${courseDuration} Hrs)` : courseName
       const score = certificateData.metadata?.score
       const certificateNumber = certificateData.certificate_number
       const verificationCode = certificateData.verification_code
@@ -67,163 +69,154 @@ const CertificatesPage = () => {
       downloadContainer.style.zIndex = '-1'
       downloadContainer.innerHTML = `
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+          
           .download-wrapper {
-            width: 960px;
+            width: 1200px;
             padding: 40px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', 'Arial', sans-serif;
+            background: #f5f5f5;
           }
           .certificate {
-            background: white;
-            padding: 60px;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            background: #ffffff;
+            padding: 80px 100px;
             text-align: center;
-            max-width: 860px;
+            max-width: 1120px;
             margin: 0 auto;
             position: relative;
             overflow: hidden;
-            min-height: 600px;
-          }
-          .certificate::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            min-height: 900px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
           }
           .watermark {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            width: 1000px;
-            height: 1000px;
-            opacity: 0.05;
+            font-size: 180px;
+            font-weight: 900;
+            color: #e5e7eb;
+            opacity: 0.15;
             z-index: 0;
             pointer-events: none;
+            white-space: nowrap;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 20px;
           }
-          .watermark img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-          }
-          .logo-container {
-            width: 180px;
-            margin: 0 auto 30px auto;
+          .logo-section {
+            margin-bottom: 50px;
             position: relative;
-            z-index: 3;
+            z-index: 2;
+            text-align: left;
           }
-          .logo-container img {
-            width: 100%;
-            height: auto;
+          .logo-section img {
+            height: 80px;
+            width: auto;
             display: block;
-            margin: 0 auto;
-            filter: drop-shadow(0 6px 12px rgba(56, 189, 248, 0.25));
           }
-          .header {
-            color: #4a5568;
-            margin-bottom: 40px;
-            position: relative;
-            z-index: 1;
-            margin-top: 20px;
-          }
-          .header h1 {
+          .certificate-title {
             font-size: 42px;
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-weight: 900;
+            color: #1e293b;
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 2;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            font-family: 'Playfair Display', serif;
+            line-height: 1.2;
+            white-space: nowrap;
           }
-          .header .subtitle {
-            font-size: 20px;
-            color: #718096;
-            margin-bottom: 40px;
+          .certify-text {
+            font-size: 22px;
+            color: #475569;
+            margin: 40px 0;
+            position: relative;
+            z-index: 2;
+            line-height: 1.8;
+            font-weight: 400;
             font-style: italic;
           }
           .student-name {
+            font-size: 48px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 50px 0 40px 0;
+            position: relative;
+            z-index: 2;
+            font-family: 'Playfair Display', serif;
+            text-decoration: underline;
+            text-decoration-color: #6366f1;
+            text-decoration-thickness: 3px;
+            text-underline-offset: 10px;
+          }
+          .course-text {
+            font-size: 24px;
+            color: #475569;
+            margin: 30px 0;
+            position: relative;
+            z-index: 2;
+            line-height: 1.8;
+            font-weight: 400;
+          }
+          .course-name {
             font-size: 32px;
-            font-weight: bold;
-            color: #2d3748;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            font-weight: 700;
+            color: #1e293b;
+            margin: 30px 0;
             position: relative;
-            z-index: 1;
+            z-index: 2;
+            line-height: 1.6;
           }
-          .course-title {
-            font-size: 28px;
-            color: #4a5568;
-            margin-bottom: 10px;
+          .score-display {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 50px 0;
+            position: relative;
+            z-index: 2;
+            font-family: 'Playfair Display', serif;
+          }
+          .issue-date {
+            font-size: 20px;
+            color: #64748b;
+            margin-top: 70px;
+            position: relative;
+            z-index: 2;
             font-weight: 500;
-            position: relative;
-            z-index: 1;
-          }
-          .details {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-            font-size: 16px;
-            color: #718096;
-            border-top: 2px solid #e2e8f0;
-            padding-top: 30px;
-            position: relative;
-            z-index: 1;
           }
           .certificate-id {
             font-size: 14px;
-            color: #a0aec0;
+            color: #94a3b8;
             margin-top: 30px;
             font-family: 'Courier New', monospace;
             position: relative;
-            z-index: 1;
+            z-index: 2;
+            font-weight: 400;
           }
           .verification-code {
-            font-size: 12px;
-            color: #a0aec0;
+            font-size: 14px;
+            color: #94a3b8;
             margin-top: 10px;
             font-family: 'Courier New', monospace;
             position: relative;
-            z-index: 1;
-          }
-          .score {
-            background: linear-gradient(135deg, #48bb78, #38a169);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 25px;
-            display: inline-block;
-            margin: 20px 0;
-            font-weight: bold;
-            font-size: 18px;
-            position: relative;
-            z-index: 1;
+            z-index: 2;
+            font-weight: 400;
           }
         </style>
         <div class="download-wrapper">
           <div class="certificate certificate-download">
-            <div class="watermark">
-              <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
+            <div class="watermark">GNANAM AI</div>
+            <div class="logo-section">
+              <img src="${logoUrl}" alt="GNANAM AI" onerror="this.style.display='none'">
             </div>
-            <div class="logo-container">
-              <img src="/lms_logo.svg" alt="GNANAM AI" onerror="this.style.display='none'">
-            </div>
-            <div class="logo-container">
-              <img src="${logoUrl}" alt="GNANAM AI">
-            </div>
-            <div class="header">
-              <h1>CERTIFICATE OF COMPLETION</h1>
-              <p class="subtitle">This is to certify that</p>
-            </div>
+            <div class="certificate-title">CERTIFICATE OF COMPLETION</div>
+            <div class="certify-text">This is to certify that</div>
             <div class="student-name">${studentName}</div>
-            <div class="course-title">has successfully completed the course</div>
-            <div class="course-title" style="font-weight: bold; color: #2d3748;">${courseName}</div>
-            ${score ? `<div class="score">Score: ${Math.round(score)}%</div>` : ''}
-            <div class="details">
-              <div>Issued by: GNANAM AI Learning Platform</div>
-              <div>Date: ${issuedDate}</div>
-            </div>
+            <div class="course-text">has successfully completed the course</div>
+            <div class="course-name">${courseNameWithDuration}</div>
+            ${score ? `<div class="score-display">with a score of ${Math.round(score)}%</div>` : ''}
+            <div class="issue-date">Issued on ${issuedDate}</div>
             <div class="certificate-id">Certificate ID: ${certificateNumber}</div>
             <div class="verification-code">Verification Code: ${verificationCode}</div>
           </div>
@@ -454,49 +447,67 @@ const CertificatesPage = () => {
               </button>
             </div>
 
-            <div className="relative bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 rounded-[32px] px-8 md:px-16 py-10 md:py-14 shadow-lg overflow-hidden">
-              <div className="absolute -top-20 -left-10 w-64 h-64 bg-indigo-100/60 rounded-full blur-3xl"></div>
-              <div className="absolute -bottom-32 -right-10 w-80 h-80 bg-purple-100/60 rounded-full blur-3xl"></div>
+            <div className="relative bg-white px-16 md:px-20 py-16 md:py-20 shadow-lg overflow-hidden text-center" style={{ minHeight: '900px' }}>
+              {/* Watermark Background - Text */}
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -rotate-45 text-[180px] font-black text-gray-200 opacity-20 z-0 whitespace-nowrap tracking-[20px]" style={{ fontFamily: "'Inter', sans-serif" }}>
+                GNANAM AI
+              </div>
+              
               <div className="relative z-10">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-10">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.4em] text-indigo-400 font-semibold">Certificate of Completion</p>
-                    <h4 className="mt-4 text-3xl md:text-4xl font-extrabold text-slate-800">
-                      {selectedCertificate.metadata?.courseName || 'Course Certificate'}
-                    </h4>
-                    <p className="mt-3 text-base md:text-lg text-slate-500 max-w-xl">
-                      This certificate is proudly presented to the learner for successfully completing the course requirements with outstanding performance.
-                    </p>
-                  </div>
-                  <div className="mt-8 md:mt-0 text-left md:text-right">
-                    <p className="text-sm text-slate-500">Issued Date</p>
-                    <p className="text-lg font-semibold text-slate-700">{formatDate(selectedCertificate.issued_date)}</p>
-                    <p className="mt-4 text-sm text-slate-500">Verification Code</p>
-                    <p className="text-lg font-mono text-slate-700 break-all">{selectedCertificate.verification_code}</p>
-                  </div>
+                {/* Logo */}
+                <div className="mb-12 text-left">
+                  <img src="/lms_logo.svg" alt="GNANAM AI" className="h-[80px] w-auto" onError={(e) => e.target.style.display = 'none'} />
                 </div>
 
-                <div className="text-center my-12">
-                  <p className="text-sm uppercase tracking-[0.6em] text-indigo-300 font-semibold">Awarded To</p>
-                  <p className="mt-6 text-4xl md:text-5xl font-black text-slate-800">
-                    {selectedCertificate.metadata?.studentName || 'Learner Name'}
-                  </p>
-                  {selectedCertificate.metadata?.score && (
-                    <p className="mt-3 text-lg font-semibold text-emerald-500">
-                      Completed with a score of {Math.round(selectedCertificate.metadata.score)}%
-                    </p>
-                  )}
+                {/* Certificate Title */}
+                <div className="text-[42px] font-black text-slate-800 mb-12 tracking-[6px] uppercase leading-tight whitespace-nowrap" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  CERTIFICATE OF COMPLETION
                 </div>
 
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-                  <div>
-                    <p className="text-sm text-slate-500">Certificate Number</p>
-                    <p className="text-lg font-mono text-slate-700">{selectedCertificate.certificate_number}</p>
+                {/* Certify Text */}
+                <div className="text-[22px] text-slate-600 my-10 leading-relaxed italic">
+                  This is to certify that
+                </div>
+
+                {/* Student Name */}
+                <div className="text-[48px] font-bold text-slate-800 my-12 underline decoration-indigo-600 decoration-[3px] underline-offset-[10px]" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  {selectedCertificate.metadata?.studentName || 'Learner Name'}
+                </div>
+
+                {/* Course Text */}
+                <div className="text-[24px] text-slate-600 my-8 leading-relaxed">
+                  has successfully completed the course
+                </div>
+
+                {/* Course Name */}
+                <div className="text-[32px] font-bold text-slate-800 my-8 leading-relaxed">
+                  {(() => {
+                    const courseName = selectedCertificate.metadata?.courseName || 'Course'
+                    const courseDuration = selectedCertificate.metadata?.courseDuration || selectedCertificate.course?.estimated_duration
+                    return courseDuration ? `${courseName} (${courseDuration} Hrs)` : courseName
+                  })()}
+                </div>
+
+                {/* Score */}
+                {selectedCertificate.metadata?.score && (
+                  <div className="text-[36px] font-bold text-slate-800 my-12" style={{ fontFamily: "'Playfair Display', serif" }}>
+                    with a score of {Math.round(selectedCertificate.metadata.score)}%
                   </div>
-                  <div className="border-t border-slate-200 pt-6 md:pt-4 md:border-none md:text-right">
-                    <p className="text-base font-semibold text-slate-700">GNANAM AI</p>
-                    <p className="text-sm text-slate-500">Authorized Signature</p>
-                  </div>
+                )}
+
+                {/* Issue Date */}
+                <div className="text-xl text-slate-600 mt-20 font-medium">
+                  Issued on {formatDate(selectedCertificate.issued_date)}
+                </div>
+
+                {/* Certificate ID */}
+                <div className="text-sm text-slate-400 mt-8 font-mono">
+                  Certificate ID: {selectedCertificate.certificate_number}
+                </div>
+
+                {/* Verification Code */}
+                <div className="text-sm text-slate-400 mt-3 font-mono">
+                  Verification Code: {selectedCertificate.verification_code}
                 </div>
               </div>
             </div>

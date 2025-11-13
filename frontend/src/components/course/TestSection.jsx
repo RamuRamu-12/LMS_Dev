@@ -40,6 +40,12 @@ const TestSection = ({ courseId, enrollment, progress, progressionData }) => {
       toast.error('You must complete all course chapters before taking the test')
       return
     }
+    if (!test || !test.id) {
+      console.error('Invalid test object:', test)
+      toast.error('Test data is invalid. Please try again.')
+      return
+    }
+    console.log('🟢 Take Test clicked:', { testId: test.id, test })
     setSelectedTest(test)
     setIsTestModalOpen(true)
   }

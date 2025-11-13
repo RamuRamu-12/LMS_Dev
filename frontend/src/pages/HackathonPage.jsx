@@ -124,7 +124,15 @@ const HackathonPage = () => {
 
   // Show access denied if user doesn't have permission and is not admin
   if (!isAdmin && !hasAccess('hackathons')) {
-    return <AccessDenied feature="hackathons" onContactAdmin={handleContactAdmin} />;
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 py-12">
+          <AccessDenied feature="hackathons" onContactAdmin={handleContactAdmin} />
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   return (
