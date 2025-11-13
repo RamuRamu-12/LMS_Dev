@@ -463,8 +463,38 @@ class PhaseNavigation {
     // Resolve URL relative to API base
     const resolveUrl = (url) => {
       try {
+        // Handle relative paths with ../
+        if (url.startsWith('../')) {
+          // Remove ../ and construct path relative to project root (apiBase)
+          // When content is loaded from phase folder, ../ goes up to project root
+          const relativePath = url.replace('../', '');
+          // Construct URL: apiBase + relativePath
+          // Example: ../ecommerce_architecture.svg -> /api/realtime-projects/ecommerce/ecommerce_architecture.svg
+          return apiBase + relativePath;
+        } else if (url.startsWith('./')) {
+          // Handle ./ paths - these are relative to current phase folder
+          // Get current phase folder from API base or current path
+          const currentPath = window.location.pathname;
+          let phaseFolder = '';
+          
+          // Extract phase folder from current path if available
+          const pathMatch = currentPath.match(/\/api\/realtime-projects\/[^\/]+\/([^\/]+)\//);
+          if (pathMatch && pathMatch[1]) {
+            phaseFolder = pathMatch[1] + '/';
+            const relativePath = url.replace('./', '');
+            return apiBase + phaseFolder + relativePath;
+          }
+          // Fallback: remove ./ and use relative to API base
+          return apiBase + url.replace('./', '');
+        } else if (!url.startsWith('/') && !url.startsWith('http')) {
+          // Relative path without ./ or ../ - assume it's relative to project root
+          return apiBase + url;
+        }
+        
+        // Absolute path or full URL
         return new URL(url, apiBase).href;
       } catch (e) {
+        console.warn('[Navigation] Error resolving URL:', url, e);
         return url;
       }
     };
