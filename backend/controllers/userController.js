@@ -256,6 +256,50 @@ const deleteUser = async (req, res, next) => {
       throw new AppError('Cannot delete your own account', 400);
     }
 
+    // Delete related records before deleting user to avoid foreign key constraint errors
+    const { TestAttempt, TestAnswer, Enrollment, ChapterProgress } = require('../models');
+    
+    // Find all enrollments for this user
+    const enrollments = await Enrollment.findAll({
+      where: { student_id: id },
+      attributes: ['id']
+    });
+
+    const enrollmentIds = enrollments.map(enrollment => enrollment.id);
+
+    // Delete chapter_progress records for all enrollments
+    if (enrollmentIds.length > 0) {
+      await ChapterProgress.destroy({
+        where: { enrollment_id: enrollmentIds }
+      });
+    }
+
+    // Delete enrollments
+    await Enrollment.destroy({
+      where: { student_id: id }
+    });
+    
+    // Find all test attempt IDs for this user
+    const testAttempts = await TestAttempt.findAll({
+      where: { student_id: id },
+      attributes: ['id']
+    });
+
+    const attemptIds = testAttempts.map(attempt => attempt.id);
+
+    // Delete test answers for all test attempts in one query
+    if (attemptIds.length > 0) {
+      await TestAnswer.destroy({
+        where: { attempt_id: attemptIds }
+      });
+    }
+
+    // Delete test attempts
+    await TestAttempt.destroy({
+      where: { student_id: id }
+    });
+
+    // Now delete the user
     await user.destroy();
 
     logger.info(`User ${user.email} deleted by admin ${req.user.email}`);

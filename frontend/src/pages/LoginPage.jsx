@@ -34,6 +34,15 @@ const LoginPage = () => {
     const token = urlParams.get('token')
     const refresh = urlParams.get('refresh')
     const isNew = urlParams.get('isNew') === 'true'
+    const error = urlParams.get('error')
+
+    // Check for account deactivated error
+    if (error === 'account_deactivated') {
+      toast.error('Your account has been deactivated. Please contact an administrator.')
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname)
+      return
+    }
 
     if (token && refresh) {
       handleOAuthCallback(token, refresh, isNew)

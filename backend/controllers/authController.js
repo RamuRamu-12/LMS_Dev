@@ -183,25 +183,33 @@ const verifyGoogleCredential = async (req, res, next) => {
     let isNewUser = false;
     
     if (user) {
-      // Update existing user's information
+      // Check if user account is active
+      if (!user.is_active) {
+        throw new AppError('Account is deactivated. Please contact an administrator.', 403);
+      }
+      
+      // Update existing user's information (do NOT update is_active)
       await user.update({
         name: displayName,
         email: email,
         avatar: avatar,
-        last_login: new Date(),
-        is_active: true
+        last_login: new Date()
       });
     } else {
       // Check if user exists with same email
       user = await User.findByEmail(email);
       
       if (user) {
-        // Link Google account to existing user
+        // Check if user account is active
+        if (!user.is_active) {
+          throw new AppError('Account is deactivated. Please contact an administrator.', 403);
+        }
+        
+        // Link Google account to existing user (do NOT update is_active)
         await user.update({
           google_id: googleId,
           avatar: avatar,
-          last_login: new Date(),
-          is_active: true
+          last_login: new Date()
         });
       } else {
         // Create new user
@@ -245,13 +253,18 @@ const googleCallback = async (req, res, next) => {
   try {
     const { user, isNewUser } = req.user;
     
+    // Check if user account is active (user should already be checked in passport strategy, but double-check here)
+    if (!user.is_active) {
+      logger.warn(`Inactive user ${user.email} attempted Google OAuth login via callback`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=account_deactivated`);
+    }
+    
     // Generate tokens
     const tokens = generateTokenPair(user);
     
-    // Update last login and ensure user is active
+    // Update last login (do NOT update is_active - preserve admin's deactivation)
     await user.update({ 
-      last_login: new Date(),
-      is_active: true
+      last_login: new Date()
     });
     
     logger.info(`User ${user.email} ${isNewUser ? 'registered' : 'logged in'} via Google OAuth`);

@@ -21,7 +21,11 @@ const AuthCallbackPage = () => {
         const error = urlParams.get('error')
 
         if (error) {
-          setError('Authentication failed. Please try again.')
+          if (error === 'account_deactivated') {
+            setError('Your account has been deactivated. Please contact an administrator.')
+          } else {
+            setError('Authentication failed. Please try again.')
+          }
           setLoading(false)
           return
         }

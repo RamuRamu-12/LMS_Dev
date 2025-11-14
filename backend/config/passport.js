@@ -20,6 +20,12 @@ passport.use(new GoogleStrategy({
     let isNewUser = false;
 
     if (user) {
+      // Check if user account is active
+      if (!user.is_active) {
+        logger.warn(`Inactive user ${user.email} attempted Google OAuth login`);
+        return done(new Error('Account is deactivated. Please contact an administrator.'), null);
+      }
+      
       // Update existing user's information
       await user.update({
         name: displayName,
@@ -32,6 +38,12 @@ passport.use(new GoogleStrategy({
       user = await User.findByEmail(email);
       
       if (user) {
+        // Check if user account is active
+        if (!user.is_active) {
+          logger.warn(`Inactive user ${user.email} attempted Google OAuth login`);
+          return done(new Error('Account is deactivated. Please contact an administrator.'), null);
+        }
+        
         // Link Google account to existing user
         await user.update({
           google_id: googleId,

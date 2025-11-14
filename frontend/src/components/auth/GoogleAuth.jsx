@@ -42,7 +42,16 @@ const GoogleAuth = ({ onSuccess, onError }) => {
       })
 
       if (!backendResponse.ok) {
-        throw new Error(`HTTP error! status: ${backendResponse.status}`)
+        // Try to parse error message from response
+        let errorMessage = `HTTP error! status: ${backendResponse.status}`
+        try {
+          const errorData = await backendResponse.json()
+          errorMessage = errorData.message || errorMessage
+        } catch (e) {
+          // If JSON parsing fails, use default message
+        }
+        onError?.(errorMessage)
+        return
       }
 
       const data = await backendResponse.json()
