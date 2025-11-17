@@ -1472,9 +1472,14 @@ const serveProjectMainPage = async (req, res, next) => {
       frontendUrl,
       // Support localhost for development
       "http://localhost:3000",
-      "https://localhost:3000",
+      "http://localhost:3000",
       "http://localhost:*",
-      "https://localhost:*",
+      "http://localhost:*",
+      // Production frontend domains
+      "https://gnanamai.com",
+      "https://www.gnanamai.com",
+      "http://gnanamai.com",
+      "http://www.gnanamai.com",
       // Add dynamically detected origin if different from configured
       ...(refererOrigin && refererOrigin !== frontendUrl ? [refererOrigin] : [])
     ].filter(Boolean).join(' ');
