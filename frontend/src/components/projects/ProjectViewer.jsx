@@ -10,39 +10,61 @@ const ProjectViewer = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [iframeLoading, setIframeLoading] = useState(true);
   const { projects, isLoading } = useRealtimeProjects();
 
+  // Validate projectId exists
+  if (!projectId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Project</h2>
+          <p className="text-gray-600 mb-4">No project ID provided.</p>
+          <button
+            onClick={() => navigate('/student/realtime-projects')}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Find project by id or folderName
   const project = projects.find(p => 
     p.id?.toLowerCase() === projectId?.toLowerCase() || 
     p.folderName?.toLowerCase() === projectId?.toLowerCase()
   );
+
+  // Get API URL and token
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  // Get token for iframe authentication
   const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-  const projectUrl = `${apiUrl}/api/realtime-projects/${projectId}${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+  
+  // Construct project URL only if projectId is valid
+  const projectUrl = projectId 
+    ? `${apiUrl}/api/realtime-projects/${projectId}${token ? `?token=${encodeURIComponent(token)}` : ''}`
+    : null;
   
   // Debug logging
   console.log('ProjectViewer - projectId:', projectId);
+  console.log('ProjectViewer - projects count:', projects.length);
   console.log('ProjectViewer - project:', project);
   console.log('ProjectViewer - projectUrl:', projectUrl);
   console.log('ProjectViewer - token exists:', !!token);
 
   const handleIframeLoad = () => {
-    try {
-      const iframe = iframeRef.current;
-      if (!iframe) return;
+    // Note: We cannot access iframe content due to cross-origin restrictions
+    // This is expected behavior when iframe loads from different origin (localhost:5000 vs localhost:3000)
+    // The backend handles all content rendering and footer visibility
+    // No action needed here - the iframe will load and display content correctly
+    setIframeLoading(false);
+    console.log('Iframe loaded successfully - content is cross-origin, backend handles rendering');
+  };
 
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-
-      if (iframeDoc) {
-        // Footer is now shown by default - no CSS injection needed
-        // Backend handles footer visibility based on project.json configuration
-        console.log('Iframe loaded - footer will be shown by default');
-      }
-    } catch (error) {
-      // Cross-origin error - backend handles footer visibility
-      console.log('Cannot access iframe (cross-origin), backend handles footer visibility');
-    }
+  const handleIframeError = (e) => {
+    setIframeLoading(false);
+    console.error('Iframe load error:', e);
   };
 
   const toggleFullscreen = () => {
@@ -68,6 +90,7 @@ const ProjectViewer = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Show loading spinner while projects are being fetched
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -76,12 +99,33 @@ const ProjectViewer = () => {
     );
   }
 
-  if (!project) {
+  // Show error if project not found after loading completes
+  if (!isLoading && !project) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Project Not Found</h2>
-          <p className="text-gray-600 mb-4">The project you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-4">
+            The project "{projectId}" was not found. Available projects: {projects.map(p => p.id || p.folderName).join(', ')}
+          </p>
+          <button
+            onClick={() => navigate('/student/realtime-projects')}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render iframe if projectUrl is invalid
+  if (!projectUrl) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Project URL</h2>
+          <p className="text-gray-600 mb-4">Unable to construct project URL.</p>
           <button
             onClick={() => navigate('/student/realtime-projects')}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
@@ -137,45 +181,33 @@ const ProjectViewer = () => {
 
       {/* Project iframe - Takes all remaining space */}
       <div className="flex-1 relative overflow-hidden" style={{ height: 0 }}>
-        <iframe
-          ref={iframeRef}
-          src={projectUrl}
-          className="absolute inset-0 w-full h-full border-0"
-          title={project.name}
-          onLoad={(e) => {
-            console.log('Iframe loaded successfully');
-            handleIframeLoad();
-            
-            // Check if iframe loaded content
-            try {
-              const iframe = e.target;
-              const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-              if (iframeDoc) {
-                console.log('Iframe document accessible');
-                console.log('Iframe title:', iframeDoc.title);
-                console.log('Iframe body content length:', iframeDoc.body?.innerHTML?.length || 0);
-              } else {
-                console.warn('Cannot access iframe document (cross-origin or security restriction)');
-              }
-            } catch (error) {
-              console.warn('Error accessing iframe content:', error.message);
-            }
-          }}
-          onError={(e) => {
-            console.error('Iframe load error:', e);
-          }}
-          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation"
-          allow="fullscreen"
-        />
-        {!project && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        {iframeLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
             <div className="text-center">
-              <div className="text-6xl mb-4">📄</div>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Loading Project...</h3>
+              <LoadingSpinner size="lg" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2 mt-4">Loading Project...</h3>
               <p className="text-gray-500">Please wait while the project loads</p>
             </div>
           </div>
         )}
+        <iframe
+          ref={iframeRef}
+          src={projectUrl}
+          className="absolute inset-0 w-full h-full border-0"
+          title={project?.name || 'Project Viewer'}
+          onLoad={(e) => {
+            console.log('Iframe loaded successfully');
+            handleIframeLoad();
+            
+            // Note: We intentionally don't try to access iframe.contentDocument or iframe.contentWindow.document
+            // because it's cross-origin (localhost:5000 vs localhost:3000) and will throw a security error.
+            // This is expected behavior and the iframe will still display content correctly.
+            // The backend handles all content rendering and the iframe will work properly.
+          }}
+          onError={handleIframeError}
+          sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation"
+          allow="fullscreen"
+        />
       </div>
 
       {/* LMS Footer - Hidden for project viewer to maximize space */}

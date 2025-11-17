@@ -281,10 +281,44 @@ class PhaseNavigation {
       let projectId = window.__LMS_PROJECT_ID;
       let apiBase = window.__LMS_API_BASE;
       
+      console.log('[Navigation] Initial state - projectId:', projectId, 'apiBase:', apiBase);
+      console.log('[Navigation] Current URL:', currentUrl.href);
+      console.log('[Navigation] Current path:', currentPath);
+      
       // If API base not set, construct it from project ID or extract from URL
       if (!apiBase) {
-        if (projectId) {
-          apiBase = window.location.origin + '/api/realtime-projects/' + projectId;
+        // First, try to extract backend origin from current URL if it's already an API URL
+        let backendOrigin = null;
+        if (currentPath.includes('/api/realtime-projects/')) {
+          // Current URL is already pointing to backend API - use current origin
+          backendOrigin = currentUrl.origin;
+          console.log('[Navigation] Using backend origin from current API URL:', backendOrigin);
+        } else {
+          // Not an API URL - try to determine backend URL
+          // Check if we're on a frontend domain and need to use backend domain
+          const currentHost = currentUrl.hostname;
+          const currentPort = currentUrl.port;
+          
+          console.log('[Navigation] Current host:', currentHost, 'port:', currentPort);
+          
+          if (currentHost === 'gnanamai.com' || currentHost === 'www.gnanamai.com') {
+            // Frontend domain - backend should be api.gnanamai.com
+            backendOrigin = currentUrl.protocol + '//api.gnanamai.com';
+            console.log('[Navigation] Using backend origin for production:', backendOrigin);
+          } else if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+            // Local development - backend is on different port (5000)
+            // Always use port 5000 for backend, regardless of current port (3000 for frontend)
+            backendOrigin = currentUrl.protocol + '//localhost:5000';
+            console.log('[Navigation] Using backend origin for local development:', backendOrigin);
+          } else {
+            // Fallback to current origin (shouldn't happen in normal flow)
+            backendOrigin = currentUrl.origin;
+            console.warn('[Navigation] Using current origin as fallback (may be incorrect):', backendOrigin);
+          }
+        }
+        
+        if (projectId && backendOrigin) {
+          apiBase = backendOrigin + '/api/realtime-projects/' + projectId;
           window.__LMS_API_BASE = apiBase;
           console.log('[Navigation] Constructed API base from stored project ID:', apiBase);
         } else if (currentPath.includes('/api/realtime-projects/')) {
@@ -300,15 +334,55 @@ class PhaseNavigation {
               return normalizedPf === normalizedExtracted || projectId.includes('_phase') || projectId.includes('Phase');
             });
             
-            if (!isPhaseFolder) {
-              apiBase = window.location.origin + '/api/realtime-projects/' + projectId;
+            if (!isPhaseFolder && backendOrigin) {
+              apiBase = backendOrigin + '/api/realtime-projects/' + projectId;
               window.__LMS_API_BASE = apiBase;
               window.__LMS_PROJECT_ID = projectId;
               console.log('[Navigation] Constructed API base from URL:', apiBase);
+            } else if (isPhaseFolder) {
+              console.warn('[Navigation] Extracted ID is a phase folder, not project ID:', projectId);
+            }
+          }
+        }
+        
+        // Final fallback: if we still don't have apiBase but we're on an API URL, construct from current URL
+        if (!apiBase && currentPath.includes('/api/realtime-projects/')) {
+          const pathMatch = currentPath.match(/^\/api\/realtime-projects\/([^\/]+)/);
+          if (pathMatch && pathMatch[1]) {
+            const extractedId = pathMatch[1];
+            const phaseFolders = ['BRD_phase', 'UI_UX_phase', 'Architectural_Design_phase', 'Development Phase', 'Testing_phase', 'Deployment Phase'];
+            const isPhaseFolder = phaseFolders.some(pf => {
+              const normalizedPf = pf.replace(/\s+/g, '_').toLowerCase();
+              const normalizedExtracted = extractedId.replace(/\s+/g, '_').toLowerCase();
+              return normalizedPf === normalizedExtracted || extractedId.includes('_phase') || extractedId.includes('Phase');
+            });
+            
+            if (!isPhaseFolder) {
+              // Extract project ID by going up the path
+              const pathParts = currentPath.split('/').filter(p => p);
+              // pathParts = ['api', 'realtime-projects', 'ecommerce', ...]
+              if (pathParts.length >= 3 && pathParts[0] === 'api' && pathParts[1] === 'realtime-projects') {
+                projectId = pathParts[2];
+                apiBase = currentUrl.origin + '/api/realtime-projects/' + projectId;
+                window.__LMS_API_BASE = apiBase;
+                window.__LMS_PROJECT_ID = projectId;
+                console.log('[Navigation] Final fallback - constructed API base from path:', apiBase);
+              }
             }
           }
         }
       }
+      
+      // Final validation
+      if (!apiBase) {
+        console.error('[Navigation] CRITICAL: Could not determine API base!');
+        console.error('[Navigation] Current URL:', currentUrl.href);
+        console.error('[Navigation] Current path:', currentPath);
+        console.error('[Navigation] Project ID:', projectId);
+        throw new Error('Unable to determine API base URL for content loading');
+      }
+      
+      console.log('[Navigation] Final API base:', apiBase);
       
       if (apiBase) {
         // Use LMS API base to construct the URL
@@ -416,9 +490,22 @@ class PhaseNavigation {
       console.log('[Navigation] Token available:', !!window.__LMS_TOKEN);
       console.log('[Navigation] API Base:', apiBase || 'Not set (standalone mode)');
       
-      const response = await fetch(contentUrl);
+      // Validate URL before fetching
+      if (!contentUrl || contentUrl === 'undefined' || contentUrl.includes('undefined')) {
+        throw new Error('Invalid content URL constructed');
+      }
+      
+      const response = await fetch(contentUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        credentials: 'include' // Include cookies if any
+      });
+      
       if (!response.ok) {
-        throw new Error(`Failed to load content: ${response.status} ${response.statusText}`);
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`Failed to load content: ${response.status} ${response.statusText}. ${errorText.substring(0, 100)}`);
       }
       
       const html = await response.text();
@@ -426,7 +513,18 @@ class PhaseNavigation {
       // Extract content from the HTML (assumes content is in a specific container)
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
-      const content = doc.querySelector('.content-body') || doc.body;
+      
+      // Check for parsing errors
+      const parserError = doc.querySelector('parsererror');
+      if (parserError) {
+        console.warn('[Navigation] HTML parsing warning:', parserError.textContent);
+      }
+      
+      const content = doc.querySelector('.content-body') || doc.querySelector('body') || doc.body;
+      
+      if (!content) {
+        throw new Error('No content found in loaded HTML');
+      }
 
       // Rewrite asset URLs to include project base and token
       this.rewriteAssetUrls(content);
@@ -777,10 +875,38 @@ class PhaseNavigation {
     }
     
     // Construct API base with the project ID
-    const apiBase = window.location.origin + '/api/realtime-projects/' + projectId;
+    // Use stored API base if available, otherwise determine backend origin
+    let backendOrigin = null;
+    const currentUrl = new URL(window.location.href);
+    const currentPathForNav = currentUrl.pathname; // Use different variable name to avoid conflict
+    
+    if (currentPathForNav.includes('/api/realtime-projects/')) {
+      // Current URL is already pointing to backend API - use current origin
+      backendOrigin = currentUrl.origin;
+    } else {
+      // Not an API URL - try to determine backend URL
+      const currentHost = currentUrl.hostname;
+      
+      if (currentHost === 'gnanamai.com' || currentHost === 'www.gnanamai.com') {
+        // Frontend domain - backend should be api.gnanamai.com
+        backendOrigin = currentUrl.protocol + '//api.gnanamai.com';
+      } else if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
+        // Local development - backend is on different port (5000)
+        // Always use port 5000 for backend, regardless of current port
+        backendOrigin = currentUrl.protocol + '//localhost:5000';
+        console.log('[Navigation] Using backend origin for local development:', backendOrigin);
+      } else {
+        // Fallback to current origin (shouldn't happen in normal flow)
+        backendOrigin = currentUrl.origin;
+        console.warn('[Navigation] Using current origin as fallback (may be incorrect):', backendOrigin);
+      }
+    }
+    
+    const apiBase = backendOrigin + '/api/realtime-projects/' + projectId;
     window.__LMS_API_BASE = apiBase; // Cache it
     window.__LMS_PROJECT_ID = projectId; // Cache project ID
     console.log('[Navigation] Using project ID:', projectId);
+    console.log('[Navigation] Backend origin:', backendOrigin);
     console.log('[Navigation] API base:', apiBase);
     
     // Construct target URL: /api/realtime-projects/{projectId}/{phase_folder}/Overview.html

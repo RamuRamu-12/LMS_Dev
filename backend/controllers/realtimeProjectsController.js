@@ -370,11 +370,40 @@ const serveProjectMainPage = async (req, res, next) => {
 
     // It's an HTML file - process it
     console.log(`[serveProjectMainPage] Reading HTML file from: ${filePath}...`);
-    let html = fs.readFileSync(filePath, 'utf8');
-    console.log(`[serveProjectMainPage] HTML file read, size: ${html.length} characters`);
-    
-    // Log first 500 characters to see what we're serving
-    console.log(`[serveProjectMainPage] HTML preview (first 500 chars): ${html.substring(0, 500)}`);
+    let html;
+    try {
+      html = fs.readFileSync(filePath, 'utf8');
+      console.log(`[serveProjectMainPage] HTML file read successfully, size: ${html.length} characters`);
+      
+      // Validate HTML is not empty
+      if (!html || html.trim().length === 0) {
+        throw new Error('HTML file is empty');
+      }
+      
+      // Log first 500 characters to see what we're serving
+      console.log(`[serveProjectMainPage] HTML preview (first 500 chars): ${html.substring(0, 500)}`);
+    } catch (readError) {
+      console.error(`[serveProjectMainPage] Error reading HTML file: ${readError.message}`);
+      return res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Error Loading Project</title>
+          <style>
+            body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .error { text-align: center; padding: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="error">
+            <h1>Error Loading Project</h1>
+            <p>Failed to read project file: ${readError.message}</p>
+            <p>File path: ${filePath}</p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
 
     // Always remove any previously injected footer-hider styles to ensure footer visibility by default
     html = html.replace(/<style id="lms-footer-hider">[\s\S]*?<\/style>/gi, '');
@@ -428,12 +457,75 @@ const serveProjectMainPage = async (req, res, next) => {
     
     // Use absolute URL for base tag - dynamically detect from request
     // Supports both local development and production deployments
-    const protocol = req.protocol || (req.secure ? 'https' : 'http');
-    const host = req.get('host') || process.env.API_URL?.replace(/^https?:\/\//, '') || 'localhost:5000';
+    // CRITICAL: Use backend API URL from environment variable, not frontend host
+    let backendUrl;
+    if (process.env.API_URL) {
+      // Use API_URL from environment (e.g., https://api.gnanamai.com)
+      backendUrl = process.env.API_URL.replace(/\/$/, ''); // Remove trailing slash
+      // Ensure it has protocol
+      if (!backendUrl.startsWith('http://') && !backendUrl.startsWith('https://')) {
+        // If no protocol, use HTTPS in production, HTTP in development
+        const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+        backendUrl = `${protocol}://${backendUrl}`;
+      }
+      console.log(`[serveProjectMainPage] Using API_URL from environment: ${backendUrl}`);
+    } else {
+      // Fallback: construct from request
+      // CRITICAL: When request comes from iframe, use the request's origin (which is the backend)
+      // When request comes from frontend, we need to determine backend URL
+      let host = req.get('host') || 'localhost:5000';
+      
+      // Log for debugging
+      console.log(`[serveProjectMainPage] Request host: ${host}`);
+      console.log(`[serveProjectMainPage] Request protocol (from req): ${req.protocol}`);
+      console.log(`[serveProjectMainPage] Request URL: ${req.url}`);
+      console.log(`[serveProjectMainPage] Request referer: ${req.get('referer') || 'none'}`);
+      
+      // CRITICAL: For localhost, ensure we use the backend port (5000), not frontend port (3000)
+      // If host is localhost:3000 or 127.0.0.1:3000, change to port 5000
+      if (host.includes('localhost:3000') || host.includes('127.0.0.1:3000')) {
+        host = host.replace(':3000', ':5000');
+        console.log(`[serveProjectMainPage] Detected frontend port, switching to backend port: ${host}`);
+      }
+      // If host is just 'localhost' or '127.0.0.1' without port, add backend port
+      else if (host === 'localhost' || host === '127.0.0.1') {
+        host = `${host}:5000`;
+        console.log(`[serveProjectMainPage] No port specified, adding backend port: ${host}`);
+      }
+      // If host already has port 5000, use it as-is (request is coming from backend iframe)
+      else if (host.includes(':5000')) {
+        console.log(`[serveProjectMainPage] Request is from backend (port 5000), using as-is: ${host}`);
+      }
+      
+      // CRITICAL: Determine protocol - ALWAYS use HTTP for localhost, regardless of req.protocol
+      // req.protocol might be 'https' if behind a proxy, but localhost never uses HTTPS
+      let protocol = 'http';
+      if (process.env.NODE_ENV === 'production') {
+        // In production, check if host is localhost (shouldn't happen, but be safe)
+        if (host.includes('localhost') || host.includes('127.0.0.1')) {
+          protocol = 'http'; // Always HTTP for localhost even in production
+        } else {
+          protocol = 'https'; // Production uses HTTPS
+        }
+      } else {
+        // In development, ALWAYS use HTTP for localhost
+        if (host.includes('localhost') || host.includes('127.0.0.1')) {
+          protocol = 'http'; // Always HTTP for localhost in development
+        } else {
+          // For non-localhost in development, check actual request
+          protocol = req.protocol || (req.secure ? 'https' : 'http');
+        }
+      }
+      
+      console.log(`[serveProjectMainPage] Determined protocol: ${protocol} (host: ${host})`);
+      
+      backendUrl = `${protocol}://${host}`;
+      console.log(`[serveProjectMainPage] Final constructed backendUrl: ${backendUrl}`);
+    }
     
     // Base href points to the project root - all files (HTML, CSS, JS, images) use the same route
     // IMPORTANT: Base href must end with a slash for proper resolution
-    const baseHref = `${protocol}://${host}/api/realtime-projects/${projectId}/`;
+    const baseHref = `${backendUrl}/api/realtime-projects/${projectId}/`;
     
     // Remove any existing base tags first
     html = html.replace(/<base[^>]*>/gi, '');
@@ -507,11 +599,14 @@ const serveProjectMainPage = async (req, res, next) => {
     // 5. Handle relative paths for HTML navigation (e.g., BRD_phase/Overview.html, UI_UX_phase/Overview.html)
     // These are phase folder paths that should be converted to absolute URLs
     // Match: href="BRD_phase/Overview.html" or href="UI_UX_phase/Overview.html"
-    // Simplified regex to match folder/File.html pattern
+    // Match any path that contains a folder with "phase" in it followed by a file
     html = html.replace(/(href)\s*=\s*(["'])([^"']+\/[^"']+\.html)\2/gi, (match, attr, quote, fullPath) => {
-      // Only convert if it matches phase folder pattern and is not already absolute
-      if (fullPath.match(/[^\/]+_(phase|Phase)\/|([A-Z][a-zA-Z]+\s*(Phase|phase))\//) && 
-          !fullPath.startsWith('http') && !fullPath.startsWith('//') && !fullPath.startsWith('/api/realtime-projects/')) {
+      // Only convert if it's a relative path (not already absolute) and contains phase folder pattern
+      // Check for patterns like: BRD_phase/, UI_UX_phase/, Development Phase/, etc.
+      const isPhasePath = fullPath.match(/([^\/]+_(phase|Phase)\/|([A-Z][a-zA-Z]+\s*(Phase|phase))\/)/i);
+      const isRelative = !fullPath.startsWith('http') && !fullPath.startsWith('//') && !fullPath.startsWith('/api/realtime-projects/');
+      
+      if (isPhasePath && isRelative) {
         const absolutePath = addTokenToUrl(`${baseHref}${fullPath}`);
         console.log(`[Path Fix] Converting phase navigation path: ${match} -> ${attr}=${quote}${absolutePath}${quote}`);
         return `${attr}=${quote}${absolutePath}${quote}`;
@@ -598,7 +693,7 @@ const serveProjectMainPage = async (req, res, next) => {
           // Set global variables IMMEDIATELY - these must be available before navigation.js runs
           window.__LMS_TOKEN = token || '';
           window.__LMS_PROJECT_ID = ${JSON.stringify(projectId)};
-          window.__LMS_API_BASE = ${JSON.stringify(protocol + '://' + host + '/api/realtime-projects/' + projectId)};
+          window.__LMS_API_BASE = ${JSON.stringify(backendUrl + '/api/realtime-projects/' + projectId)};
           
           // Log for debugging
           console.log('[LMS] Token interceptor initialized');
@@ -984,7 +1079,7 @@ const serveProjectMainPage = async (req, res, next) => {
             // Store token and project info for requests
             window.__LMS_TOKEN = ${JSON.stringify(token)};
             window.__LMS_PROJECT_ID = ${JSON.stringify(projectId)};
-            window.__LMS_API_BASE = ${JSON.stringify(protocol + '://' + host + '/api/realtime-projects/' + projectId)};
+            window.__LMS_API_BASE = ${JSON.stringify(backendUrl + '/api/realtime-projects/' + projectId)};
             
             // Helper function to check if URL is an HTML file
             function isHtmlFile(url) {
@@ -1188,8 +1283,8 @@ const serveProjectMainPage = async (req, res, next) => {
       <script>
         (function() {
           window.__LMS_PROJECT_ID = ${JSON.stringify(projectId)};
-          window.__LMS_API_BASE = ${JSON.stringify(protocol + '://' + host + '/api/realtime-projects/' + projectId)};
-          window.__LMS_FILES_BASE = ${JSON.stringify(protocol + '://' + host + '/api/realtime-projects/' + projectId + '/files')};
+          window.__LMS_API_BASE = ${JSON.stringify(backendUrl + '/api/realtime-projects/' + projectId)};
+          window.__LMS_FILES_BASE = ${JSON.stringify(backendUrl + '/api/realtime-projects/' + projectId + '/files')};
           
           function isHtmlFile(url) {
             if (!url) return false;
@@ -1384,17 +1479,78 @@ const serveProjectMainPage = async (req, res, next) => {
       ...(refererOrigin && refererOrigin !== frontendUrl ? [refererOrigin] : [])
     ].filter(Boolean).join(' ');
     
-    res.setHeader('Content-Type', 'text/html');
+    // Validate HTML before sending
+    if (!html || html.trim().length === 0) {
+      console.error(`[serveProjectMainPage] ERROR: HTML is empty after processing!`);
+      return res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Error Loading Project</title>
+          <style>
+            body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .error { text-align: center; padding: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="error">
+            <h1>Error Loading Project</h1>
+            <p>Project HTML is empty after processing.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+    
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     // Use CSP frame-ancestors to allow embedding (modern standard)
     // Supports both local development and production deployments
     res.setHeader('Content-Security-Policy', `frame-ancestors ${frameAncestorsList}`);
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    console.log(`[serveProjectMainPage] Sending HTML response, length: ${html.length}`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    console.log(`[serveProjectMainPage] Sending HTML response, length: ${html.length}, backendUrl: ${backendUrl}`);
     res.send(html);
   } catch (error) {
     console.error('[serveProjectMainPage] Error serving project page:', error);
     console.error('[serveProjectMainPage] Error stack:', error.stack);
-    next(new AppError('Failed to serve project page', 500));
+    console.error('[serveProjectMainPage] Error details:', {
+      message: error.message,
+      projectId: req.params?.projectId,
+      subPath: req.params?.[0],
+      url: req.url,
+      host: req.get('host'),
+      referer: req.get('referer')
+    });
+    
+    // Return a proper error page instead of letting it go to error handler
+    // This ensures the iframe always gets valid HTML
+    return res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Error Loading Project</title>
+        <style>
+          body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
+          .error { text-align: center; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 600px; }
+          h1 { color: #dc2626; margin-bottom: 1rem; }
+          p { color: #6b7280; margin: 0.5rem 0; }
+          .details { margin-top: 1rem; padding: 1rem; background: #fef2f2; border-radius: 4px; text-align: left; font-size: 0.875rem; }
+        </style>
+      </head>
+      <body>
+        <div class="error">
+          <h1>Error Loading Project</h1>
+          <p>An error occurred while loading the project.</p>
+          <div class="details">
+            <p><strong>Error:</strong> ${error.message || 'Unknown error'}</p>
+            <p><strong>Project ID:</strong> ${req.params?.projectId || 'Unknown'}</p>
+            <p><strong>Request URL:</strong> ${req.url || 'Unknown'}</p>
+          </div>
+          <p style="margin-top: 1.5rem; font-size: 0.875rem;">Please check the backend logs for more details.</p>
+        </div>
+      </body>
+      </html>
+    `);
   }
 };
 
